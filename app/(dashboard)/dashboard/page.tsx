@@ -1,9 +1,12 @@
 import { DashboardCards } from "@/components/dashboard/dashboard-cards";
 import { DashboardChart } from "@/components/dashboard/dashboard-chart";
+import { getDashboardData } from "@/lib/dashboard";
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+  const dashboard = await getDashboardData();
+
   return (
-    <div className="space-y-8 p-6">
+    <div className="space-y-8">
       <div>
         <h1 className="text-4xl font-bold text-white">
           Dashboard
@@ -14,9 +17,16 @@ export default function DashboardPage() {
         </p>
       </div>
 
-      <DashboardCards />
+      <DashboardCards
+        totalBalance={dashboard.totalBalance}
+        totalIncome={dashboard.totalIncome}
+        totalExpense={dashboard.totalExpense}
+        accountCount={dashboard.accountCount}
+      />
 
-      <DashboardChart />
+      <DashboardChart
+        data={dashboard.chartData}
+      />
     </div>
   );
 }
