@@ -3,13 +3,14 @@
 import { useState } from "react";
 
 import { TransactionForm } from "@/components/transactions/transaction-form";
-import { TransactionsHeader } from "@/components/transactions/transactions-header";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
 import type { Account } from "@/lib/accounts";
 import type { Category } from "@/lib/categories";
 
@@ -17,18 +18,29 @@ type Props = {
   action: (formData: FormData) => Promise<void>;
   accounts: Account[];
   categories: Category[];
+  label?: string;
+  className?: string;
 };
 
-export function NewTransactionSheet({
+export function NewTransactionTrigger({
   action,
   accounts,
   categories,
+  label = "Nova Transação",
+  className,
 }: Props) {
   const [open, setOpen] = useState(false);
 
   return (
     <>
-      <TransactionsHeader onNewTransaction={() => setOpen(true)} />
+      <Button
+        type="button"
+        className={className ?? "rounded-xl"}
+        onClick={() => setOpen(true)}
+      >
+        <Plus className="mr-2 h-4 w-4" />
+        {label}
+      </Button>
 
       <Sheet open={open} onOpenChange={setOpen}>
         <SheetContent
@@ -44,6 +56,7 @@ export function NewTransactionSheet({
               action={action}
               accounts={accounts}
               categories={categories}
+              onSuccess={() => setOpen(false)}
             />
           </div>
         </SheetContent>

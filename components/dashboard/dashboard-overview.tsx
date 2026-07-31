@@ -1,20 +1,31 @@
-import { ArrowUpRight, Plus } from "lucide-react";
+import { ArrowUpRight } from "lucide-react";
 
 import { AccountsSummary } from "@/components/dashboard/accounts-summary";
 import { DashboardCards } from "@/components/dashboard/dashboard-cards";
 import { DashboardChart } from "@/components/dashboard/dashboard-chart";
 import { FinancialInsights } from "@/components/dashboard/financial-insights";
 import { GoalsCard } from "@/components/dashboard/goals-card";
+import { NewTransactionTrigger } from "@/components/dashboard/new-transaction-trigger";
+import { QuickActionsCard } from "@/components/dashboard/quick-actions-card";
 import { RecentTransactions } from "@/components/dashboard/recent-transactions";
-import { Button } from "@/components/ui/button";
+import { createTransaction } from "@/app/actions/transactions";
+import type { Account } from "@/lib/accounts";
+import type { Category } from "@/lib/categories";
 import { DashboardData } from "@/lib/dashboard";
+import type { Goal } from "@/lib/goals";
 
 type DashboardOverviewProps = {
   data: DashboardData;
+  accounts: Account[];
+  categories: Category[];
+  goals: Goal[];
 };
 
 export function DashboardOverview({
   data,
+  accounts,
+  categories,
+  goals,
 }: DashboardOverviewProps) {
   const balance = new Intl.NumberFormat("pt-BR", {
     style: "currency",
@@ -41,24 +52,23 @@ export function DashboardOverview({
 
         <div className="flex flex-col items-start gap-5 lg:items-end">
           <div>
-            <p className="text-sm text-slate-400">
-              Patrimônio Total
-            </p>
+            <p className="text-sm text-slate-400">Patrimônio Total</p>
 
-            <h2 className="mt-1 text-5xl font-bold text-white">
-              {balance}
-            </h2>
+            <h2 className="mt-1 text-5xl font-bold text-white">{balance}</h2>
 
-            <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 text-sm font-medium text-emerald-400">
-              <ArrowUpRight size={16} />
-              +12,4% em relação ao mês passado
-            </div>
+            {data.hasData && (
+              <div className="mt-3 inline-flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 text-sm font-medium text-emerald-400">
+                <ArrowUpRight size={16} />
+                Receitas superam despesas no período
+              </div>
+            )}
           </div>
 
-          <Button className="rounded-xl">
-            <Plus className="mr-2 h-4 w-4" />
-            Nova Transação
-          </Button>
+          <NewTransactionTrigger
+            action={createTransaction}
+            accounts={accounts}
+            categories={categories}
+          />
         </div>
       </header>
 
@@ -72,18 +82,18 @@ export function DashboardOverview({
       <div className="grid gap-6 xl:grid-cols-3">
         <div className="xl:col-span-2">
           <DashboardChart
-            data={data.chartData}
+            chart7d={data.chart7d}
+            chart30d={data.chart30d}
+            chart12m={data.chart12m}
           />
         </div>
 
-        <GoalsCard />
+        <GoalsCard goals={goals} />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-3">
         <div className="xl:col-span-2">
-          <RecentTransactions
-            transactions={data.recentTransactions}
-          />
+          <RecentTransactions transactions={data.recentTransactions} />
         </div>
 
         <AccountsSummary
@@ -100,25 +110,7 @@ export function DashboardOverview({
           />
         </div>
 
-        <div className="rounded-3xl border border-dashed border-white/10 bg-[#111827] p-6">
-          <div className="flex h-full flex-col items-center justify-center text-center">
-            <div className="mb-5 rounded-2xl bg-violet-500/10 p-4">
-              <Plus
-                className="text-violet-400"
-                size={28}
-              />
-            </div>
-
-            <h3 className="text-lg font-semibold text-white">
-              Ações Rápidas
-            </h3>
-
-            <p className="mt-2 max-w-xs text-sm leading-6 text-slate-400">
-              Este painel receberá atalhos para criar transações, contas,
-              cartões, metas e outras ações rápidas nas próximas etapas.
-            </p>
-          </div>
-        </div>
+        <QuickActionsCard accounts={accounts} categories={categories} />
       </div>
     </section>
   );

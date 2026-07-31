@@ -2,7 +2,6 @@ import {
   ArrowDownRight,
   ArrowUpRight,
   Landmark,
-  TrendingUp,
   WalletCards,
 } from "lucide-react";
 
@@ -30,7 +29,6 @@ export function DashboardCards({
     {
       title: "Saldo Total",
       value: formatCurrency(totalBalance),
-      change: "+8,2%",
       subtitle: "Patrimônio atualizado",
       icon: WalletCards,
       iconColor: "bg-violet-500/15 text-violet-400",
@@ -38,24 +36,22 @@ export function DashboardCards({
     {
       title: "Receitas",
       value: formatCurrency(totalIncome),
-      change: "+14,8%",
-      subtitle: "Últimos 30 dias",
+      subtitle: "Total registrado",
       icon: ArrowUpRight,
       iconColor: "bg-emerald-500/15 text-emerald-400",
     },
     {
       title: "Despesas",
       value: formatCurrency(totalExpense),
-      change: "-3,6%",
-      subtitle: "Controle de gastos",
+      subtitle: "Total registrado",
       icon: ArrowDownRight,
       iconColor: "bg-rose-500/15 text-rose-400",
     },
     {
       title: "Contas",
       value: accountCount.toString(),
-      change: "100%",
-      subtitle: "Sincronizadas",
+      subtitle:
+        accountCount > 0 ? "Cadastradas e ativas" : "Nenhuma conta ainda",
       icon: Landmark,
       iconColor: "bg-cyan-500/15 text-cyan-400",
     },
@@ -75,9 +71,7 @@ export function DashboardCards({
 
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-sm text-slate-400">
-                  {card.title}
-                </p>
+                <p className="text-sm text-slate-400">{card.title}</p>
 
                 <h3 className="mt-3 text-3xl font-bold tracking-tight text-white">
                   {card.value}
@@ -89,21 +83,10 @@ export function DashboardCards({
               </div>
             </div>
 
-            <div className="mt-6 flex items-end justify-between">
-              <div>
-                <p className="text-sm font-medium text-slate-300">
-                  {card.subtitle}
-                </p>
-
-                <span className="mt-1 block text-xs text-slate-500">
-                  Comparado ao período anterior
-                </span>
-              </div>
-
-              <div className="flex items-center gap-1 rounded-full bg-emerald-500/10 px-3 py-1 text-sm font-semibold text-emerald-400">
-                <TrendingUp className="h-4 w-4" />
-                {card.change}
-              </div>
+            <div className="mt-6">
+              <p className="text-sm font-medium text-slate-300">
+                {card.subtitle}
+              </p>
             </div>
           </article>
         );

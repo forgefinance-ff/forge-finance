@@ -1,6 +1,8 @@
 "use client";
 
-import { Filter, Plus, Search } from "lucide-react";
+import { Plus } from "lucide-react";
+
+import { Button } from "@/components/ui/button";
 
 type TransactionsHeaderProps = {
   onNewTransaction?: () => void;
@@ -10,10 +12,10 @@ export function TransactionsHeader({
   onNewTransaction,
 }: TransactionsHeaderProps) {
   return (
-    <section className="space-y-6">
-      <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+    <section className="rounded-3xl border border-white/10 bg-[#111827] p-8">
+      <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <span className="text-sm font-medium uppercase tracking-[0.25em] text-blue-400">
+          <span className="text-sm font-medium uppercase tracking-[0.25em] text-violet-400">
             Financeiro
           </span>
 
@@ -21,39 +23,15 @@ export function TransactionsHeader({
             Transações
           </h1>
 
-          <p className="mt-2 text-zinc-400">
+          <p className="mt-2 max-w-xl text-slate-400">
             Gerencie todas as suas receitas e despesas em um único lugar.
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={onNewTransaction}
-          className="inline-flex h-12 items-center gap-2 rounded-xl bg-blue-600 px-6 font-semibold text-white transition hover:bg-blue-500"
-        >
-          <Plus className="h-5 w-5" />
+        <Button type="button" onClick={onNewTransaction} className="rounded-xl">
+          <Plus className="mr-2 h-4 w-4" />
           Nova Transação
-        </button>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-[1fr_auto]">
-        <div className="relative">
-          <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-zinc-500" />
-
-          <input
-            type="text"
-            placeholder="Pesquisar transações..."
-            className="h-12 w-full rounded-xl border border-zinc-800 bg-zinc-900 pl-12 pr-4 text-white outline-none transition focus:border-blue-500"
-          />
-        </div>
-
-        <button
-          type="button"
-          className="inline-flex h-12 items-center gap-2 rounded-xl border border-zinc-800 bg-zinc-900 px-5 text-zinc-300 transition hover:border-zinc-700 hover:bg-zinc-800"
-        >
-          <Filter className="h-5 w-5" />
-          Filtros
-        </button>
+        </Button>
       </div>
     </section>
   );

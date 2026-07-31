@@ -9,6 +9,12 @@ export type RecentTransaction = {
   transactionDate: string;
 };
 
+export type ChartPoint = {
+  label: string;
+  receitas: number;
+  despesas: number;
+};
+
 export type DashboardData = {
   totalBalance: number;
   totalIncome: number;
@@ -22,8 +28,127 @@ export type DashboardData = {
     despesas: number;
   }[];
 
+  chart7d: ChartPoint[];
+  chart30d: ChartPoint[];
+  chart12m: ChartPoint[];
+
   recentTransactions: RecentTransaction[];
 };
+
+type RawTransaction = {
+  amount: number;
+  type: "income" | "expense";
+  transaction_date: string;
+};
+
+function buildChartByDay(
+  transactions: RawTransaction[],
+  days: number
+): ChartPoint[] {
+  const now = new Date();
+  const cutoff = new Date(now);
+  cutoff.setDate(cutoff.getDate() - (days - 1));
+  cutoff.setHours(0, 0, 0, 0);
+
+  const buckets = new Map<
+    string,
+    { sortKey: number; label: string; receitas: number; despesas: number }
+  >();
+
+  for (let i = 0; i < days; i++) {
+    const date = new Date(cutoff);
+    date.setDate(cutoff.getDate() + i);
+
+    const key = date.toISOString().slice(0, 10);
+
+    buckets.set(key, {
+      sortKey: date.getTime(),
+      label: date.toLocaleDateString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+      }),
+      receitas: 0,
+      despesas: 0,
+    });
+  }
+
+  transactions.forEach((transaction) => {
+    const date = new Date(transaction.transaction_date);
+
+    if (date < cutoff) return;
+
+    const key = date.toISOString().slice(0, 10);
+    const bucket = buckets.get(key);
+
+    if (!bucket) return;
+
+    const value = Number(transaction.amount);
+
+    if (transaction.type === "income") {
+      bucket.receitas += value;
+    } else {
+      bucket.despesas += value;
+    }
+  });
+
+  return Array.from(buckets.values())
+    .sort((a, b) => a.sortKey - b.sortKey)
+    .map(({ label, receitas, despesas }) => ({
+      label,
+      receitas,
+      despesas,
+    }));
+}
+
+function buildChartByMonth(
+  transactions: RawTransaction[],
+  months: number
+): ChartPoint[] {
+  const now = new Date();
+
+  const buckets = new Map<
+    string,
+    { sortKey: number; label: string; receitas: number; despesas: number }
+  >();
+
+  for (let i = months - 1; i >= 0; i--) {
+    const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${date.getFullYear()}-${date.getMonth()}`;
+
+    buckets.set(key, {
+      sortKey: date.getTime(),
+      label: date
+        .toLocaleDateString("pt-BR", { month: "short" })
+        .replace(".", ""),
+      receitas: 0,
+      despesas: 0,
+    });
+  }
+
+  transactions.forEach((transaction) => {
+    const date = new Date(transaction.transaction_date);
+    const key = `${date.getFullYear()}-${date.getMonth()}`;
+    const bucket = buckets.get(key);
+
+    if (!bucket) return;
+
+    const value = Number(transaction.amount);
+
+    if (transaction.type === "income") {
+      bucket.receitas += value;
+    } else {
+      bucket.despesas += value;
+    }
+  });
+
+  return Array.from(buckets.values())
+    .sort((a, b) => a.sortKey - b.sortKey)
+    .map(({ label, receitas, despesas }) => ({
+      label,
+      receitas,
+      despesas,
+    }));
+}
 
 export async function getDashboardData(): Promise<DashboardData> {
   const supabase = await createClient();
@@ -40,6 +165,9 @@ export async function getDashboardData(): Promise<DashboardData> {
       accountCount: 0,
       hasData: false,
       chartData: [],
+      chart7d: [],
+      chart30d: [],
+      chart12m: [],
       recentTransactions: [],
     };
   }
@@ -128,12 +256,22 @@ export async function getDashboardData(): Promise<DashboardData> {
       transactionDate: transaction.transaction_date,
     })) ?? [];
 
+  const rawTransactions: RawTransaction[] =
+    transactions?.map((transaction) => ({
+      amount: Number(transaction.amount),
+      type: transaction.type,
+      transaction_date: transaction.transaction_date,
+    })) ?? [];
+
   return {
     totalBalance,
     totalIncome,
     totalExpense,
     accountCount: accounts?.length ?? 0,
     chartData,
+    chart7d: buildChartByDay(rawTransactions, 7),
+    chart30d: buildChartByDay(rawTransactions, 30),
+    chart12m: buildChartByMonth(rawTransactions, 12),
     recentTransactions,
     hasData: (transactions?.length ?? 0) > 0,
   };

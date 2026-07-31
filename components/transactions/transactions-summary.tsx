@@ -3,8 +3,8 @@
 import {
   ArrowDownCircle,
   ArrowUpCircle,
-  Wallet,
   TrendingUp,
+  Wallet,
 } from "lucide-react";
 
 type Props = {
@@ -14,17 +14,11 @@ type Props = {
 export function TransactionsSummary({ transactions }: Props) {
   const income = transactions
     .filter((transaction) => transaction.type === "income")
-    .reduce(
-      (total, transaction) => total + Number(transaction.amount),
-      0
-    );
+    .reduce((total, transaction) => total + Number(transaction.amount), 0);
 
   const expense = transactions
     .filter((transaction) => transaction.type === "expense")
-    .reduce(
-      (total, transaction) => total + Number(transaction.amount),
-      0
-    );
+    .reduce((total, transaction) => total + Number(transaction.amount), 0);
 
   const balance = income - expense;
 
@@ -33,29 +27,25 @@ export function TransactionsSummary({ transactions }: Props) {
       title: "Receitas",
       value: income,
       icon: ArrowUpCircle,
-      color:
-        "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+      iconColor: "bg-emerald-500/15 text-emerald-400",
     },
     {
       title: "Despesas",
       value: expense,
       icon: ArrowDownCircle,
-      color:
-        "bg-red-500/10 text-red-400 border-red-500/20",
+      iconColor: "bg-rose-500/15 text-rose-400",
     },
     {
       title: "Saldo",
       value: balance,
       icon: Wallet,
-      color:
-        "bg-blue-500/10 text-blue-400 border-blue-500/20",
+      iconColor: "bg-violet-500/15 text-violet-400",
     },
     {
       title: "Transações",
       value: transactions.length,
       icon: TrendingUp,
-      color:
-        "bg-violet-500/10 text-violet-400 border-violet-500/20",
+      iconColor: "bg-cyan-500/15 text-cyan-400",
       isCount: true,
     },
   ];
@@ -68,15 +58,13 @@ export function TransactionsSummary({ transactions }: Props) {
         return (
           <div
             key={card.title}
-            className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6 transition hover:border-zinc-700"
+            className="rounded-3xl border border-white/10 bg-[#111827] p-6 transition hover:-translate-y-1 hover:border-violet-500/30"
           >
             <div className="flex items-center justify-between">
-              <span className="text-sm text-zinc-400">
-                {card.title}
-              </span>
+              <span className="text-sm text-slate-400">{card.title}</span>
 
               <div
-                className={`flex h-11 w-11 items-center justify-center rounded-xl border ${card.color}`}
+                className={`flex h-11 w-11 items-center justify-center rounded-2xl ${card.iconColor}`}
               >
                 <Icon className="h-5 w-5" />
               </div>
