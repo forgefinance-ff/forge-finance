@@ -1,15 +1,28 @@
 import { createClient } from "@/lib/supabase/server";
 
+export type RecentTransaction = {
+  id: string;
+  title: string;
+  amount: number;
+  type: "income" | "expense";
+  category: string;
+  transactionDate: string;
+};
+
 export type DashboardData = {
   totalBalance: number;
   totalIncome: number;
   totalExpense: number;
   accountCount: number;
+  hasData: boolean;
+
   chartData: {
     month: string;
     receitas: number;
     despesas: number;
   }[];
+
+  recentTransactions: RecentTransaction[];
 };
 
 export async function getDashboardData(): Promise<DashboardData> {
@@ -25,7 +38,9 @@ export async function getDashboardData(): Promise<DashboardData> {
       totalIncome: 0,
       totalExpense: 0,
       accountCount: 0,
+      hasData: false,
       chartData: [],
+      recentTransactions: [],
     };
   }
 
@@ -37,9 +52,18 @@ export async function getDashboardData(): Promise<DashboardData> {
 
     supabase
       .from("transactions")
-      .select("amount,type,transaction_date")
+      .select(
+        `
+        id,
+        amount,
+        type,
+        description,
+        category,
+        transaction_date
+      `
+      )
       .eq("user_id", user.id)
-      .order("transaction_date", { ascending: true }),
+      .order("transaction_date", { ascending: false }),
   ]);
 
   const totalBalance =
@@ -48,15 +72,8 @@ export async function getDashboardData(): Promise<DashboardData> {
       0
     ) ?? 0;
 
-  const totalIncome =
-    transactions
-      ?.filter((t) => t.type === "income")
-      .reduce((acc, t) => acc + Number(t.amount), 0) ?? 0;
-
-  const totalExpense =
-    transactions
-      ?.filter((t) => t.type === "expense")
-      .reduce((acc, t) => acc + Number(t.amount), 0) ?? 0;
+  let totalIncome = 0;
+  let totalExpense = 0;
 
   const grouped = new Map<
     string,
@@ -67,12 +84,13 @@ export async function getDashboardData(): Promise<DashboardData> {
   >();
 
   transactions?.forEach((transaction) => {
-    const month = new Date(transaction.transaction_date).toLocaleDateString(
-      "pt-BR",
-      {
-        month: "short",
-      }
-    );
+    const value = Number(transaction.amount);
+
+    const month = new Date(
+      transaction.transaction_date
+    ).toLocaleDateString("pt-BR", {
+      month: "short",
+    });
 
     if (!grouped.has(month)) {
       grouped.set(month, {
@@ -84,19 +102,31 @@ export async function getDashboardData(): Promise<DashboardData> {
     const item = grouped.get(month)!;
 
     if (transaction.type === "income") {
-      item.receitas += Number(transaction.amount);
-    }
-
-    if (transaction.type === "expense") {
-      item.despesas += Number(transaction.amount);
+      totalIncome += value;
+      item.receitas += value;
+    } else {
+      totalExpense += value;
+      item.despesas += value;
     }
   });
 
-  const chartData = Array.from(grouped.entries()).map(([month, values]) => ({
-    month,
-    receitas: values.receitas,
-    despesas: values.despesas,
-  }));
+  const chartData = Array.from(grouped.entries())
+    .reverse()
+    .map(([month, values]) => ({
+      month,
+      receitas: values.receitas,
+      despesas: values.despesas,
+    }));
+
+  const recentTransactions =
+    transactions?.slice(0, 5).map((transaction) => ({
+      id: transaction.id,
+      title: transaction.description ?? "Sem descrição",
+      amount: Number(transaction.amount),
+      type: transaction.type,
+      category: transaction.category ?? "Sem categoria",
+      transactionDate: transaction.transaction_date,
+    })) ?? [];
 
   return {
     totalBalance,
@@ -104,5 +134,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     totalExpense,
     accountCount: accounts?.length ?? 0,
     chartData,
+    recentTransactions,
+    hasData: (transactions?.length ?? 0) > 0,
   };
 }
