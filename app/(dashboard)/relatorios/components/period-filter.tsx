@@ -8,7 +8,7 @@ export function PeriodFilter() {
     <div className="flex flex-col gap-3 rounded-xl border bg-card p-4 md:flex-row md:items-center md:justify-between">
       <div>
         <h2 className="font-semibold">Período de Análise</h2>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-sm text-slate-400">
           Selecione o período para atualizar todos os indicadores e gráficos.
         </p>
       </div>

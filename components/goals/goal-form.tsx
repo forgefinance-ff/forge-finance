@@ -1,12 +1,25 @@
 "use client";
 
+import { useTransition } from "react";
+
 import { createGoalAction } from "@/app/actions/goals";
+import { Button } from "@/components/ui/button";
 
 export function GoalForm() {
+  const [isPending, startTransition] = useTransition();
+
+  function handleSubmit(formData: FormData) {
+    startTransition(async () => {
+      await createGoalAction(formData);
+      (document.getElementById("goal-form") as HTMLFormElement)?.reset();
+    });
+  }
+
   return (
     <form
-      action={createGoalAction}
-      className="rounded-2xl border border-white/10 bg-[#111827] p-6 space-y-4"
+      id="goal-form"
+      action={handleSubmit}
+      className="rounded-3xl border border-white/10 bg-[#111827] p-6 space-y-4"
     >
       <div>
         <label className="mb-2 block text-sm text-slate-300">
@@ -65,12 +78,9 @@ export function GoalForm() {
         />
       </div>
 
-      <button
-        type="submit"
-        className="w-full rounded-lg bg-violet-600 px-4 py-3 font-semibold text-white transition hover:bg-violet-500"
-      >
-        Salvar Meta
-      </button>
+      <Button type="submit" disabled={isPending} className="w-full">
+        {isPending ? "Salvando..." : "Salvar Meta"}
+      </Button>
     </form>
   );
 }

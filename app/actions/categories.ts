@@ -19,17 +19,24 @@ export async function createCategory(formData: FormData) {
   const color = String(formData.get("color"));
   const icon = String(formData.get("icon"));
 
-  const { error } = await supabase.from("categories").insert({
-    user_id: user.id,
-    name,
-    type,
-    color,
-    icon,
-  });
+  const { data, error } = await supabase
+    .from("categories")
+    .insert({
+      user_id: user.id,
+      name,
+      type,
+      color,
+      icon,
+    })
+    .select()
+    .single();
 
   if (error) throw error;
 
-  revalidatePath("/categorias");
+  revalidatePath("/transacoes");
+  revalidatePath("/dashboard");
+
+  return data;
 }
 
 export async function deleteCategory(formData: FormData) {
@@ -44,5 +51,6 @@ export async function deleteCategory(formData: FormData) {
 
   if (error) throw error;
 
-  revalidatePath("/categorias");
+  revalidatePath("/transacoes");
+  revalidatePath("/dashboard");
 }

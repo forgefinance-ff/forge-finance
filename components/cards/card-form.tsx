@@ -1,12 +1,25 @@
 "use client";
 
+import { useTransition } from "react";
+
 import { createCardAction } from "@/app/actions/cards";
+import { Button } from "@/components/ui/button";
 
 export function CardForm() {
+  const [isPending, startTransition] = useTransition();
+
+  function handleSubmit(formData: FormData) {
+    startTransition(async () => {
+      await createCardAction(formData);
+      (document.getElementById("card-form") as HTMLFormElement)?.reset();
+    });
+  }
+
   return (
     <form
-      action={createCardAction}
-      className="rounded-2xl border border-white/10 bg-[#111827] p-6 space-y-4"
+      id="card-form"
+      action={handleSubmit}
+      className="rounded-3xl border border-white/10 bg-[#111827] p-6 space-y-4"
     >
       <div>
         <label className="mb-2 block text-sm text-slate-300">
@@ -82,12 +95,9 @@ export function CardForm() {
         </div>
       </div>
 
-      <button
-        type="submit"
-        className="w-full rounded-lg bg-violet-600 px-4 py-3 font-semibold text-white transition hover:bg-violet-500"
-      >
-        Salvar Cartão
-      </button>
+      <Button type="submit" disabled={isPending} className="w-full">
+        {isPending ? "Salvando..." : "Salvar Cartão"}
+      </Button>
     </form>
   );
 }

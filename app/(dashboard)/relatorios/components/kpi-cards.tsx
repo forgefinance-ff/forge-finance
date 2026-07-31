@@ -50,7 +50,7 @@ export function KpiCards({
           <CardContent>
             <p className="text-3xl font-bold">{card.value}</p>
 
-            <p className="mt-1 text-sm text-muted-foreground">
+            <p className="mt-1 text-sm text-slate-400">
               {card.description}
             </p>
           </CardContent>

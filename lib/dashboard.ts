@@ -172,7 +172,10 @@ export async function getDashboardData(): Promise<DashboardData> {
     };
   }
 
-  const [{ data: accounts }, { data: transactions }] = await Promise.all([
+  const [
+    { data: accounts, error: accountsError },
+    { data: transactions, error: transactionsError },
+  ] = await Promise.all([
     supabase
       .from("accounts")
       .select("current_balance")
@@ -186,13 +189,16 @@ export async function getDashboardData(): Promise<DashboardData> {
         amount,
         type,
         description,
-        category,
-        transaction_date
+        transaction_date,
+        categories(name,color,icon)
       `
       )
       .eq("user_id", user.id)
       .order("transaction_date", { ascending: false }),
   ]);
+
+  if (accountsError) throw accountsError;
+  if (transactionsError) throw transactionsError;
 
   const totalBalance =
     accounts?.reduce(
@@ -247,12 +253,12 @@ export async function getDashboardData(): Promise<DashboardData> {
     }));
 
   const recentTransactions =
-    transactions?.slice(0, 5).map((transaction) => ({
+    transactions?.slice(0, 5).map((transaction: any) => ({
       id: transaction.id,
       title: transaction.description ?? "Sem descrição",
       amount: Number(transaction.amount),
       type: transaction.type,
-      category: transaction.category ?? "Sem categoria",
+      category: transaction.categories?.name ?? "Sem categoria",
       transactionDate: transaction.transaction_date,
     })) ?? [];
 

@@ -1,12 +1,27 @@
 "use client";
 
+import { useTransition } from "react";
+
 import { createInvestmentAction } from "@/app/actions/investments";
+import { Button } from "@/components/ui/button";
 
 export function InvestmentForm() {
+  const [isPending, startTransition] = useTransition();
+
+  function handleSubmit(formData: FormData) {
+    startTransition(async () => {
+      await createInvestmentAction(formData);
+      (
+        document.getElementById("investment-form") as HTMLFormElement
+      )?.reset();
+    });
+  }
+
   return (
     <form
-      action={createInvestmentAction}
-      className="rounded-2xl border border-white/10 bg-[#111827] p-6 space-y-4"
+      id="investment-form"
+      action={handleSubmit}
+      className="rounded-3xl border border-white/10 bg-[#111827] p-6 space-y-4"
     >
       <div>
         <label className="mb-2 block text-sm text-slate-300">
@@ -84,12 +99,9 @@ export function InvestmentForm() {
         </div>
       </div>
 
-      <button
-        type="submit"
-        className="w-full rounded-lg bg-violet-600 px-4 py-3 font-semibold text-white transition hover:bg-violet-500"
-      >
-        Salvar Investimento
-      </button>
+      <Button type="submit" disabled={isPending} className="w-full">
+        {isPending ? "Salvando..." : "Salvar Investimento"}
+      </Button>
     </form>
   );
 }

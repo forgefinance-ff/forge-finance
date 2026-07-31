@@ -29,15 +29,15 @@ export async function ProfileCard() {
 
       <CardContent className="space-y-6">
         <div>
-          <p className="text-sm text-muted-foreground">E-mail</p>
+          <p className="text-sm text-slate-400">E-mail</p>
           <p className="font-medium">{user?.email}</p>
         </div>
 
         <UpdateProfileForm initialName={name} />
 
         <div>
-          <p className="text-sm text-muted-foreground">ID da Conta</p>
-          <p className="break-all text-xs text-muted-foreground">
+          <p className="text-sm text-slate-400">ID da Conta</p>
+          <p className="break-all text-xs text-slate-400">
             {user?.id}
           </p>
         </div>
