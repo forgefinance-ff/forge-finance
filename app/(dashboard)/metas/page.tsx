@@ -1,6 +1,7 @@
 import { Trash2 } from "lucide-react";
 
 import { deleteGoalAction } from "@/app/actions/goals";
+import { EditGoalTrigger } from "@/components/goals/edit-goal-trigger";
 import { GoalForm } from "@/components/goals/goal-form";
 import { getGoals } from "@/lib/goals";
 
@@ -99,20 +100,24 @@ export default async function MetasPage() {
                   </td>
 
                   <td className="p-4 text-right">
-                    <form action={deleteGoalAction}>
-                      <input
-                        type="hidden"
-                        name="id"
-                        value={goal.id}
-                      />
+                    <div className="flex items-center justify-end gap-1">
+                      <EditGoalTrigger goal={goal} />
 
-                      <button
-                        type="submit"
-                        className="rounded-lg p-2 text-slate-500 transition hover:bg-rose-500/10 hover:text-rose-400"
-                      >
-                        <Trash2 className="h-5 w-5" />
-                      </button>
-                    </form>
+                      <form action={deleteGoalAction}>
+                        <input
+                          type="hidden"
+                          name="id"
+                          value={goal.id}
+                        />
+
+                        <button
+                          type="submit"
+                          className="rounded-lg p-2 text-slate-500 transition hover:bg-rose-500/10 hover:text-rose-400"
+                        >
+                          <Trash2 className="h-5 w-5" />
+                        </button>
+                      </form>
+                    </div>
                   </td>
                 </tr>
               );

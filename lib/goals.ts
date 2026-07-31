@@ -70,3 +70,36 @@ export async function deleteGoal(id: string) {
 
   if (error) throw error;
 }
+
+type UpdateGoalInput = {
+  id: string;
+  title: string;
+  target_amount: number;
+  current_amount: number;
+  deadline: string;
+};
+
+export async function updateGoal(input: UpdateGoalInput) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("Usuário não autenticado.");
+  }
+
+  const { error } = await supabase
+    .from("goals")
+    .update({
+      title: input.title,
+      target_amount: input.target_amount,
+      current_amount: input.current_amount,
+      deadline: input.deadline,
+    })
+    .eq("id", input.id)
+    .eq("user_id", user.id);
+
+  if (error) throw error;
+}
