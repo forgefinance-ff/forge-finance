@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+﻿import { createClient } from "@/lib/supabase/server";
 
 export type NetWorthItem = {
   month: string;
@@ -23,7 +23,7 @@ export async function getNetWorthData(): Promise<NetWorthItem[]> {
 
   const { data: investments, error: investmentsError } = await supabase
     .from("investments")
-    .select("current_amount")
+    .select("current_value")
     .eq("user_id", user.id);
 
   if (investmentsError) throw investmentsError;
@@ -36,7 +36,7 @@ export async function getNetWorthData(): Promise<NetWorthItem[]> {
 
   const totalInvestments =
     investments?.reduce(
-      (sum, investment) => sum + Number(investment.current_amount),
+      (sum, investment) => sum + Number(investment.current_value),
       0
     ) ?? 0;
 

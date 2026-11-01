@@ -15,7 +15,7 @@ export function RecentTransactions({
 }: RecentTransactionsProps) {
   if (transactions.length === 0) {
     return (
-      <section className="rounded-3xl border border-white/10 bg-[#111827] p-6">
+      <section className="rounded-[22px] border border-white/[0.07] bg-surface p-6">
         <div className="flex flex-col items-center justify-center py-14 text-center">
           <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/5">
             <ReceiptText
@@ -38,7 +38,7 @@ export function RecentTransactions({
   }
 
   return (
-    <section className="rounded-3xl border border-white/10 bg-[#111827] p-6">
+    <section className="rounded-[22px] border border-white/[0.07] bg-surface p-6">
       <div className="mb-6 flex items-center justify-between">
         <div>
           <h3 className="text-xl font-semibold text-white">

@@ -27,7 +27,7 @@ export function TransactionsFilters({
   onReset,
 }: TransactionsFiltersProps) {
   return (
-    <section className="rounded-3xl border border-white/10 bg-[#111827] p-6">
+    <section className="rounded-[22px] border border-white/[0.07] bg-surface p-6">
       <div className="flex items-center gap-2">
         <Filter className="h-5 w-5 text-violet-400" />
 

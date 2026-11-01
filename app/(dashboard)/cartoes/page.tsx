@@ -9,7 +9,7 @@ export default async function CartoesPage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-3xl border border-white/10 bg-[#111827] p-8">
+      <div className="rounded-[22px] border border-white/[0.07] bg-surface p-8">
         <span className="text-sm font-medium uppercase tracking-[0.25em] text-violet-400">
           Financeiro
         </span>
@@ -25,7 +25,7 @@ export default async function CartoesPage() {
 
       <CardForm />
 
-      <div className="overflow-hidden rounded-3xl border border-white/10 bg-[#111827]">
+      <div className="overflow-hidden rounded-[22px] border border-white/[0.07] bg-surface">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[600px]">
           <thead className="border-b border-white/10">

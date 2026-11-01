@@ -11,7 +11,7 @@ export function GoalsCard({ goals }: GoalsCardProps) {
   const visibleGoals = goals.slice(0, 3);
 
   return (
-    <div className="flex flex-col rounded-3xl border border-white/10 bg-[#111827] p-6">
+    <div className="flex flex-col rounded-[22px] border border-white/[0.07] bg-surface p-6">
       <div className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="rounded-xl bg-violet-500/15 p-3">
@@ -38,7 +38,7 @@ export function GoalsCard({ goals }: GoalsCardProps) {
 
           <Link
             href="/metas"
-            className="mt-4 rounded-xl bg-gradient-to-r from-[#2563EB] to-[#7C3AED] px-4 py-2 text-sm font-semibold text-white transition hover:scale-[1.02]"
+            className="mt-4 rounded-xl bg-gradient-to-r from-brand to-brand-indigo px-4 py-2 text-sm font-semibold text-white transition hover:scale-[1.02]"
           >
             Criar primeira meta
           </Link>
@@ -69,7 +69,7 @@ export function GoalsCard({ goals }: GoalsCardProps) {
 
                   <div className="mb-3 h-2 overflow-hidden rounded-full bg-white/10">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-blue-500 to-violet-500"
+                      className="h-full rounded-full bg-gradient-to-r from-brand to-brand-soft"
                       style={{ width: `${progress}%` }}
                     />
                   </div>

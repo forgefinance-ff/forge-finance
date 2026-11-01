@@ -87,7 +87,7 @@ export function TransactionForm({
   return (
     <form
       action={handleSubmit}
-      className="space-y-4 rounded-2xl border border-white/10 bg-[#111827] p-6"
+      className="space-y-4 rounded-2xl border border-white/10 bg-surface p-6"
     >
       <h2 className="text-xl font-semibold text-white">Nova Transação</h2>
 
@@ -195,7 +195,7 @@ export function TransactionForm({
                 type="button"
                 disabled={isCreatingCategory || !newCategoryName.trim()}
                 onClick={handleCreateCategory}
-                className="flex-1 rounded-lg bg-gradient-to-r from-[#2563EB] to-[#7C3AED] px-4 py-2 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex-1 rounded-lg bg-gradient-to-r from-brand to-brand-indigo px-4 py-2 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isCreatingCategory ? "Criando..." : "Criar categoria"}
               </button>

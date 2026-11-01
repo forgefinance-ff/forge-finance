@@ -10,7 +10,7 @@ export function AccountsSummary({
   accountCount,
 }: AccountsSummaryProps) {
   return (
-    <section className="rounded-3xl border border-white/10 bg-[#111827] p-6">
+    <section className="rounded-[22px] border border-white/[0.07] bg-surface p-6">
       <div className="flex items-center gap-3">
         <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-500/10">
           <Landmark

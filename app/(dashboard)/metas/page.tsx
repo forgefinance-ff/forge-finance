@@ -10,7 +10,7 @@ export default async function MetasPage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-3xl border border-white/10 bg-[#111827] p-8">
+      <div className="rounded-[22px] border border-white/[0.07] bg-surface p-8">
         <span className="text-sm font-medium uppercase tracking-[0.25em] text-violet-400">
           Financeiro
         </span>
@@ -26,7 +26,7 @@ export default async function MetasPage() {
 
       <GoalForm />
 
-      <div className="rounded-3xl border border-white/10 bg-[#111827] overflow-hidden">
+      <div className="rounded-[22px] border border-white/[0.07] bg-surface overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[560px]">
           <thead className="border-b border-white/10">
@@ -85,7 +85,7 @@ export default async function MetasPage() {
                   <td className="p-4 w-80">
                     <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
                       <div
-                        className="h-full rounded-full bg-gradient-to-r from-blue-500 to-violet-500 transition-all"
+                        className="h-full rounded-full bg-gradient-to-r from-brand to-brand-soft transition-all"
                         style={{ width: `${percentage}%` }}
                       />
                     </div>

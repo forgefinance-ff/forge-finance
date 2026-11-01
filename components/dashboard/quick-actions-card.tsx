@@ -34,7 +34,7 @@ export function QuickActionsCard({
   ];
 
   return (
-    <div className="rounded-3xl border border-white/10 bg-[#111827] p-6">
+    <div className="rounded-[22px] border border-white/[0.07] bg-surface p-6">
       <div className="mb-6 flex items-center gap-3">
         <div className="rounded-xl bg-violet-500/15 p-3">
           <ListPlus className="text-violet-400" size={20} />

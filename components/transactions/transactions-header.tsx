@@ -12,7 +12,7 @@ export function TransactionsHeader({
   onNewTransaction,
 }: TransactionsHeaderProps) {
   return (
-    <section className="rounded-3xl border border-white/10 bg-[#111827] p-8">
+    <section className="rounded-[22px] border border-white/[0.07] bg-surface p-8">
       <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
         <div>
           <span className="text-sm font-medium uppercase tracking-[0.25em] text-violet-400">

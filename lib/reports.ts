@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+﻿import { createClient } from "@/lib/supabase/server";
 
 export type ReportSummary = {
   income: number;
@@ -37,7 +37,7 @@ export async function getReportSummary(): Promise<ReportSummary> {
 
       supabase
         .from("investments")
-        .select("current_amount")
+        .select("current_value")
         .eq("user_id", user.id),
     ]);
 
@@ -61,7 +61,7 @@ export async function getReportSummary(): Promise<ReportSummary> {
 
   const investmentsTotal =
     investments?.reduce(
-      (sum, investment) => sum + Number(investment.current_amount),
+      (sum, investment) => sum + Number(investment.current_value),
       0
     ) ?? 0;
 

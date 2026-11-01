@@ -9,7 +9,7 @@ export default async function InvestimentosPage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-3xl border border-white/10 bg-[#111827] p-8">
+      <div className="rounded-[22px] border border-white/[0.07] bg-surface p-8">
         <span className="text-sm font-medium uppercase tracking-[0.25em] text-violet-400">
           Financeiro
         </span>
@@ -19,22 +19,22 @@ export default async function InvestimentosPage() {
         </h1>
 
         <p className="mt-2 max-w-xl text-slate-400">
-          Acompanhe seus investimentos e sua evolução patrimonial.
+          Acompanhe seus investimentos e sua evoluÃ§Ã£o patrimonial.
         </p>
       </div>
 
       <InvestmentForm />
 
-      <div className="rounded-3xl border border-white/10 bg-[#111827] overflow-hidden">
+      <div className="rounded-[22px] border border-white/[0.07] bg-surface overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px]">
           <thead className="border-b border-white/10">
             <tr className="text-left text-slate-400">
               <th className="p-4">Investimento</th>
-              <th className="p-4">Instituição</th>
+              <th className="p-4">InstituiÃ§Ã£o</th>
               <th className="p-4">Tipo</th>
               <th className="p-4">Rentabilidade</th>
-              <th className="p-4 text-right">Ações</th>
+              <th className="p-4 text-right">AÃ§Ãµes</th>
             </tr>
           </thead>
 
@@ -52,7 +52,7 @@ export default async function InvestimentosPage() {
 
             {investments.map((investment) => {
               const profit =
-                investment.current_amount -
+                investment.current_value -
                 investment.invested_amount;
 
               const percentage =
@@ -74,7 +74,7 @@ export default async function InvestimentosPage() {
                       {new Intl.NumberFormat("pt-BR", {
                         style: "currency",
                         currency: "BRL",
-                      }).format(investment.current_amount)}
+                      }).format(investment.current_value)}
                     </div>
                   </td>
 

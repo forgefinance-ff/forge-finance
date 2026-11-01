@@ -1,4 +1,5 @@
 "use client";
+import type { getTransactions } from "@/lib/transactions";
 
 import {
   ArrowDownCircle,
@@ -8,7 +9,7 @@ import {
 } from "lucide-react";
 
 type Props = {
-  transactions: any[];
+  transactions: Awaited<ReturnType<typeof getTransactions>>;
 };
 
 export function TransactionsSummary({ transactions }: Props) {
@@ -45,7 +46,7 @@ export function TransactionsSummary({ transactions }: Props) {
       title: "Transações",
       value: transactions.length,
       icon: TrendingUp,
-      iconColor: "bg-cyan-500/15 text-cyan-400",
+      iconColor: "bg-indigo-500/15 text-indigo-300",
       isCount: true,
     },
   ];
@@ -58,7 +59,7 @@ export function TransactionsSummary({ transactions }: Props) {
         return (
           <div
             key={card.title}
-            className="rounded-3xl border border-white/10 bg-[#111827] p-6 transition hover:-translate-y-1 hover:border-violet-500/30"
+            className="rounded-[22px] border border-white/[0.07] bg-surface p-6 transition hover:-translate-y-1 hover:border-violet-500/30"
           >
             <div className="flex items-center justify-between">
               <span className="text-sm text-slate-400">{card.title}</span>

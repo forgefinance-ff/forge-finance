@@ -1,4 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
+import { buildAnalytics, type DashboardAnalytics } from "@/lib/dashboard-analytics";
+import { firstRelation } from "@/lib/relations";
 
 export type RecentTransaction = {
   id: string;
@@ -33,6 +35,12 @@ export type DashboardData = {
   chart12m: ChartPoint[];
 
   recentTransactions: RecentTransaction[];
+
+  /** Composição do patrimônio (contas + investimentos), sem dupla contagem. */
+  accountsTotal: number;
+  investmentsTotal: number;
+  investedAmount: number;
+  analytics: DashboardAnalytics;
 };
 
 type RawTransaction = {
@@ -169,12 +177,17 @@ export async function getDashboardData(): Promise<DashboardData> {
       chart30d: [],
       chart12m: [],
       recentTransactions: [],
+      accountsTotal: 0,
+      investmentsTotal: 0,
+      investedAmount: 0,
+      analytics: buildAnalytics([]),
     };
   }
 
   const [
     { data: accounts, error: accountsError },
     { data: transactions, error: transactionsError },
+    { data: investments, error: investmentsError },
   ] = await Promise.all([
     supabase
       .from("accounts")
@@ -195,16 +208,30 @@ export async function getDashboardData(): Promise<DashboardData> {
       )
       .eq("user_id", user.id)
       .order("transaction_date", { ascending: false }),
+
+    supabase
+      .from("investments")
+      .select("current_value, invested_amount")
+      .eq("user_id", user.id),
   ]);
 
   if (accountsError) throw accountsError;
   if (transactionsError) throw transactionsError;
+  if (investmentsError) throw investmentsError;
 
-  const totalBalance =
+  const accountsTotal =
     accounts?.reduce(
       (acc, account) => acc + Number(account.current_balance),
       0
     ) ?? 0;
+
+  const investmentsTotal =
+    investments?.reduce(
+      (acc, investment) => acc + Number(investment.current_value ?? 0),
+      0
+    ) ?? 0;
+
+  const totalBalance = accountsTotal + investmentsTotal;
 
   let totalIncome = 0;
   let totalExpense = 0;
@@ -253,12 +280,12 @@ export async function getDashboardData(): Promise<DashboardData> {
     }));
 
   const recentTransactions =
-    transactions?.slice(0, 5).map((transaction: any) => ({
+    transactions?.slice(0, 5).map((transaction) => ({
       id: transaction.id,
       title: transaction.description ?? "Sem descrição",
       amount: Number(transaction.amount),
       type: transaction.type,
-      category: transaction.categories?.name ?? "Sem categoria",
+      category: firstRelation(transaction.categories)?.name ?? "Sem categoria",
       transactionDate: transaction.transaction_date,
     })) ?? [];
 
@@ -280,5 +307,23 @@ export async function getDashboardData(): Promise<DashboardData> {
     chart12m: buildChartByMonth(rawTransactions, 12),
     recentTransactions,
     hasData: (transactions?.length ?? 0) > 0,
+    accountsTotal,
+    investmentsTotal,
+    investedAmount:
+      investments?.reduce(
+        (acc, investment) => acc + Number(investment.invested_amount ?? 0),
+        0
+      ) ?? 0,
+    analytics: buildAnalytics(
+      (transactions ?? []).map((transaction) => ({
+        amount: Number(transaction.amount),
+        type: transaction.type,
+        description: transaction.description ?? null,
+        transactionDate: String(transaction.transaction_date).slice(0, 10),
+        categoryName: firstRelation(transaction.categories)?.name ?? null,
+        categoryColor: firstRelation(transaction.categories)?.color ?? null,
+      }))
+    ),
   };
 }
+

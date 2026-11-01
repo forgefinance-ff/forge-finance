@@ -54,7 +54,7 @@ export function RegisterForm() {
           required
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-blue-500"
+          className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-brand-bright"
         />
       </div>
 
@@ -65,7 +65,7 @@ export function RegisterForm() {
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-blue-500"
+          className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-brand-bright"
         />
       </div>
 
@@ -77,20 +77,20 @@ export function RegisterForm() {
           minLength={6}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-blue-500"
+          className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-brand-bright"
         />
       </div>
 
       <button
         disabled={loading}
-        className="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white transition hover:bg-blue-500 disabled:opacity-60"
+        className="w-full rounded-lg bg-brand py-3 font-semibold text-white transition hover:bg-brand-bright disabled:opacity-60"
       >
         {loading ? "Criando conta..." : "Criar conta"}
       </button>
 
       <p className="text-center text-sm text-zinc-400">
         Já possui uma conta?{" "}
-        <Link href="/login" className="text-blue-400 hover:text-blue-300">
+        <Link href="/login" className="text-brand-soft hover:text-brand-soft">
           Entrar
         </Link>
       </p>

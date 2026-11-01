@@ -6,7 +6,7 @@ export type Investment = {
   name: string;
   type: string;
   invested_amount: number;
-  current_amount: number;
+  current_value: number;
   institution: string;
   created_at: string;
   updated_at: string;
@@ -16,7 +16,7 @@ type CreateInvestmentInput = {
   name: string;
   type: string;
   invested_amount: number;
-  current_amount: number;
+  current_value: number;
   institution: string;
 };
 
@@ -48,7 +48,7 @@ export async function createInvestment(input: CreateInvestmentInput) {
   } = await supabase.auth.getUser();
 
   if (!user) {
-    throw new Error("Usuário não autenticado.");
+    throw new Error("UsuÃ¡rio nÃ£o autenticado.");
   }
 
   const { error } = await supabase.from("investments").insert({
@@ -56,7 +56,7 @@ export async function createInvestment(input: CreateInvestmentInput) {
     name: input.name,
     type: input.type,
     invested_amount: input.invested_amount,
-    current_amount: input.current_amount,
+    current_value: input.current_value,
     institution: input.institution,
   });
 

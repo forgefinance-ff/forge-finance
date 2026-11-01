@@ -42,7 +42,7 @@ export function GoalForm({
     <form
       id="goal-form"
       action={handleSubmit}
-      className="rounded-3xl border border-white/10 bg-[#111827] p-6 space-y-4"
+      className="rounded-[22px] border border-white/[0.07] bg-surface p-6 space-y-4"
     >
       <h2 className="text-xl font-semibold text-white">
         {title ?? (goal ? "Editar Meta" : "Nova Meta")}

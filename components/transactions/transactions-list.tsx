@@ -1,9 +1,10 @@
 "use client";
+import type { getTransactions } from "@/lib/transactions";
 
 import { ReceiptText, Trash2 } from "lucide-react";
 
 type Props = {
-  transactions: any[];
+  transactions: Awaited<ReturnType<typeof getTransactions>>;
   deleteAction: (formData: FormData) => Promise<void>;
   hasAnyTransactions: boolean;
 };
@@ -15,7 +16,7 @@ export function TransactionsList({
 }: Props) {
   if (transactions.length === 0) {
     return (
-      <div className="flex min-h-[320px] flex-col items-center justify-center rounded-3xl border border-dashed border-white/10 bg-[#111827] text-center">
+      <div className="flex min-h-[320px] flex-col items-center justify-center rounded-3xl border border-dashed border-white/10 bg-surface text-center">
         <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/5">
           <ReceiptText className="text-slate-500" size={30} />
         </div>
@@ -34,7 +35,7 @@ export function TransactionsList({
   }
 
   return (
-    <div className="overflow-hidden rounded-3xl border border-white/10 bg-[#111827]">
+    <div className="overflow-hidden rounded-[22px] border border-white/[0.07] bg-surface">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[720px]">
           <thead className="border-b border-white/10 bg-white/[0.02]">
@@ -66,7 +67,7 @@ export function TransactionsList({
           </thead>
 
           <tbody>
-            {transactions.map((transaction: any) => {
+            {transactions.map((transaction) => {
               const isIncome = transaction.type === "income";
 
               return (

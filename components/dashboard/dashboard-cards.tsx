@@ -2,92 +2,150 @@ import {
   ArrowDownRight,
   ArrowUpRight,
   Landmark,
+  LineChart,
   WalletCards,
 } from "lucide-react";
 
+import { formatCurrency } from "@/lib/formatters";
+import { cn } from "@/lib/utils";
+
 type DashboardCardsProps = {
   totalBalance: number;
+  accountsTotal: number;
+  investmentsTotal: number;
+  investedAmount: number;
+  monthIncome: number;
+  monthExpense: number;
+  previousMonthExpense: number;
   totalIncome: number;
   totalExpense: number;
-  accountCount: number;
 };
 
-function formatCurrency(value: number) {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(value);
+type Badge = { text: string; tone: "up" | "down" | "neutral" } | null;
+
+function percentChange(current: number, previous: number): number | null {
+  if (previous <= 0) return null;
+  return ((current - previous) / previous) * 100;
+}
+
+function formatPercent(value: number) {
+  const sign = value > 0 ? "+" : "";
+  return `${sign}${value.toFixed(1).replace(".", ",")}%`;
 }
 
 export function DashboardCards({
   totalBalance,
+  accountsTotal,
+  investmentsTotal,
+  investedAmount,
+  monthIncome,
+  monthExpense,
+  previousMonthExpense,
   totalIncome,
   totalExpense,
-  accountCount,
 }: DashboardCardsProps) {
-  const cards = [
+  const expenseChange = percentChange(monthExpense, previousMonthExpense);
+  const yieldChange = percentChange(investmentsTotal, investedAmount);
+
+  const cards: {
+    title: string;
+    value: string;
+    subtitle: string;
+    icon: React.ComponentType<{ className?: string }>;
+    iconClass: string;
+    badge: Badge;
+  }[] = [
     {
-      title: "Saldo Total",
+      title: "Patrimônio total",
       value: formatCurrency(totalBalance),
-      subtitle: "Patrimônio atualizado",
+      subtitle: `Contas ${formatCurrency(accountsTotal)} + investimentos`,
       icon: WalletCards,
-      iconColor: "bg-violet-500/15 text-violet-400",
+      iconClass: "bg-brand/20 text-brand-soft",
+      badge: null,
     },
     {
-      title: "Receitas",
-      value: formatCurrency(totalIncome),
-      subtitle: "Total registrado",
+      title: "Receitas do mês",
+      value: formatCurrency(monthIncome),
+      subtitle: `Histórico: ${formatCurrency(totalIncome)}`,
       icon: ArrowUpRight,
-      iconColor: "bg-emerald-500/15 text-emerald-400",
+      iconClass: "bg-emerald-500/15 text-emerald-300",
+      badge: null,
     },
     {
-      title: "Despesas",
-      value: formatCurrency(totalExpense),
-      subtitle: "Total registrado",
+      title: "Despesas do mês",
+      value: formatCurrency(monthExpense),
+      subtitle: `Histórico: ${formatCurrency(totalExpense)}`,
       icon: ArrowDownRight,
-      iconColor: "bg-rose-500/15 text-rose-400",
+      iconClass: "bg-rose-500/15 text-rose-300",
+      badge:
+        expenseChange === null
+          ? null
+          : {
+              text: `${formatPercent(expenseChange)} vs mês anterior`,
+              // Despesa subindo é ruim; caindo é bom.
+              tone: expenseChange > 0 ? "down" : "up",
+            },
     },
     {
-      title: "Contas",
-      value: accountCount.toString(),
+      title: "Investimentos",
+      value: formatCurrency(investmentsTotal),
       subtitle:
-        accountCount > 0 ? "Cadastradas e ativas" : "Nenhuma conta ainda",
-      icon: Landmark,
-      iconColor: "bg-cyan-500/15 text-cyan-400",
+        investedAmount > 0
+          ? `Aportado: ${formatCurrency(investedAmount)}`
+          : "Nenhum aporte registrado",
+      icon: investmentsTotal > 0 ? LineChart : Landmark,
+      iconClass: "bg-indigo-500/15 text-indigo-300",
+      badge:
+        yieldChange === null
+          ? null
+          : {
+              text: `${formatPercent(yieldChange)} sobre o aportado`,
+              tone: yieldChange >= 0 ? "up" : "down",
+            },
     },
   ];
 
   return (
-    <section className="grid gap-5 lg:grid-cols-2 2xl:grid-cols-4">
+    <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
       {cards.map((card) => {
         const Icon = card.icon;
 
         return (
           <article
             key={card.title}
-            className="group relative overflow-hidden rounded-3xl border border-white/10 bg-[#111827] p-6 transition-all duration-300 hover:-translate-y-1 hover:border-violet-500/30 hover:shadow-[0_20px_45px_rgba(124,58,237,.18)]"
+            className="forge-panel group relative overflow-hidden p-4 transition-all duration-300 hover:-translate-y-0.5 hover:border-brand-bright/30 hover:shadow-[0_18px_40px_-18px_rgba(124,58,237,0.45)]"
           >
-            <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-violet-500/60 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-sm text-slate-400">{card.title}</p>
-
-                <h3 className="mt-3 text-3xl font-bold tracking-tight text-white">
-                  {card.value}
-                </h3>
+            <div className="flex items-start justify-between gap-2">
+              <div
+                className={cn(
+                  "flex h-9 w-9 items-center justify-center rounded-xl",
+                  card.iconClass
+                )}
+              >
+                <Icon className="h-[18px] w-[18px]" />
               </div>
 
-              <div className={`rounded-2xl p-3 ${card.iconColor}`}>
-                <Icon className="h-5 w-5" />
-              </div>
+              {card.badge && (
+                <span
+                  className={cn(
+                    "rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                    card.badge.tone === "up" && "bg-emerald-500/15 text-emerald-300",
+                    card.badge.tone === "down" && "bg-rose-500/15 text-rose-300",
+                    card.badge.tone === "neutral" && "bg-white/10 text-zinc-300"
+                  )}
+                >
+                  {card.badge.text}
+                </span>
+              )}
             </div>
 
-            <div className="mt-6">
-              <p className="text-sm font-medium text-slate-300">
-                {card.subtitle}
-              </p>
-            </div>
+            <p className="mt-3 text-xs text-zinc-400">{card.title}</p>
+            <h3 className="mt-0.5 truncate text-2xl font-semibold tracking-tight text-white">
+              {card.value}
+            </h3>
+            <p className="mt-1 truncate text-[11px] text-zinc-500">
+              {card.subtitle}
+            </p>
           </article>
         );
       })}

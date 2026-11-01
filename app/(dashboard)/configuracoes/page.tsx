@@ -7,7 +7,7 @@ import { LogoutButton } from "./components/logout-button";
 export default function SettingsPage() {
   return (
     <div className="space-y-8">
-      <div className="rounded-3xl border border-white/10 bg-[#111827] p-8">
+      <div className="rounded-[22px] border border-white/[0.07] bg-surface p-8">
         <span className="text-sm font-medium uppercase tracking-[0.25em] text-violet-400">
           Financeiro
         </span>

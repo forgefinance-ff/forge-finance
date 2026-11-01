@@ -1,4 +1,4 @@
-"use server";
+﻿"use server";
 
 import { revalidatePath } from "next/cache";
 import {
@@ -13,7 +13,7 @@ export async function createInvestmentAction(
     name: String(formData.get("name")),
     type: String(formData.get("type")),
     invested_amount: Number(formData.get("invested_amount")),
-    current_amount: Number(formData.get("current_amount")),
+    current_value: Number(formData.get("current_amount")),
     institution: String(formData.get("institution")),
   });
 

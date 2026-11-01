@@ -25,7 +25,7 @@ export function CategoryForm({ action }: Props) {
     <form
       id="category-form"
       action={handleSubmit}
-      className="space-y-4 rounded-3xl border border-white/10 bg-[#111827] p-6"
+      className="space-y-4 rounded-[22px] border border-white/[0.07] bg-surface p-6"
     >
       <h2 className="text-xl font-semibold text-white">Nova Categoria</h2>
 

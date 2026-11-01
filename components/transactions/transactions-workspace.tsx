@@ -1,4 +1,5 @@
 "use client";
+import type { getTransactions } from "@/lib/transactions";
 
 import { useMemo, useState } from "react";
 
@@ -20,7 +21,7 @@ import type { Account } from "@/lib/accounts";
 import type { Category } from "@/lib/categories";
 
 type Props = {
-  transactions: any[];
+  transactions: Awaited<ReturnType<typeof getTransactions>>;
   accounts: Account[];
   categories: Category[];
   createAction: (formData: FormData) => Promise<void>;
