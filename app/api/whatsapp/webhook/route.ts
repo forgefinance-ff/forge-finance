@@ -35,9 +35,30 @@ type MetaMessage = {
   interactive?: { button_reply?: { id?: string } };
 };
 
-type MetaPayload = {
-  entry?: { changes?: { value?: { messages?: MetaMessage[] } }[] }[];
+type MetaStatus = {
+  id?: string;
+  status?: string;
+  recipient_id?: string;
+  errors?: { code?: number; title?: string }[];
 };
+
+type MetaPayload = {
+  entry?: {
+    changes?: { value?: { messages?: MetaMessage[]; statuses?: MetaStatus[] } }[];
+  }[];
+};
+
+/** Registra o status de entrega sem nenhum conteúdo de mensagem. */
+function logStatus(status: MetaStatus) {
+  const error = status.errors?.[0];
+
+  console.log("WhatsApp status", {
+    id: status.id,
+    status: status.status,
+    recipient_id: status.recipient_id,
+    ...(error ? { error_code: error.code, error_title: error.title } : {}),
+  });
+}
 
 function toIncoming(message: MetaMessage): IncomingMessage {
   if (message.type === "text") {
@@ -77,6 +98,10 @@ export async function POST(request: Request) {
 
   for (const entry of payload.entry ?? []) {
     for (const change of entry.changes ?? []) {
+      for (const status of change.value?.statuses ?? []) {
+        logStatus(status);
+      }
+
       for (const message of change.value?.messages ?? []) {
         try {
           await handleIncoming(toIncoming(message));
