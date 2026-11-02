@@ -3,6 +3,8 @@ import type { getTransactions } from "@/lib/transactions";
 
 import { ReceiptText, Trash2 } from "lucide-react";
 
+import { formatDateBR } from "@/lib/dates";
+
 type Props = {
   transactions: Awaited<ReturnType<typeof getTransactions>>;
   deleteAction: (formData: FormData) => Promise<void>;
@@ -105,9 +107,7 @@ export function TransactionsList({
                   </td>
 
                   <td className="px-6 py-5 text-center text-muted-foreground">
-                    {new Date(
-                      transaction.transaction_date
-                    ).toLocaleDateString("pt-BR")}
+                    {formatDateBR(String(transaction.transaction_date))}
                   </td>
 
                   <td className="px-6 py-5 text-right">

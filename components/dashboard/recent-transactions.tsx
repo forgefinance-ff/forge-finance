@@ -4,6 +4,8 @@ import {
   ReceiptText,
 } from "lucide-react";
 
+import { formatDateBR } from "@/lib/dates";
+
 import { RecentTransaction } from "@/lib/dashboard";
 
 type RecentTransactionsProps = {
@@ -92,9 +94,7 @@ export function RecentTransactions({
                     </span>
 
                     <span className="text-xs text-faint">
-                      {new Date(
-                        transaction.transactionDate
-                      ).toLocaleDateString("pt-BR")}
+                      {formatDateBR(String(transaction.transactionDate))}
                     </span>
                   </div>
                 </div>

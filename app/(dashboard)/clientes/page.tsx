@@ -1,7 +1,7 @@
 import { CustomersWorkspace } from "@/components/customers/customers-workspace";
 import { BusinessOnly } from "@/components/mei/business-only";
 import { PageHeader } from "@/components/mei/page-header";
-import { getCustomers } from "@/lib/customers";
+import { countArchivedCustomers, getCustomers } from "@/lib/customers";
 import { todayInBrazil } from "@/lib/dates";
 import { getCustomerReceivables } from "@/lib/payables";
 import { getActiveScope } from "@/lib/scope-server";
@@ -31,9 +31,10 @@ export default async function ClientesPage({ searchParams }: Props) {
     );
   }
 
-  const [customers, receivables] = await Promise.all([
+  const [customers, receivables, archivedCount] = await Promise.all([
     getCustomers({ archived }),
     getCustomerReceivables(),
+    archived ? Promise.resolve(0) : countArchivedCustomers(),
   ]);
 
   return (
@@ -42,6 +43,7 @@ export default async function ClientesPage({ searchParams }: Props) {
       <CustomersWorkspace
         customers={customers}
         archived={archived}
+        archivedCount={archivedCount}
         receivables={receivables}
         today={todayInBrazil()}
       />

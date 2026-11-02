@@ -28,7 +28,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Sheet,
   SheetContent,
@@ -53,6 +53,8 @@ function normalize(value: string) {
 type Props = {
   customers: Customer[];
   archived: boolean;
+  /** Arquivados existentes (só usado na aba Ativos). */
+  archivedCount: number;
   /** Contas a receber com cliente, para totais e histórico. */
   receivables: Payable[];
   today: string;
@@ -60,7 +62,7 @@ type Props = {
 
 type Totals = { open: number; received: number; count: number };
 
-export function CustomersWorkspace({ customers, archived, receivables, today }: Props) {
+export function CustomersWorkspace({ customers, archived, archivedCount, receivables, today }: Props) {
   const [query, setQuery] = useState("");
   const [history, setHistory] = useState<Customer | null>(null);
 
@@ -180,6 +182,20 @@ export function CustomersWorkspace({ customers, archived, receivables, today }: 
             title="Nenhum cliente arquivado"
             description="Clientes arquivados saem da lista principal, mas o histórico deles continua guardado."
           />
+        ) : archivedCount > 0 ? (
+          <EmptyState
+            icon={UsersIcon}
+            title="Nenhum cliente ativo"
+            description={`Você tem ${archivedCount} ${archivedCount === 1 ? "cliente arquivado" : "clientes arquivados"}. Reative quem voltou a comprar ou cadastre um novo.`}
+          >
+            <Link href="/clientes?arquivados=1" className={buttonVariants({ variant: "outline" })}>
+              Ver arquivados
+            </Link>
+            <Button onClick={() => setEditing("new")}>
+              <PlusIcon className="h-4 w-4" />
+              Novo cliente
+            </Button>
+          </EmptyState>
         ) : (
           <EmptyState
             icon={UsersIcon}

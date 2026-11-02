@@ -36,3 +36,24 @@ export async function getCustomers(options: { archived?: boolean } = {}) {
 
   return (data ?? []) as Customer[];
 }
+
+/** Quantos clientes estão arquivados (para o estado vazio da aba Ativos). */
+export async function countArchivedCustomers(): Promise<number> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return 0;
+
+  const { count, error } = await supabase
+    .from("customers")
+    .select("id", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .not("archived_at", "is", null);
+
+  if (error) throw error;
+
+  return count ?? 0;
+}

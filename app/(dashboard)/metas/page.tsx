@@ -3,6 +3,7 @@ import { Trash2 } from "lucide-react";
 import { deleteGoalAction } from "@/app/actions/goals";
 import { EditGoalTrigger } from "@/components/goals/edit-goal-trigger";
 import { GoalForm } from "@/components/goals/goal-form";
+import { formatDateBR } from "@/lib/dates";
 import { getGoals } from "@/lib/goals";
 
 export default async function MetasPage() {
@@ -96,7 +97,7 @@ export default async function MetasPage() {
                   </td>
 
                   <td className="p-4 text-text-soft">
-                    {new Date(goal.deadline).toLocaleDateString("pt-BR")}
+                    {goal.deadline ? formatDateBR(goal.deadline) : "—"}
                   </td>
 
                   <td className="p-4 text-right">
