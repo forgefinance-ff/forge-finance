@@ -78,7 +78,7 @@ export default async function DashboardLayout({
         </main>
       </div>
 
-      <MobileNav />
+      <MobileNav scope={scope} />
     </div>
   );
 }

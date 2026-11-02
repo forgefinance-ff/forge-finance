@@ -14,6 +14,7 @@ import {
   Settings2Icon,
   TagsIcon,
   TargetIcon,
+  UsersIcon,
   WalletCardsIcon,
 } from "lucide-react";
 
@@ -40,6 +41,18 @@ const mainItems: NavItem[] = [
   { title: "Investimentos", url: "/investimentos", icon: FolderIcon },
   { title: "Planos", url: "/planos", icon: CreditCardIcon },
 ];
+
+/** Itens que só aparecem no escopo Empresa (entram depois de "Categorias"). */
+const businessItems: NavItem[] = [
+  { title: "Clientes", url: "/clientes", icon: UsersIcon },
+];
+
+export function getNavItems(scope: Scope): NavItem[] {
+  if (scope !== "business") return mainItems;
+
+  const at = mainItems.findIndex((item) => item.url === "/categorias") + 1;
+  return [...mainItems.slice(0, at), ...businessItems, ...mainItems.slice(at)];
+}
 
 const settingsItem: NavItem = {
   title: "Configurações",
@@ -121,7 +134,7 @@ export function AppSidebar({ scope }: { scope: Scope }) {
 
       <nav className="flex w-full flex-1 flex-col items-center overflow-y-auto overflow-x-visible py-1">
         <ul className="flex flex-col items-center gap-2 rounded-[28px] border border-line bg-tint p-2">
-          {mainItems.map((item) => (
+          {getNavItems(scope).map((item) => (
             <RailItem
               key={item.url}
               item={item}
@@ -145,9 +158,9 @@ export function AppSidebar({ scope }: { scope: Scope }) {
 }
 
 /** Navegação móvel: barra inferior com rolagem interna (sem rolagem horizontal da página). */
-export function MobileNav() {
+export function MobileNav({ scope }: { scope: Scope }) {
   const pathname = usePathname();
-  const items = [...mainItems, settingsItem];
+  const items = [...getNavItems(scope), settingsItem];
 
   return (
     <nav
