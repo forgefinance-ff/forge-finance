@@ -1,18 +1,14 @@
+import { AsyncLocalStorage } from "node:async_hooks";
 import { revalidatePath } from "next/cache";
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { parseScope, SCOPE_EMOJI, SCOPE_LABEL, type Scope } from "@/lib/scope";
-import { downloadMedia, sendConfirmButtons, sendText } from "./meta";
-import { parseTransactionMessage, type ParsedItem } from "./parse";
+import { parseScope, SCOPE_EMOJI, SCOPE_LABEL } from "@/lib/scope";
+import { executePending, remember, runAgent } from "./agent/agent";
+import type { PreparedAction } from "./agent/write-tools";
+import { downloadMedia } from "./meta";
 import { transcribeAudio } from "./transcribe";
-import {
-  formatBRL,
-  formatDayMonth,
-  isRealDate,
-  normalize,
-  shiftDate,
-  todayInBrazil,
-} from "./text";
+import { formatBRL, formatDayMonth, normalize } from "./text";
+import { metaTransport, type Transport } from "./transport";
 
 export type IncomingMessage = {
   id: string;
@@ -31,10 +27,8 @@ type Link = {
   default_account_id: string | null;
 };
 
-type Category = { id: string; name: string; type: "income" | "expense"; scope: Scope };
-type Account = { id: string; name: string; scope: Scope };
-
-type ResolvedItem = {
+/** Lançamento pendente no formato antigo (antes do agente). */
+type LegacyItem = {
   type: "income" | "expense";
   amount: number;
   description: string;
@@ -42,7 +36,7 @@ type ResolvedItem = {
   category_name: string;
   account_id: string;
   account_name: string;
-  scope: Scope;
+  scope?: string;
   date: string;
 };
 
@@ -50,19 +44,45 @@ const MAX_MESSAGES_PER_HOUR = 30;
 
 const HELP = `*Forge Finance no WhatsApp* 💜
 
-Registre gastos e receitas por texto ou áudio:
+Faço tudo o que o app faz, por texto ou áudio. Antes de alterar qualquer coisa, eu sempre peço a sua confirmação.
+
+*Lançamentos*
 • "gastei 45 no mercado"
-• "recebi 1500 de freelance"
-• "ontem paguei 80 de uber no Nubank"
+• "recebi 1500 de freelance no Nubank"
+• "apaga o último lançamento"
 
-Antes de salvar, eu sempre peço a sua confirmação.
+*Consultas*
+• "qual meu saldo?"
+• "quanto gastei com mercado esse mês?"
+• "o que vence essa semana?"
 
-Comandos:
-• *conta padrão Nubank* — define a conta usada quando você não citar nenhuma
-• Citou uma conta da empresa? Eu uso as categorias da empresa 🏢
-• *ajuda* — mostra esta mensagem`;
+*Empresa (MEI)* 🏢
+• "conta a receber da Maria, 300, dia 15"
+• "a Maria pagou"
+• "cobrar a Maria" (te mando o link para enviar)
+• "como está meu limite do MEI?"
 
-export async function handleIncoming(message: IncomingMessage) {
+*Cadastros*
+• "cria a meta Viagem de 5 mil"
+• "guarda 200 na meta Viagem"
+• "cadastra o cliente João, 11 91234-5678"
+
+Comandos: *conta padrão Nubank* • *ajuda*`;
+
+/* ---------- envio (Meta em produção; memória no simulador) ---------- */
+
+const transportStore = new AsyncLocalStorage<Transport>();
+
+const out: Transport = {
+  text: (to, body) => (transportStore.getStore() ?? metaTransport).text(to, body),
+  buttons: (to, body, id) => (transportStore.getStore() ?? metaTransport).buttons(to, body, id),
+};
+
+export async function handleIncoming(message: IncomingMessage, transport: Transport = metaTransport) {
+  return transportStore.run(transport, () => handle(message));
+}
+
+async function handle(message: IncomingMessage) {
   const admin = createAdminClient();
 
   // 1) Idempotência: a Meta reenvia o webhook se demorarmos a responder.
@@ -86,10 +106,7 @@ export async function handleIncoming(message: IncomingMessage) {
     .gte("created_at", since);
 
   if ((count ?? 0) > MAX_MESSAGES_PER_HOUR) {
-    await sendText(
-      message.from,
-      "Muitas mensagens em pouco tempo. Tente de novo daqui a pouco. 🙏"
-    );
+    await out.text(message.from, "Muitas mensagens em pouco tempo. Tente de novo daqui a pouco. 🙏");
     return;
   }
 
@@ -108,10 +125,7 @@ export async function handleIncoming(message: IncomingMessage) {
     await handleLinked(admin, link as Link, message);
   } catch (error) {
     console.error("WhatsApp handler error", error);
-    await sendText(
-      message.from,
-      "Ops, algo deu errado do meu lado. Tente de novo em instantes."
-    );
+    await out.text(message.from, "Ops, algo deu errado do meu lado. Tente de novo em instantes.");
   }
 }
 
@@ -121,7 +135,7 @@ async function handleUnlinked(admin: Admin, message: IncomingMessage) {
   const match = message.text?.match(/^\s*vincular\s+(\d{6})\s*$/i);
 
   if (!match) {
-    await sendText(
+    await out.text(
       message.from,
       "Olá! 👋 Este número ainda não está vinculado ao Forge Finance.\n\nNo app, abra a página *WhatsApp*, gere um código e envie aqui: *VINCULAR 123456*"
     );
@@ -136,10 +150,7 @@ async function handleUnlinked(admin: Admin, message: IncomingMessage) {
     .maybeSingle();
 
   if (!codeRow) {
-    await sendText(
-      message.from,
-      "Código inválido ou expirado. Gere um novo na página *WhatsApp* do app."
-    );
+    await out.text(message.from, "Código inválido ou expirado. Gere um novo na página *WhatsApp* do app.");
     return;
   }
 
@@ -150,7 +161,7 @@ async function handleUnlinked(admin: Admin, message: IncomingMessage) {
 
   if (error) {
     console.error("WhatsApp link error", error.code);
-    await sendText(
+    await out.text(
       message.from,
       error.code === "23505"
         ? "Este número já está vinculado a outra conta do Forge Finance."
@@ -162,10 +173,7 @@ async function handleUnlinked(admin: Admin, message: IncomingMessage) {
   await admin.from("whatsapp_link_codes").delete().eq("code", codeRow.code);
   revalidatePath("/whatsapp");
 
-  await sendText(
-    message.from,
-    `✅ Número vinculado!\n\n${HELP}`
-  );
+  await out.text(message.from, `✅ Número vinculado!\n\n${HELP}`);
 }
 
 /* ------------------------------ fluxo normal ------------------------------ */
@@ -188,21 +196,21 @@ async function handleLinked(admin: Admin, link: Link, message: IncomingMessage) 
       transcript = await transcribeAudio(buffer, mimeType);
     } catch (error) {
       console.error("WhatsApp audio error", (error as Error).message);
-      await sendText(
+      await out.text(
         link.phone,
         (error as Error).message === "AUDIO_TOO_LARGE"
-          ? "Esse áudio é muito longo. Mande um áudio curto ou escreva o lançamento."
-          : "Não consegui ouvir esse áudio. Tente de novo ou escreva o lançamento."
+          ? "Esse áudio é muito longo. Mande um áudio curto ou escreva o pedido."
+          : "Não consegui ouvir esse áudio. Tente de novo ou escreva o pedido."
       );
       return;
     }
 
     if (!transcript) {
-      await sendText(link.phone, "Não consegui entender o áudio. Tente de novo? 🎙️");
+      await out.text(link.phone, "Não consegui entender o áudio. Tente de novo? 🎙️");
       return;
     }
 
-    await registerFromText(admin, link, transcript, true);
+    await askAgent(admin, link, transcript, true);
     return;
   }
 
@@ -210,7 +218,7 @@ async function handleLinked(admin: Admin, link: Link, message: IncomingMessage) 
     const normalized = normalize(message.text);
 
     if (["ajuda", "menu", "help", "oi", "ola"].includes(normalized)) {
-      await sendText(link.phone, HELP);
+      await out.text(link.phone, HELP);
       return;
     }
 
@@ -231,224 +239,61 @@ async function handleLinked(admin: Admin, link: Link, message: IncomingMessage) 
       return;
     }
 
-    await registerFromText(admin, link, message.text, false);
+    await askAgent(admin, link, message.text, false);
     return;
   }
 
-  await sendText(link.phone, "Envie um texto ou um áudio com o gasto ou a receita. 🙂");
+  await out.text(link.phone, "Envie um texto ou um áudio com o seu pedido. 🙂");
 }
 
-async function loadContext(admin: Admin, userId: string) {
-  const [{ data: categories }, { data: accounts }] = await Promise.all([
-    admin.from("categories").select("id, name, type, scope").eq("user_id", userId),
-    admin.from("accounts").select("id, name, scope").eq("user_id", userId),
-  ]);
+/** Pergunta ao agente: responde direto ou pede confirmação das ações. */
+async function askAgent(admin: Admin, link: Link, text: string, fromAudio: boolean) {
+  const echo = fromAudio ? `🎙️ Entendi: “${text.slice(0, 200)}”\n\n` : "";
+  const result = await runAgent(admin, link, text);
 
-  return {
-    categories: ((categories ?? []) as Category[]).map((c) => ({ ...c, scope: parseScope(c.scope) })),
-    accounts: ((accounts ?? []) as Account[]).map((a) => ({ ...a, scope: parseScope(a.scope) })),
-  };
-}
+  await remember(admin, link.user_id, link.phone, "user", text);
 
-/**
- * Escopo provável antes da IA: conta citada no texto > conta padrão > conta única.
- * As categorias enviadas à IA são só as desse escopo.
- */
-function guessScope(text: string, accounts: Account[], defaultId: string | null): Scope {
-  const normalized = normalize(text);
-
-  const cited = accounts
-    .filter((a) => normalize(a.name).length >= 3 && normalized.includes(normalize(a.name)))
-    .sort((a, b) => b.name.length - a.name.length)[0];
-
-  if (cited) return cited.scope;
-
-  const fallback = resolveAccount(null, accounts, defaultId);
-
-  return fallback?.scope ?? "personal";
-}
-
-function resolveCategory(name: string, type: "income" | "expense", categories: Category[]) {
-  const same = categories.filter((c) => c.type === type);
-  const target = normalize(name);
-
-  return (
-    same.find((c) => normalize(c.name) === target) ??
-    same.find((c) => normalize(c.name) === "outros") ??
-    null
-  );
-}
-
-function resolveAccount(hint: string | null | undefined, accounts: Account[], defaultId: string | null) {
-  if (hint && hint.trim()) {
-    const wanted = normalize(hint);
-
-    return (
-      accounts.find((a) => {
-        const n = normalize(a.name);
-        return n === wanted || n.includes(wanted) || wanted.includes(n);
-      }) ?? null
-    );
-  }
-
-  if (defaultId) {
-    const found = accounts.find((a) => a.id === defaultId);
-    if (found) return found;
-  }
-
-  if (accounts.length === 1) return accounts[0];
-
-  return null;
-}
-
-async function registerFromText(
-  admin: Admin,
-  link: Link,
-  text: string,
-  fromAudio: boolean
-) {
-  const { categories, accounts } = await loadContext(admin, link.user_id);
-
-  if (accounts.length === 0) {
-    await sendText(
-      link.phone,
-      "Você ainda não tem nenhuma conta cadastrada. Crie uma conta no app e tente de novo."
-    );
+  if (result.kind === "reply") {
+    await remember(admin, link.user_id, link.phone, "assistant", result.text);
+    await out.text(link.phone, `${echo}${result.text}`);
     return;
-  }
-
-  const today = todayInBrazil();
-
-  const hasBusiness = accounts.some((a) => a.scope === "business");
-
-  const parseFor = (scope: Scope) =>
-    parseTransactionMessage(text, {
-      today,
-      scope,
-      categories: categories
-        .filter((c) => c.scope === scope)
-        .map((c) => ({ name: c.name, type: c.type })),
-      accounts: accounts.map((a) => ({ name: a.name })),
-    });
-
-  let scope = guessScope(text, accounts, link.default_account_id);
-  let result = await parseFor(scope);
-
-  if (!result.ok) {
-    await sendText(link.phone, result.reply);
-    return;
-  }
-
-  // Se a IA apontou contas de outro escopo, reinterpreta com as categorias certas.
-  const accountScopes = new Set(
-    result.items
-      .map((item) => resolveAccount(item.account, accounts, link.default_account_id)?.scope)
-      .filter((s): s is Scope => !!s)
-  );
-
-  if (accountScopes.size === 1) {
-    const [accountScope] = accountScopes;
-
-    if (accountScope !== scope) {
-      scope = accountScope;
-      result = await parseFor(scope);
-
-      if (!result.ok) {
-        await sendText(link.phone, result.reply);
-        return;
-      }
-    }
-  }
-
-  const resolved: ResolvedItem[] = [];
-
-  for (const item of result.items) {
-    const problem = validateDate(item, today);
-
-    if (problem) {
-      await sendText(link.phone, problem);
-      return;
-    }
-
-    const account = resolveAccount(item.account, accounts, link.default_account_id);
-
-    if (!account) {
-      await sendText(
-        link.phone,
-        `Em qual conta? Mande de novo citando a conta, por exemplo: "${item.description} ${formatBRL(item.amount)} no ${accounts[0].name}".\n\nSuas contas: ${accounts
-          .map((a) => a.name)
-          .join(", ")}.\nDica: *conta padrão ${accounts[0].name}* define uma conta padrão.`
-      );
-      return;
-    }
-
-    // A categoria sempre vem do escopo da CONTA escolhida.
-    const category = resolveCategory(
-      item.category,
-      item.type,
-      categories.filter((c) => c.scope === account.scope)
-    );
-
-    if (!category) {
-      const kind = item.type === "expense" ? "despesa" : "receita";
-
-      await sendText(
-        link.phone,
-        account.scope === "business"
-          ? `Não encontrei uma categoria de ${kind} da empresa para "${item.description}". No app, entre no modo *Empresa* e crie as categorias (ex.: "Outros").`
-          : `Não encontrei uma categoria de ${kind} para "${item.description}". Crie uma categoria (ex.: "Outros") no app e tente de novo.`
-      );
-      return;
-    }
-
-    resolved.push({
-      type: item.type,
-      amount: Math.round(item.amount * 100) / 100,
-      description: item.description,
-      category_id: category.id,
-      category_name: category.name,
-      account_id: account.id,
-      account_name: account.name,
-      scope: account.scope,
-      date: item.date,
-    });
   }
 
   const { data: pending, error } = await admin
     .from("whatsapp_pending")
-    .insert({ user_id: link.user_id, phone: link.phone, payload: { items: resolved } })
+    .insert({
+      user_id: link.user_id,
+      phone: link.phone,
+      payload: { version: 2, actions: result.actions },
+    })
     .select("id")
     .single();
 
   if (error || !pending) {
     console.error("WhatsApp pending error", error?.code);
-    await sendText(link.phone, "Não consegui preparar o lançamento. Tente de novo.");
+    await out.text(link.phone, "Não consegui preparar a ação. Tente de novo.");
     return;
   }
 
-  const lines = resolved.map(
-    (r) =>
-      `${r.type === "expense" ? "🔴" : "🟢"} ${r.description} — ${formatBRL(r.amount)}\n${
-        hasBusiness ? `${SCOPE_EMOJI[r.scope]} ${SCOPE_LABEL[r.scope]} • ` : ""
-      }${r.category_name} • ${r.account_name} • ${formatDayMonth(r.date)}`
+  const heading =
+    result.actions.length > 1 ? `Confirmar estas ${result.actions.length} ações?` : "Confirmar?";
+  const body = `${echo}${heading}\n\n${result.actions.map((a) => a.summary).join("\n\n")}`;
+
+  await remember(
+    admin,
+    link.user_id,
+    link.phone,
+    "assistant",
+    `Aguardando confirmação:\n${result.actions.map((a) => a.summary).join("\n")}`
   );
 
-  const heading = resolved.length > 1 ? "Confirmar estes lançamentos?" : "Confirmar este lançamento?";
-  const echo = fromAudio ? `🎙️ Entendi: “${text.slice(0, 200)}”\n\n` : "";
-
-  await sendConfirmButtons(link.phone, `${echo}${heading}\n\n${lines.join("\n\n")}`, pending.id);
-}
-
-function validateDate(item: ParsedItem, today: string): string | null {
-  if (!isRealDate(item.date)) {
-    return "Não entendi a data. Diga, por exemplo, \"ontem\" ou \"dia 15\".";
+  // O corpo com botões aceita até 1000 caracteres; acima disso, manda o texto antes.
+  if (body.length > 1000) {
+    await out.text(link.phone, body);
+    await out.buttons(link.phone, heading, pending.id);
+  } else {
+    await out.buttons(link.phone, body, pending.id);
   }
-
-  if (item.date < shiftDate(today, -366) || item.date > shiftDate(today, 31)) {
-    return `A data ${formatDayMonth(item.date)} parece fora do esperado. Mande de novo com a data correta.`;
-  }
-
-  return null;
 }
 
 /* ------------------------------ confirmação ------------------------------ */
@@ -465,19 +310,35 @@ async function decideLatest(admin: Admin, link: Link, action: "confirm" | "cance
     .maybeSingle();
 
   if (!data) {
-    await sendText(link.phone, "Não há nenhum lançamento aguardando confirmação.");
+    await out.text(link.phone, "Não há nada aguardando confirmação.");
     return;
   }
 
   await decide(admin, link, action, data.id);
 }
 
-async function decide(
-  admin: Admin,
-  link: Link,
-  action: "confirm" | "cancel",
-  pendingId: string
-) {
+/** Converte pendências do formato antigo em ações do agente. */
+function toActions(payload: unknown): PreparedAction[] {
+  const data = payload as { version?: number; actions?: PreparedAction[]; items?: LegacyItem[] };
+
+  if (data.version === 2) return data.actions ?? [];
+
+  return (data.items ?? []).map((item) => ({
+    tool: "registrar_lancamento",
+    scope: parseScope(item.scope),
+    summary: `${item.type === "expense" ? "🔴" : "🟢"} ${item.description} — ${formatBRL(item.amount)}\n${SCOPE_EMOJI[parseScope(item.scope)]} ${SCOPE_LABEL[parseScope(item.scope)]} • ${item.category_name} • ${item.account_name} • ${formatDayMonth(item.date)}`,
+    payload: {
+      account_id: item.account_id,
+      category_id: item.category_id,
+      type: item.type,
+      description: item.description,
+      amount: item.amount,
+      date: item.date,
+    },
+  }));
+}
+
+async function decide(admin: Admin, link: Link, action: "confirm" | "cancel", pendingId: string) {
   // DELETE ... RETURNING garante que só um clique/mensagem "ganha" (sem duplicar).
   const { data: pending } = await admin
     .from("whatsapp_pending")
@@ -489,91 +350,39 @@ async function decide(
     .maybeSingle();
 
   if (!pending) {
-    await sendText(link.phone, "Esse lançamento já foi tratado ou expirou.");
+    await out.text(link.phone, "Esse pedido já foi tratado ou expirou.");
     return;
   }
 
   if (action === "cancel") {
-    await sendText(link.phone, "Cancelado. Nada foi salvo. 👍");
+    await remember(admin, link.user_id, link.phone, "assistant", "Usuário cancelou. Nada foi feito.");
+    await out.text(link.phone, "Cancelado. Nada foi feito. 👍");
     return;
   }
 
-  const items = ((pending.payload as { items?: ResolvedItem[] }).items ?? []) as ResolvedItem[];
+  const reply = await executePending(admin, link, toActions(pending.payload));
 
-  const { error } = await admin.from("transactions").insert(
-    items.map((item) => ({
-      user_id: link.user_id,
-      account_id: item.account_id,
-      category_id: item.category_id,
-      type: item.type,
-      title: item.description,
-      description: item.description,
-      amount: item.amount,
-      transaction_date: item.date,
-    }))
-  );
-
-  if (error) {
-    console.error("WhatsApp insert error", error.code);
-    await sendText(link.phone, "Não consegui salvar o lançamento. Tente registrar de novo.");
-    return;
-  }
-
-  // Mesmo comportamento do app: ajusta o saldo da conta (um ajuste por conta).
-  const deltas = new Map<string, number>();
-
-  for (const item of items) {
-    const delta = item.type === "income" ? item.amount : -item.amount;
-    deltas.set(item.account_id, (deltas.get(item.account_id) ?? 0) + delta);
-  }
-
-  let balanceFailed = false;
-
-  for (const [accountId, delta] of deltas) {
-    const { data: account, error: readError } = await admin
-      .from("accounts")
-      .select("current_balance")
-      .eq("id", accountId)
-      .eq("user_id", link.user_id)
-      .single();
-
-    if (readError || !account) {
-      balanceFailed = true;
-      continue;
-    }
-
-    const { error: updateError } = await admin
-      .from("accounts")
-      .update({ current_balance: Number(account.current_balance) + delta })
-      .eq("id", accountId)
-      .eq("user_id", link.user_id);
-
-    if (updateError) balanceFailed = true;
-  }
-
-  revalidatePath("/transacoes");
-  revalidatePath("/contas");
-  revalidatePath("/dashboard");
-  revalidatePath("/relatorios");
-
-  await sendText(
-    link.phone,
-    balanceFailed
-      ? "✅ Lançamento salvo, mas não consegui atualizar o saldo da conta. Confira no app."
-      : items.length > 1
-        ? `✅ ${items.length} lançamentos salvos!`
-        : "✅ Lançamento salvo!"
-  );
+  await remember(admin, link.user_id, link.phone, "assistant", reply);
+  await out.text(link.phone, reply);
 }
 
 /* ------------------------------ conta padrão ------------------------------ */
 
 async function setDefaultAccount(admin: Admin, link: Link, wantedRaw: string) {
-  const { accounts } = await loadContext(admin, link.user_id);
-  const account = resolveAccount(wantedRaw, accounts, null);
+  const { data } = await admin
+    .from("accounts")
+    .select("id, name, scope")
+    .eq("user_id", link.user_id);
+
+  const accounts = data ?? [];
+  const wanted = normalize(wantedRaw);
+  const account = accounts.find((a) => {
+    const name = normalize(a.name);
+    return name === wanted || name.includes(wanted) || wanted.includes(name);
+  });
 
   if (!account) {
-    await sendText(
+    await out.text(
       link.phone,
       `Não achei essa conta. Suas contas: ${accounts.map((a) => a.name).join(", ") || "(nenhuma)"}.`
     );
@@ -586,9 +395,11 @@ async function setDefaultAccount(admin: Admin, link: Link, wantedRaw: string) {
     .eq("user_id", link.user_id);
 
   revalidatePath("/whatsapp");
+
+  const scope = parseScope(account.scope);
   const scopeNote = accounts.some((a) => a.scope === "business")
-    ? ` (${SCOPE_EMOJI[account.scope]} ${SCOPE_LABEL[account.scope]})`
+    ? ` (${SCOPE_EMOJI[scope]} ${SCOPE_LABEL[scope]})`
     : "";
 
-  await sendText(link.phone, `Conta padrão: *${account.name}*${scopeNote} ✅`);
+  await out.text(link.phone, `Conta padrão: *${account.name}*${scopeNote} ✅`);
 }
