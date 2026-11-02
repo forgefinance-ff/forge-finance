@@ -1,4 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
+import { getActiveScope } from "@/lib/scope-server";
+import type { Scope } from "@/lib/scope";
 
 export type Account = {
   id: string;
@@ -8,11 +10,13 @@ export type Account = {
   color: string;
   initial_balance: number;
   current_balance: number;
+  scope: Scope;
   created_at: string;
   updated_at: string;
 };
 
-export async function getAccounts() {
+/** Contas do escopo ativo. `allScopes` lista as duas (ex.: conta padrão do WhatsApp). */
+export async function getAccounts(options: { allScopes?: boolean } = {}) {
   const supabase = await createClient();
 
   const {
@@ -21,10 +25,14 @@ export async function getAccounts() {
 
   if (!user) return [];
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("accounts")
     .select("*")
-    .eq("user_id", user.id)
+    .eq("user_id", user.id);
+
+  if (!options.allScopes) query = query.eq("scope", await getActiveScope());
+
+  const { data, error } = await query
     .order("created_at", { ascending: true });
 
   if (error) {
@@ -59,6 +67,7 @@ export async function createAccount(input: CreateAccountInput) {
     color: input.color,
     initial_balance: input.initial_balance,
     current_balance: input.initial_balance,
+    scope: await getActiveScope(),
   });
 
   if (error) {

@@ -1,9 +1,12 @@
 "use client";
+import type { getTransactions } from "@/lib/transactions";
 
 import { ReceiptText, Trash2 } from "lucide-react";
 
+import { formatDateBR } from "@/lib/dates";
+
 type Props = {
-  transactions: any[];
+  transactions: Awaited<ReturnType<typeof getTransactions>>;
   deleteAction: (formData: FormData) => Promise<void>;
   hasAnyTransactions: boolean;
 };
@@ -15,16 +18,16 @@ export function TransactionsList({
 }: Props) {
   if (transactions.length === 0) {
     return (
-      <div className="flex min-h-[320px] flex-col items-center justify-center rounded-3xl border border-dashed border-white/10 bg-[#111827] text-center">
-        <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/5">
-          <ReceiptText className="text-slate-500" size={30} />
+      <div className="flex min-h-[320px] flex-col items-center justify-center rounded-3xl border border-dashed border-line bg-surface text-center">
+        <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-tint">
+          <ReceiptText className="text-faint" size={30} />
         </div>
 
-        <h3 className="text-xl font-semibold text-white">
+        <h3 className="text-xl font-semibold text-foreground">
           Nenhuma transação encontrada
         </h3>
 
-        <p className="mt-2 max-w-sm text-sm text-slate-400">
+        <p className="mt-2 max-w-sm text-sm text-muted-foreground">
           {hasAnyTransactions
             ? "Nenhum resultado para os filtros aplicados."
             : "Cadastre sua primeira receita ou despesa para começar."}
@@ -34,57 +37,57 @@ export function TransactionsList({
   }
 
   return (
-    <div className="overflow-hidden rounded-3xl border border-white/10 bg-[#111827]">
+    <div className="overflow-hidden rounded-[22px] border border-line bg-surface">
       <div className="overflow-x-auto">
         <table className="w-full min-w-[720px]">
-          <thead className="border-b border-white/10 bg-white/[0.02]">
+          <thead className="border-b border-line bg-tint">
             <tr>
-              <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-faint">
                 Descrição
               </th>
 
-              <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-faint">
                 Conta
               </th>
 
-              <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-faint">
                 Categoria
               </th>
 
-              <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-faint">
                 Valor
               </th>
 
-              <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <th className="px-6 py-4 text-center text-xs font-semibold uppercase tracking-wider text-faint">
                 Data
               </th>
 
-              <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-faint">
                 Ações
               </th>
             </tr>
           </thead>
 
           <tbody>
-            {transactions.map((transaction: any) => {
+            {transactions.map((transaction) => {
               const isIncome = transaction.type === "income";
 
               return (
                 <tr
                   key={transaction.id}
-                  className="border-b border-white/5 transition hover:bg-white/[0.03]"
+                  className="border-b border-line transition hover:bg-tint"
                 >
                   <td className="px-6 py-5">
-                    <div className="font-medium text-white">
+                    <div className="font-medium text-foreground">
                       {transaction.description}
                     </div>
                   </td>
 
-                  <td className="px-6 py-5 text-slate-300">
+                  <td className="px-6 py-5 text-text-soft">
                     {transaction.accounts?.name}
                   </td>
 
-                  <td className="px-6 py-5 text-slate-300">
+                  <td className="px-6 py-5 text-text-soft">
                     <span className="mr-2">
                       {transaction.categories?.icon}
                     </span>
@@ -93,7 +96,7 @@ export function TransactionsList({
 
                   <td
                     className={`px-6 py-5 text-right font-semibold ${
-                      isIncome ? "text-emerald-400" : "text-rose-400"
+                      isIncome ? "text-success" : "text-danger"
                     }`}
                   >
                     {isIncome ? "+" : "-"}{" "}
@@ -103,10 +106,8 @@ export function TransactionsList({
                     })}
                   </td>
 
-                  <td className="px-6 py-5 text-center text-slate-400">
-                    {new Date(
-                      transaction.transaction_date
-                    ).toLocaleDateString("pt-BR")}
+                  <td className="px-6 py-5 text-center text-muted-foreground">
+                    {formatDateBR(String(transaction.transaction_date))}
                   </td>
 
                   <td className="px-6 py-5 text-right">
@@ -119,7 +120,7 @@ export function TransactionsList({
 
                       <button
                         type="submit"
-                        className="rounded-lg p-2 text-slate-500 transition hover:bg-rose-500/10 hover:text-rose-400"
+                        className="rounded-lg p-2 text-faint transition hover:bg-rose-500/10 hover:text-danger"
                       >
                         <Trash2 className="h-5 w-5" />
                       </button>

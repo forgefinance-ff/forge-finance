@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getActiveScope } from "@/lib/scope-server";
 
 export type Investment = {
   id: string;
@@ -6,7 +7,7 @@ export type Investment = {
   name: string;
   type: string;
   invested_amount: number;
-  current_amount: number;
+  current_value: number;
   institution: string;
   created_at: string;
   updated_at: string;
@@ -16,7 +17,7 @@ type CreateInvestmentInput = {
   name: string;
   type: string;
   invested_amount: number;
-  current_amount: number;
+  current_value: number;
   institution: string;
 };
 
@@ -33,6 +34,7 @@ export async function getInvestments() {
     .from("investments")
     .select("*")
     .eq("user_id", user.id)
+    .eq("scope", await getActiveScope())
     .order("created_at", { ascending: false });
 
   if (error) throw error;
@@ -56,8 +58,9 @@ export async function createInvestment(input: CreateInvestmentInput) {
     name: input.name,
     type: input.type,
     invested_amount: input.invested_amount,
-    current_amount: input.current_amount,
+    current_value: input.current_value,
     institution: input.institution,
+    scope: await getActiveScope(),
   });
 
   if (error) {

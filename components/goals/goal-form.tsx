@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import type { Goal } from "@/lib/goals";
 
 const inputClass =
-  "w-full rounded-xl border border-white/10 bg-[#09090B] px-4 py-3 text-white outline-none transition focus:border-violet-500";
+  "w-full rounded-xl border border-line bg-background-soft px-4 py-3 text-foreground outline-none transition focus:border-violet-500";
 
 type Props = {
   action?: (formData: FormData) => Promise<void>;
@@ -42,16 +42,16 @@ export function GoalForm({
     <form
       id="goal-form"
       action={handleSubmit}
-      className="rounded-3xl border border-white/10 bg-[#111827] p-6 space-y-4"
+      className="rounded-[22px] border border-line bg-surface p-6 space-y-4"
     >
-      <h2 className="text-xl font-semibold text-white">
+      <h2 className="text-xl font-semibold text-foreground">
         {title ?? (goal ? "Editar Meta" : "Nova Meta")}
       </h2>
 
       {goal && <input type="hidden" name="id" value={goal.id} />}
 
       <div>
-        <label className="mb-2 block text-sm text-slate-300">
+        <label className="mb-2 block text-sm text-text-soft">
           Nome da meta
         </label>
 
@@ -66,7 +66,7 @@ export function GoalForm({
 
       <div className="grid gap-4 md:grid-cols-2">
         <div>
-          <label className="mb-2 block text-sm text-slate-300">
+          <label className="mb-2 block text-sm text-text-soft">
             Valor da meta
           </label>
 
@@ -81,7 +81,7 @@ export function GoalForm({
         </div>
 
         <div>
-          <label className="mb-2 block text-sm text-slate-300">
+          <label className="mb-2 block text-sm text-text-soft">
             Valor atual
           </label>
 
@@ -97,7 +97,7 @@ export function GoalForm({
       </div>
 
       <div>
-        <label className="mb-2 block text-sm text-slate-300">
+        <label className="mb-2 block text-sm text-text-soft">
           Data limite
         </label>
 

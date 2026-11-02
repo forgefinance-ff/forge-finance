@@ -1,0 +1,1247 @@
+﻿
+===== app/api/whatsapp/webhook/route.ts =====
+import { createHmac, timingSafeEqual } from "node:crypto";
+import { NextRequest, NextResponse } from "next/server";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+function validSignature(rawBody: string, signature: string | null) {
+  const appSecret = process.env.WHATSAPP_APP_SECRET;
+
+  if (!appSecret || !signature?.startsWith("sha256=")) {
+    return false;
+  }
+
+  const expected = createHmac("sha256", appSecret)
+    .update(rawBody)
+    .digest();
+
+  let received: Buffer;
+
+  try {
+    received = Buffer.from(signature.slice(7), "hex");
+  } catch {
+    return false;
+  }
+
+  return (
+    received.length === expected.length &&
+    timingSafeEqual(received, expected)
+  );
+}
+
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const mode = searchParams.get("hub.mode");
+  const token = searchParams.get("hub.verify_token");
+  const challenge = searchParams.get("hub.challenge");
+  const verifyToken = process.env.WHATSAPP_VERIFY_TOKEN;
+
+  if (
+    mode === "subscribe" &&
+    verifyToken &&
+    token === verifyToken &&
+    challenge
+  ) {
+    return new NextResponse(challenge, { status: 200 });
+  }
+
+  return NextResponse.json(
+    { error: "Webhook verification failed" },
+    { status: 403 }
+  );
+}
+
+export async function POST(request: NextRequest) {
+  const rawBody = await request.text();
+  const signature = request.headers.get("x-hub-signature-256");
+
+  if (!validSignature(rawBody, signature)) {
+    return NextResponse.json(
+      { error: "Invalid webhook signature" },
+      { status: 401 }
+    );
+  }
+
+  let body: {
+    object?: string;
+    entry?: Array<{
+      changes?: Array<{
+        value?: {
+          messages?: Array<{
+            id?: string;
+            from?: string;
+            type?: string;
+            text?: { body?: string };
+          }>;
+        };
+      }>;
+    }>;
+  };
+
+  try {
+    body = JSON.parse(rawBody);
+  } catch {
+    return NextResponse.json(
+      { error: "Invalid JSON" },
+      { status: 400 }
+    );
+  }
+
+  if (body.object !== "whatsapp_business_account") {
+    return NextResponse.json({ received: false }, { status: 404 });
+  }
+
+  const messages =
+    body.entry?.flatMap((entry) =>
+      entry.changes?.flatMap((change) => change.value?.messages ?? []) ?? []
+    ) ?? [];
+
+  // Nenhuma movimentação financeira é criada nesta etapa.
+  // O processamento será habilitado após configurar o vínculo
+  // autorizado e a operação transacional segura no banco.
+  if (messages.length > 0) {
+    console.info("WhatsApp: evento válido recebido.", {
+      messageCount: messages.length,
+    });
+  }
+
+  return NextResponse.json({ received: true }, { status: 200 });
+}
+
+===== app/api/ai/assistant/route.ts =====
+import { NextResponse } from "next/server";
+import { z } from "zod";
+
+import { getAiStatus } from "@/lib/ai/config";
+import { getCards } from "@/lib/cards";
+import { getDashboardData } from "@/lib/dashboard";
+import { getGoals } from "@/lib/goals";
+import { createClient } from "@/lib/supabase/server";
+import { consumeAiQuota } from "@/lib/billing/usage";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+const bodySchema = z.object({
+  question: z.string().trim().min(1).max(500),
+});
+
+// Limite simples por usuÃ¡rio (em memÃ³ria, por instÃ¢ncia). Em produÃ§Ã£o com
+// vÃ¡rias instÃ¢ncias, troque por um limitador compartilhado (ex.: Redis/Upstash).
+const WINDOW_MS = 60_000;
+const MAX_REQUESTS = 6;
+const hits = new Map<string, number[]>();
+
+function rateLimited(userId: string) {
+  const now = Date.now();
+  const recent = (hits.get(userId) ?? []).filter((t) => now - t < WINDOW_MS);
+  if (recent.length >= MAX_REQUESTS) {
+    hits.set(userId, recent);
+    return true;
+  }
+  recent.push(now);
+  hits.set(userId, recent);
+  return false;
+}
+
+const SYSTEM_PROMPT = `VocÃª Ã© o assistente do Forge Finance. Responda em portuguÃªs do Brasil, de forma curta e objetiva.
+Use SOMENTE os dados do contexto JSON fornecido. Se o contexto nÃ£o tiver a informaÃ§Ã£o pedida, diga isso claramente em vez de supor.
+VocÃª sÃ³ consulta: nÃ£o registra, altera nem apaga nada, e nÃ£o executa transferÃªncias. Se o usuÃ¡rio pedir uma aÃ§Ã£o, explique que ela deve ser feita pela interface do app.
+Valores monetÃ¡rios estÃ£o em reais (BRL).`;
+
+export async function POST(request: Request) {
+  const ai = getAiStatus();
+
+  if (!ai.configured) {
+    return NextResponse.json(
+      { error: "A IA nÃ£o estÃ¡ configurada neste ambiente." },
+      { status: 503 }
+    );
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return NextResponse.json({ error: "NÃ£o autenticado." }, { status: 401 });
+  }
+
+  const parsed = bodySchema.safeParse(await request.json().catch(() => null));
+  if (!parsed.success) {
+    return NextResponse.json({ error: "Pergunta invÃ¡lida." }, { status: 400 });
+  }
+
+  if (rateLimited(user.id)) {
+    return NextResponse.json(
+      { error: "Muitas perguntas seguidas. Aguarde um minuto." },
+      { status: 429 }
+    );
+  }
+
+  // A cota mensal Ã© aplicada atomicamente no PostgreSQL, nÃ£o no navegador.
+  const quota = await consumeAiQuota();
+  if (!quota) {
+    return NextResponse.json(
+      { error: "NÃ£o foi possÃ­vel validar sua cota de IA. Tente novamente." },
+      { status: 503 }
+    );
+  }
+  if (!quota.allowed) {
+    return NextResponse.json(
+      { error: "VocÃª atingiu a cota mensal de consultas do Forge Intelligence." },
+      { status: 429, headers: { "X-AI-Quota-Limit": String(quota.monthlyLimit), "X-AI-Quota-Remaining": "0" } }
+    );
+  }
+
+  // Contexto agregado, lido com o cliente do prÃ³prio usuÃ¡rio (RLS aplicado).
+  // NÃ£o enviamos descriÃ§Ãµes de transaÃ§Ãµes individuais ao provedor.
+  const [dashboard, goals, cards] = await Promise.all([
+    getDashboardData(),
+    getGoals(),
+    getCards(),
+  ]);
+
+  const context = {
+    hoje: new Date().toISOString().slice(0, 10),
+    patrimonio: {
+      total: dashboard.totalBalance,
+      contas: dashboard.accountsTotal,
+      investimentos: dashboard.investmentsTotal,
+    },
+    mesAtual: {
+      receitas: dashboard.analytics.monthIncome,
+      despesas: dashboard.analytics.monthExpense,
+      despesasMesAnterior: dashboard.analytics.previousMonthExpense,
+      despesasPorCategoria: dashboard.analytics.expenseByCategory.map((c) => ({
+        categoria: c.name,
+        valor: c.value,
+      })),
+    },
+    fluxoUltimos12Meses: dashboard.chart12m,
+    metas: goals.map((g) => ({
+      titulo: g.title,
+      alvo: g.target_amount,
+      atual: g.current_amount,
+      prazo: g.deadline,
+    })),
+    cartoes: cards.map((c) => ({
+      nome: c.name,
+      limite: c.limit_amount,
+      diaFechamento: c.closing_day,
+      diaVencimento: c.due_day,
+    })),
+  };
+
+  try {
+    const response = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        "x-api-key": process.env.ANTHROPIC_API_KEY as string,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model: ai.model,
+        max_tokens: 600,
+        system: `${SYSTEM_PROMPT}\n\nContexto (JSON):\n${JSON.stringify(context)}`,
+        messages: [{ role: "user", content: parsed.data.question }],
+      }),
+      signal: AbortSignal.timeout(25_000),
+    });
+
+    if (!response.ok) {
+      console.error("AI provider error", response.status);
+      return NextResponse.json(
+        { error: "O provedor de IA retornou um erro. Tente novamente." },
+        { status: 502 }
+      );
+    }
+
+    const payload = (await response.json()) as {
+      content?: { type: string; text?: string }[];
+    };
+
+    const answer = (payload.content ?? [])
+      .filter((block) => block.type === "text" && block.text)
+      .map((block) => block.text)
+      .join("\n")
+      .trim();
+
+    if (!answer) {
+      return NextResponse.json(
+        { error: "Resposta vazia do provedor." },
+        { status: 502 }
+      );
+    }
+
+    return NextResponse.json({ answer, quota: { used: quota.used, limit: quota.monthlyLimit, remaining: quota.remaining } });
+  } catch (error) {
+    console.error("AI request failed", error);
+    return NextResponse.json(
+      { error: "NÃ£o foi possÃ­vel consultar a IA agora." },
+      { status: 502 }
+    );
+  }
+}
+
+===== lib/ai/config.ts =====
+/**
+ * ConfiguraÃ§Ã£o do provedor de IA (somente servidor).
+ * A chave NUNCA deve ser exposta ao navegador: use apenas variÃ¡veis sem o
+ * prefixo NEXT_PUBLIC_.
+ *
+ *   ANTHROPIC_API_KEY  -> chave do provedor (obrigatÃ³ria para ativar a IA)
+ *   AI_MODEL           -> opcional; modelo a usar (padrÃ£o: claude-haiku-5-5)
+ */
+export type AiStatus = {
+  configured: boolean;
+  model: string;
+};
+
+export function getAiStatus(): AiStatus {
+  return {
+    configured: Boolean(process.env.ANTHROPIC_API_KEY),
+    model: process.env.AI_MODEL || "claude-haiku-5-5",
+  };
+}
+
+===== lib/billing/usage.ts =====
+import { createClient } from "@/lib/supabase/server";
+
+export type AiQuota = {
+  allowed: boolean;
+  used: number;
+  monthlyLimit: number;
+  remaining: number;
+  periodStart: string;
+};
+
+export async function consumeAiQuota(): Promise<AiQuota | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("consume_my_ai_quota");
+  if (error || !data || !Array.isArray(data) || !data[0]) return null;
+  const row = data[0] as {
+    allowed: boolean;
+    used: number;
+    monthly_limit: number;
+    remaining: number;
+    period_start: string;
+  };
+  return {
+    allowed: Boolean(row.allowed),
+    used: Number(row.used),
+    monthlyLimit: Number(row.monthly_limit),
+    remaining: Number(row.remaining),
+    periodStart: row.period_start,
+  };
+}
+
+===== lib/dashboard.ts =====
+import { createClient } from "@/lib/supabase/server";
+import { buildAnalytics, type DashboardAnalytics } from "@/lib/dashboard-analytics";
+
+export type RecentTransaction = {
+  id: string;
+  title: string;
+  amount: number;
+  type: "income" | "expense";
+  category: string;
+  transactionDate: string;
+};
+
+export type ChartPoint = {
+  label: string;
+  receitas: number;
+  despesas: number;
+};
+
+export type DashboardData = {
+  totalBalance: number;
+  totalIncome: number;
+  totalExpense: number;
+  accountCount: number;
+  hasData: boolean;
+
+  chartData: {
+    month: string;
+    receitas: number;
+    despesas: number;
+  }[];
+
+  chart7d: ChartPoint[];
+  chart30d: ChartPoint[];
+  chart12m: ChartPoint[];
+
+  recentTransactions: RecentTransaction[];
+
+  /** ComposiÃ§Ã£o do patrimÃ´nio (contas + investimentos), sem dupla contagem. */
+  accountsTotal: number;
+  investmentsTotal: number;
+  investedAmount: number;
+  analytics: DashboardAnalytics;
+};
+
+type RawTransaction = {
+  amount: number;
+  type: "income" | "expense";
+  transaction_date: string;
+};
+
+function buildChartByDay(
+  transactions: RawTransaction[],
+  days: number
+): ChartPoint[] {
+  const now = new Date();
+  const cutoff = new Date(now);
+  cutoff.setDate(cutoff.getDate() - (days - 1));
+  cutoff.setHours(0, 0, 0, 0);
+
+  const buckets = new Map<
+    string,
+    { sortKey: number; label: string; receitas: number; despesas: number }
+  >();
+
+  for (let i = 0; i < days; i++) {
+    const date = new Date(cutoff);
+    date.setDate(cutoff.getDate() + i);
+
+    const key = date.toISOString().slice(0, 10);
+
+    buckets.set(key, {
+      sortKey: date.getTime(),
+      label: date.toLocaleDateString("pt-BR", {
+        day: "2-digit",
+        month: "2-digit",
+      }),
+      receitas: 0,
+      despesas: 0,
+    });
+  }
+
+  transactions.forEach((transaction) => {
+    const date = new Date(transaction.transaction_date);
+
+    if (date < cutoff) return;
+
+    const key = date.toISOString().slice(0, 10);
+    const bucket = buckets.get(key);
+
+    if (!bucket) return;
+
+    const value = Number(transaction.amount);
+
+    if (transaction.type === "income") {
+      bucket.receitas += value;
+    } else {
+      bucket.despesas += value;
+    }
+  });
+
+  return Array.from(buckets.values())
+    .sort((a, b) => a.sortKey - b.sortKey)
+    .map(({ label, receitas, despesas }) => ({
+      label,
+      receitas,
+      despesas,
+    }));
+}
+
+function buildChartByMonth(
+  transactions: RawTransaction[],
+  months: number
+): ChartPoint[] {
+  const now = new Date();
+
+  const buckets = new Map<
+    string,
+    { sortKey: number; label: string; receitas: number; despesas: number }
+  >();
+
+  for (let i = months - 1; i >= 0; i--) {
+    const date = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${date.getFullYear()}-${date.getMonth()}`;
+
+    buckets.set(key, {
+      sortKey: date.getTime(),
+      label: date
+        .toLocaleDateString("pt-BR", { month: "short" })
+        .replace(".", ""),
+      receitas: 0,
+      despesas: 0,
+    });
+  }
+
+  transactions.forEach((transaction) => {
+    const date = new Date(transaction.transaction_date);
+    const key = `${date.getFullYear()}-${date.getMonth()}`;
+    const bucket = buckets.get(key);
+
+    if (!bucket) return;
+
+    const value = Number(transaction.amount);
+
+    if (transaction.type === "income") {
+      bucket.receitas += value;
+    } else {
+      bucket.despesas += value;
+    }
+  });
+
+  return Array.from(buckets.values())
+    .sort((a, b) => a.sortKey - b.sortKey)
+    .map(({ label, receitas, despesas }) => ({
+      label,
+      receitas,
+      despesas,
+    }));
+}
+
+export async function getDashboardData(): Promise<DashboardData> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return {
+      totalBalance: 0,
+      totalIncome: 0,
+      totalExpense: 0,
+      accountCount: 0,
+      hasData: false,
+      chartData: [],
+      chart7d: [],
+      chart30d: [],
+      chart12m: [],
+      recentTransactions: [],
+      accountsTotal: 0,
+      investmentsTotal: 0,
+      investedAmount: 0,
+      analytics: buildAnalytics([]),
+    };
+  }
+
+  const [
+    { data: accounts, error: accountsError },
+    { data: transactions, error: transactionsError },
+    { data: investments, error: investmentsError },
+  ] = await Promise.all([
+    supabase
+      .from("accounts")
+      .select("current_balance")
+      .eq("user_id", user.id),
+
+    supabase
+      .from("transactions")
+      .select(
+        `
+        id,
+        amount,
+        type,
+        description,
+        transaction_date,
+        categories(name,color,icon)
+      `
+      )
+      .eq("user_id", user.id)
+      .order("transaction_date", { ascending: false }),
+
+    supabase
+      .from("investments")
+      .select("current_value, invested_amount")
+      .eq("user_id", user.id),
+  ]);
+
+  if (accountsError) throw accountsError;
+  if (transactionsError) throw transactionsError;
+  if (investmentsError) throw investmentsError;
+
+  const accountsTotal =
+    accounts?.reduce(
+      (acc, account) => acc + Number(account.current_balance),
+      0
+    ) ?? 0;
+
+  const investmentsTotal =
+    investments?.reduce(
+      (acc, investment) => acc + Number(investment.current_value ?? 0),
+      0
+    ) ?? 0;
+
+  const totalBalance = accountsTotal + investmentsTotal;
+
+  let totalIncome = 0;
+  let totalExpense = 0;
+
+  const grouped = new Map<
+    string,
+    {
+      receitas: number;
+      despesas: number;
+    }
+  >();
+
+  transactions?.forEach((transaction) => {
+    const value = Number(transaction.amount);
+
+    const month = new Date(
+      transaction.transaction_date
+    ).toLocaleDateString("pt-BR", {
+      month: "short",
+    });
+
+    if (!grouped.has(month)) {
+      grouped.set(month, {
+        receitas: 0,
+        despesas: 0,
+      });
+    }
+
+    const item = grouped.get(month)!;
+
+    if (transaction.type === "income") {
+      totalIncome += value;
+      item.receitas += value;
+    } else {
+      totalExpense += value;
+      item.despesas += value;
+    }
+  });
+
+  const chartData = Array.from(grouped.entries())
+    .reverse()
+    .map(([month, values]) => ({
+      month,
+      receitas: values.receitas,
+      despesas: values.despesas,
+    }));
+
+  const recentTransactions =
+    transactions?.slice(0, 5).map((transaction) => ({
+      id: transaction.id,
+      title: transaction.description ?? "Sem descriÃ§Ã£o",
+      amount: Number(transaction.amount),
+      type: transaction.type,
+      category: transaction.categories?.[0]?.name ?? "Sem categoria",
+      transactionDate: transaction.transaction_date,
+    })) ?? [];
+
+  const rawTransactions: RawTransaction[] =
+    transactions?.map((transaction) => ({
+      amount: Number(transaction.amount),
+      type: transaction.type,
+      transaction_date: transaction.transaction_date,
+    })) ?? [];
+
+  return {
+    totalBalance,
+    totalIncome,
+    totalExpense,
+    accountCount: accounts?.length ?? 0,
+    chartData,
+    chart7d: buildChartByDay(rawTransactions, 7),
+    chart30d: buildChartByDay(rawTransactions, 30),
+    chart12m: buildChartByMonth(rawTransactions, 12),
+    recentTransactions,
+    hasData: (transactions?.length ?? 0) > 0,
+    accountsTotal,
+    investmentsTotal,
+    investedAmount:
+      investments?.reduce(
+        (acc, investment) => acc + Number(investment.invested_amount ?? 0),
+        0
+      ) ?? 0,
+    analytics: buildAnalytics(
+      (transactions ?? []).map((transaction) => ({
+        amount: Number(transaction.amount),
+        type: transaction.type,
+        description: transaction.description ?? null,
+        transactionDate: String(transaction.transaction_date).slice(0, 10),
+        categoryName: transaction.categories?.[0]?.name ?? null,
+        categoryColor: transaction.categories?.[0]?.color ?? null,
+      }))
+    ),
+  };
+}
+
+===== lib/goals.ts =====
+import { createClient } from "@/lib/supabase/server";
+
+export type Goal = {
+  id: string;
+  user_id: string;
+  title: string;
+  target_amount: number;
+  current_amount: number;
+  deadline: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export async function getGoals() {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from("goals")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: true });
+
+  if (error) throw error;
+
+  return (data ?? []) as Goal[];
+}
+
+type CreateGoalInput = {
+  title: string;
+  target_amount: number;
+  current_amount: number;
+  deadline: string;
+};
+
+export async function createGoal(input: CreateGoalInput) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("UsuÃ¡rio nÃ£o autenticado.");
+  }
+
+  const { error } = await supabase.from("goals").insert({
+    user_id: user.id,
+    title: input.title,
+    target_amount: input.target_amount,
+    current_amount: input.current_amount,
+    deadline: input.deadline,
+  });
+
+  if (error) throw error;
+}
+
+export async function deleteGoal(id: string) {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("goals")
+    .delete()
+    .eq("id", id);
+
+  if (error) throw error;
+}
+
+type UpdateGoalInput = {
+  id: string;
+  title: string;
+  target_amount: number;
+  current_amount: number;
+  deadline: string;
+};
+
+export async function updateGoal(input: UpdateGoalInput) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("UsuÃ¡rio nÃ£o autenticado.");
+  }
+
+  const { error } = await supabase
+    .from("goals")
+    .update({
+      title: input.title,
+      target_amount: input.target_amount,
+      current_amount: input.current_amount,
+      deadline: input.deadline,
+    })
+    .eq("id", input.id)
+    .eq("user_id", user.id);
+
+  if (error) throw error;
+}
+
+===== lib/cards.ts =====
+import { createClient } from "@/lib/supabase/server";
+
+export type Card = {
+  id: string;
+  user_id: string;
+  name: string;
+  limit_amount: number;
+  closing_day: number;
+  due_day: number;
+  color: string;
+  created_at: string;
+  updated_at: string;
+};
+
+export async function getCards() {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from("cards")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: true });
+
+  if (error) {
+    throw error;
+  }
+
+  return (data ?? []) as Card[];
+}
+
+type CreateCardInput = {
+  name: string;
+  limit_amount: number;
+  closing_day: number;
+  due_day: number;
+  color: string;
+};
+
+export async function createCard(input: CreateCardInput) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    throw new Error("UsuÃ¡rio nÃ£o autenticado.");
+  }
+
+  const { error } = await supabase.from("cards").insert({
+    user_id: user.id,
+    name: input.name,
+    limit_amount: input.limit_amount,
+    closing_day: input.closing_day,
+    due_day: input.due_day,
+    color: input.color,
+  });
+
+  if (error) {
+    throw error;
+  }
+}
+
+export async function deleteCard(id: string) {
+  const supabase = await createClient();
+
+  const { error } = await supabase
+    .from("cards")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    throw error;
+  }
+}
+
+===== components/app-sidebar.tsx =====
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  ChartBarIcon,
+  FolderIcon,
+  LandmarkIcon,
+  LayoutDashboardIcon,
+  CreditCardIcon,
+  ListIcon,
+  Settings2Icon,
+  TagsIcon,
+  TargetIcon,
+  WalletCardsIcon,
+} from "lucide-react";
+
+import { cn } from "@/lib/utils";
+
+type NavItem = {
+  title: string;
+  url: string;
+  icon: React.ComponentType<{ className?: string }>;
+};
+
+const mainItems: NavItem[] = [
+  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboardIcon },
+  { title: "TransaÃ§Ãµes", url: "/transacoes", icon: ListIcon },
+  { title: "Contas", url: "/contas", icon: LandmarkIcon },
+  { title: "CartÃµes", url: "/cartoes", icon: WalletCardsIcon },
+  { title: "Categorias", url: "/categorias", icon: TagsIcon },
+  { title: "RelatÃ³rios", url: "/relatorios", icon: ChartBarIcon },
+  { title: "Metas", url: "/metas", icon: TargetIcon },
+  { title: "Investimentos", url: "/investimentos", icon: FolderIcon },
+  { title: "Planos", url: "/planos", icon: CreditCardIcon },
+];
+
+const settingsItem: NavItem = {
+  title: "ConfiguraÃ§Ãµes",
+  url: "/configuracoes",
+  icon: Settings2Icon,
+};
+
+function isActive(pathname: string, url: string) {
+  return pathname === url || pathname.startsWith(`${url}/`);
+}
+
+function RailItem({ item, active }: { item: NavItem; active: boolean }) {
+  const Icon = item.icon;
+
+  return (
+    <li className="group/item relative">
+      <Link
+        href={item.url}
+        aria-label={item.title}
+        aria-current={active ? "page" : undefined}
+        className={cn(
+          "relative flex h-11 w-11 items-center justify-center rounded-2xl border transition-all duration-300 outline-none",
+          "focus-visible:ring-2 focus-visible:ring-brand-bright/70",
+          active
+            ? "border-brand-bright/40 bg-[#2a1646] text-brand-soft shadow-[0_0_22px_rgba(168,85,247,0.55),inset_0_0_12px_rgba(168,85,247,0.25)]"
+            : "border-transparent text-zinc-500 hover:bg-white/5 hover:text-zinc-300"
+        )}
+      >
+        {active && (
+          <span
+            aria-hidden
+            className="pointer-events-none absolute -inset-2 -z-10 rounded-full bg-brand/30 blur-xl"
+          />
+        )}
+        <Icon
+          className={cn(
+            "h-5 w-5 transition-all duration-300",
+            active && "drop-shadow-[0_0_8px_rgba(192,132,252,0.9)]"
+          )}
+        />
+      </Link>
+
+      {/* Tooltip acessÃ­vel: aparece no hover e no foco por teclado */}
+      <span
+        role="tooltip"
+        className="pointer-events-none absolute left-full top-1/2 z-50 ml-3 -translate-y-1/2 whitespace-nowrap rounded-lg border border-white/10 bg-[#1a1a1f] px-2.5 py-1.5 text-xs font-medium text-zinc-100 opacity-0 shadow-xl transition-opacity duration-150 group-hover/item:opacity-100 group-focus-within/item:opacity-100"
+      >
+        {item.title}
+      </span>
+    </li>
+  );
+}
+
+/** Barra lateral compacta (desktop) â€” apenas Ã­cones. */
+export function AppSidebar() {
+  const pathname = usePathname();
+
+  return (
+    <aside
+      aria-label="NavegaÃ§Ã£o principal"
+      className="fixed inset-y-0 left-0 z-40 hidden w-20 flex-col items-center border-r border-white/[0.06] bg-sidebar/95 py-5 backdrop-blur-xl md:flex"
+    >
+      <Link
+        href="/dashboard"
+        aria-label="Forge Finance"
+        className="mb-6 flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl ring-1 ring-brand/40"
+      >
+        <Image
+          src="/logos/forge-logo.png"
+          alt="Forge Finance"
+          width={44}
+          height={44}
+          className="h-full w-full object-cover"
+        />
+      </Link>
+
+      <nav className="flex w-full flex-1 flex-col items-center overflow-y-auto overflow-x-visible py-1">
+        <ul className="flex flex-col items-center gap-2 rounded-[28px] border border-white/[0.05] bg-white/[0.02] p-2">
+          {mainItems.map((item) => (
+            <RailItem
+              key={item.url}
+              item={item}
+              active={isActive(pathname, item.url)}
+            />
+          ))}
+        </ul>
+      </nav>
+
+      <ul className="mt-3 flex flex-col items-center">
+        <RailItem
+          item={settingsItem}
+          active={isActive(pathname, settingsItem.url)}
+        />
+      </ul>
+    </aside>
+  );
+}
+
+/** NavegaÃ§Ã£o mÃ³vel: barra inferior com rolagem interna (sem rolagem horizontal da pÃ¡gina). */
+export function MobileNav() {
+  const pathname = usePathname();
+  const items = [...mainItems, settingsItem];
+
+  return (
+    <nav
+      aria-label="NavegaÃ§Ã£o principal"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-white/[0.08] bg-sidebar/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden"
+    >
+      <ul className="flex items-center gap-1 overflow-x-auto px-3 py-2">
+        {items.map((item) => {
+          const Icon = item.icon;
+          const active = isActive(pathname, item.url);
+
+          return (
+            <li key={item.url} className="shrink-0">
+              <Link
+                href={item.url}
+                aria-label={item.title}
+                aria-current={active ? "page" : undefined}
+                className={cn(
+                  "flex h-11 w-11 items-center justify-center rounded-2xl border transition-all duration-300",
+                  active
+                    ? "border-brand-bright/40 bg-[#2a1646] text-brand-soft shadow-[0_0_18px_rgba(168,85,247,0.5)]"
+                    : "border-transparent text-zinc-500"
+                )}
+              >
+                <Icon className="h-5 w-5" />
+              </Link>
+            </li>
+          );
+        })}
+      </ul>
+    </nav>
+  );
+}
+
+===== package.json =====
+{
+  "name": "forge-finance-v2",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "test:billing:static": "node --test tests/billing-static.test.mjs"
+  },
+  "dependencies": {
+    "@base-ui/react": "^1.6.0",
+    "@dnd-kit/core": "^6.3.1",
+    "@dnd-kit/modifiers": "^9.0.0",
+    "@dnd-kit/sortable": "^10.0.0",
+    "@dnd-kit/utilities": "^3.2.2",
+    "@hookform/resolvers": "^5.5.7",
+    "@supabase/ssr": "^0.12.3",
+    "@supabase/supabase-js": "^2.110.8",
+    "@tanstack/react-table": "^8.21.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "cmdk": "^1.1.1",
+    "date-fns": "^4.4.0",
+    "lucide-react": "^1.27.0",
+    "next": "16.2.12",
+    "next-themes": "^0.4.6",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "react-hook-form": "^7.83.0",
+    "recharts": "^3.8.0",
+    "shadcn": "^4.15.0",
+    "sonner": "^2.0.7",
+    "tailwind-merge": "^3.6.0",
+    "tw-animate-css": "^1.4.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.12",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}
+
+===== supabase/migrations/20261020120000_whatsapp_finance.sql =====
+-- Forge Finance: base segura para movimentacoes via WhatsApp.
+-- Este arquivo apenas define a migracao; nao a execute em producao sem revisao.
+
+create table if not exists public.whatsapp_pending_actions (
+    id uuid primary key default gen_random_uuid(),
+    user_id uuid not null references auth.users(id) on delete cascade,
+    phone text not null,
+    account_id uuid not null references public.accounts(id) on delete cascade,
+    category_id uuid references public.categories(id) on delete set null,
+    type text not null check (type in ('income', 'expense')),
+    title text not null check (length(trim(title)) between 1 and 120),
+    description text,
+    amount numeric(14,2) not null check (amount > 0),
+    transaction_date date not null,
+    status text not null default 'pending'
+        check (status in ('pending', 'confirmed', 'cancelled', 'expired')),
+    expires_at timestamptz not null default (now() + interval '10 minutes'),
+    created_at timestamptz not null default now(),
+    confirmed_at timestamptz
+);
+
+create index if not exists idx_whatsapp_pending_user_status
+    on public.whatsapp_pending_actions (user_id, status, expires_at);
+
+create table if not exists public.whatsapp_processed_messages (
+    provider_message_id text primary key,
+    phone text not null,
+    event_type text not null default 'message',
+    created_at timestamptz not null default now()
+);
+
+alter table public.whatsapp_pending_actions enable row level security;
+alter table public.whatsapp_processed_messages enable row level security;
+
+revoke all on public.whatsapp_pending_actions from public, anon, authenticated;
+revoke all on public.whatsapp_processed_messages from public, anon, authenticated;
+
+grant select, insert, update, delete
+    on public.whatsapp_pending_actions to service_role;
+grant select, insert, update, delete
+    on public.whatsapp_processed_messages to service_role;
+
+create or replace function public.confirm_whatsapp_transaction(
+    p_pending_id uuid,
+    p_phone text
+)
+returns table (
+    transaction_id uuid,
+    new_balance numeric
+)
+language plpgsql
+security definer
+set search_path = pg_catalog, public
+as $$
+declare
+    v_action public.whatsapp_pending_actions%rowtype;
+    v_balance numeric(14,2);
+    v_transaction_id uuid;
+begin
+    -- Apenas o backend usando a chave service role pode chamar esta funcao.
+    if coalesce(auth.role(), '') <> 'service_role' then
+        raise exception 'Operacao nao autorizada';
+    end if;
+
+    select *
+      into v_action
+      from public.whatsapp_pending_actions
+     where id = p_pending_id
+     for update;
+
+    if not found then
+        raise exception 'Confirmacao nao encontrada';
+    end if;
+
+    if v_action.phone <> p_phone then
+        raise exception 'Telefone nao autorizado para esta confirmacao';
+    end if;
+
+    if v_action.status <> 'pending' then
+        raise exception 'Esta confirmacao ja foi utilizada ou cancelada';
+    end if;
+
+    if v_action.expires_at <= now() then
+        update public.whatsapp_pending_actions
+           set status = 'expired'
+         where id = v_action.id;
+
+        return;
+    end if;
+
+    perform 1
+      from public.accounts a
+     where a.id = v_action.account_id
+       and a.user_id = v_action.user_id
+     for update;
+
+    if not found then
+        raise exception 'Conta nao pertence ao usuario autorizado';
+    end if;
+
+    if v_action.category_id is not null and not exists (
+        select 1
+          from public.categories c
+         where c.id = v_action.category_id
+           and c.user_id = v_action.user_id
+           and c.type = v_action.type
+    ) then
+        raise exception 'Categoria invalida para esta movimentacao';
+    end if;
+
+    insert into public.transactions (
+        user_id,
+        account_id,
+        category_id,
+        type,
+        title,
+        description,
+        amount,
+        transaction_date
+    )
+    values (
+        v_action.user_id,
+        v_action.account_id,
+        v_action.category_id,
+        v_action.type,
+        v_action.title,
+        v_action.description,
+        v_action.amount,
+        v_action.transaction_date
+    )
+    returning id into v_transaction_id;
+
+    update public.accounts
+       set current_balance = current_balance +
+           case
+               when v_action.type = 'income' then v_action.amount
+               else -v_action.amount
+           end
+     where id = v_action.account_id
+       and user_id = v_action.user_id
+    returning current_balance into v_balance;
+
+    if not found then
+        raise exception 'Nao foi possivel atualizar o saldo';
+    end if;
+
+    update public.whatsapp_pending_actions
+       set status = 'confirmed',
+           confirmed_at = now()
+     where id = v_action.id;
+
+    return query select v_transaction_id, v_balance;
+end;
+$$;
+
+revoke all on function public.confirm_whatsapp_transaction(uuid, text)
+    from public, anon, authenticated;
+grant execute on function public.confirm_whatsapp_transaction(uuid, text)
+    to service_role;
+

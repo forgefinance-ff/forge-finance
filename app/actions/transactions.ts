@@ -2,6 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { getActiveScope } from "@/lib/scope-server";
+import { isRealDate } from "@/lib/dates";
+import { insertTransactionWithBalance } from "@/lib/transactions";
 
 export async function createTransaction(formData: FormData) {
   const supabase = await createClient();
@@ -14,50 +17,42 @@ export async function createTransaction(formData: FormData) {
     throw new Error("Usuário não autenticado.");
   }
 
-  const account_id = String(formData.get("account_id"));
-  const category_id = String(formData.get("category_id"));
+  const account_id = String(formData.get("account_id") ?? "");
+  const category_id = String(formData.get("category_id") ?? "");
   const type = String(formData.get("type"));
 
-  const title = String(formData.get("description"));
-  const description = String(formData.get("description"));
+  const description = String(formData.get("description") ?? "").trim();
 
   const amount = Number(formData.get("amount"));
-  const transaction_date = String(formData.get("transaction_date"));
+  const transaction_date = String(formData.get("transaction_date") ?? "");
 
-  const { error } = await supabase.from("transactions").insert({
-    user_id: user.id,
+  if (!account_id) throw new Error("Escolha uma conta.");
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new Error("O valor deve ser maior que zero.");
+  }
+  if (!isRealDate(transaction_date)) throw new Error("Informe uma data válida.");
+
+  // A conta precisa ser do escopo ativo (Pessoal/Empresa).
+  const { data: account } = await supabase
+    .from("accounts")
+    .select("scope")
+    .eq("id", account_id)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!account || account.scope !== (await getActiveScope())) {
+    throw new Error("Esta conta não pertence ao escopo ativo.");
+  }
+
+  await insertTransactionWithBalance(supabase, {
     account_id,
-    category_id,
+    category_id: category_id || null,
     type,
-    title,
+    title: description,
     description,
     amount,
     transaction_date,
   });
-
-  if (error) throw error;
-
-  const { data: account, error: accountError } = await supabase
-    .from("accounts")
-    .select("current_balance")
-    .eq("id", account_id)
-    .single();
-
-  if (accountError) throw accountError;
-
-  const novoSaldo =
-    type === "income"
-      ? Number(account.current_balance) + amount
-      : Number(account.current_balance) - amount;
-
-  const { error: updateError } = await supabase
-    .from("accounts")
-    .update({
-      current_balance: novoSaldo,
-    })
-    .eq("id", account_id);
-
-  if (updateError) throw updateError;
 
   revalidatePath("/transacoes");
   revalidatePath("/contas");
@@ -69,42 +64,10 @@ export async function deleteTransaction(formData: FormData) {
 
   const id = String(formData.get("id"));
 
-  const { data: transaction, error: transactionError } = await supabase
-    .from("transactions")
-    .select("*")
-    .eq("id", id)
-    .single();
+  // Estorna o saldo e apaga a transação numa única operação no banco.
+  const { error } = await supabase.rpc("ff_delete_transaction", { p_id: id });
 
-  if (transactionError) throw transactionError;
-
-  const { data: account, error: accountError } = await supabase
-    .from("accounts")
-    .select("current_balance")
-    .eq("id", transaction.account_id)
-    .single();
-
-  if (accountError) throw accountError;
-
-  const novoSaldo =
-    transaction.type === "income"
-      ? Number(account.current_balance) - Number(transaction.amount)
-      : Number(account.current_balance) + Number(transaction.amount);
-
-  const { error: updateError } = await supabase
-    .from("accounts")
-    .update({
-      current_balance: novoSaldo,
-    })
-    .eq("id", transaction.account_id);
-
-  if (updateError) throw updateError;
-
-  const { error: deleteError } = await supabase
-    .from("transactions")
-    .delete()
-    .eq("id", id);
-
-  if (deleteError) throw deleteError;
+  if (error) throw new Error(error.message);
 
   revalidatePath("/transacoes");
   revalidatePath("/contas");

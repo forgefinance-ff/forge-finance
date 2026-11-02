@@ -22,22 +22,22 @@ function Card({
           "rounded-2xl",
 
           "border",
-          "border-[#273248]",
+          "border-line",
 
-          "bg-[#111827]/95",
+          "bg-surface",
 
           "backdrop-blur-xl",
 
           "shadow-lg",
-          "shadow-black/25",
+          "shadow-black/10 dark:shadow-black/25",
 
           "transition-all",
           "duration-300",
 
           "hover:-translate-y-1",
-          "hover:border-[#3B82F6]/40",
+          "hover:border-brand-bright/30",
           "hover:shadow-2xl",
-          "hover:shadow-blue-900/15",
+          "hover:shadow-violet-900/15",
 
           "[--card-spacing:24px]",
           "data-[size=sm]:[--card-spacing:18px]",
@@ -86,7 +86,7 @@ function CardTitle({
           "text-lg",
           "font-semibold",
           "tracking-tight",
-          "text-white",
+          "text-foreground",
         ].join(" "),
         className
       )}
@@ -103,7 +103,7 @@ function CardDescription({
     <div
       data-slot="card-description"
       className={cn(
-        "mt-1 text-sm text-[#94A3B8]",
+        "mt-1 text-sm text-muted-foreground",
         className
       )}
       {...props}
@@ -157,9 +157,9 @@ function CardFooter({
           "justify-between",
 
           "border-t",
-          "border-[#273248]",
+          "border-line",
 
-          "bg-[#0F172A]/50",
+          "bg-tint",
 
           "px-[var(--card-spacing)]",
           "py-4",

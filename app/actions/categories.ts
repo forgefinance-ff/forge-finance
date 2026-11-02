@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { getActiveScope } from "@/lib/scope-server";
 
 export async function createCategory(formData: FormData) {
   const supabase = await createClient();
@@ -27,6 +28,7 @@ export async function createCategory(formData: FormData) {
       type,
       color,
       icon,
+      scope: await getActiveScope(),
     })
     .select()
     .single();
@@ -34,6 +36,7 @@ export async function createCategory(formData: FormData) {
   if (error) throw error;
 
   revalidatePath("/transacoes");
+  revalidatePath("/categorias");
   revalidatePath("/dashboard");
 
   return data;

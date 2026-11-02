@@ -9,13 +9,21 @@ import { getSummaryData } from "./data/summary";
 import { getCashFlowData } from "./data/cash-flow";
 import { getCategoryExpenses } from "./data/category-expenses";
 import { getNetWorthData } from "./data/net-worth";
+import { parsePeriod, type ReportSearchParams } from "./data/period";
 
-export default async function ReportsPage() {
+type Props = {
+  // Next 14 entrega um objeto, Next 15 uma Promise: o `await` cobre os dois.
+  searchParams?: Promise<ReportSearchParams>;
+};
+
+export default async function ReportsPage({ searchParams }: Props) {
+  const period = parsePeriod((await searchParams) ?? {});
+
   const [summary, cashFlow, categoryExpenses, netWorth] =
     await Promise.all([
-      getSummaryData(),
-      getCashFlowData(),
-      getCategoryExpenses(),
+      getSummaryData(period),
+      getCashFlowData(period),
+      getCategoryExpenses(period),
       getNetWorthData(),
     ]);
 
@@ -23,7 +31,7 @@ export default async function ReportsPage() {
     <div className="space-y-6">
       <ReportsHeader />
 
-      <PeriodFilter />
+      <PeriodFilter period={period.key} from={period.from} to={period.to} />
 
       <KpiCards
         income={summary.income}

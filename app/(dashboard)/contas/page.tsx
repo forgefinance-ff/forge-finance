@@ -9,40 +9,40 @@ export default async function ContasPage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-3xl border border-white/10 bg-[#111827] p-8">
-        <span className="text-sm font-medium uppercase tracking-[0.25em] text-violet-400">
+      <div className="rounded-[22px] border border-line bg-surface p-8">
+        <span className="text-sm font-medium uppercase tracking-[0.25em] text-brand-soft">
           Financeiro
         </span>
 
-        <h1 className="mt-2 text-4xl font-bold tracking-tight text-white">
+        <h1 className="mt-2 text-4xl font-bold tracking-tight text-foreground">
           Contas
         </h1>
 
-        <p className="mt-2 max-w-xl text-slate-400">
+        <p className="mt-2 max-w-xl text-muted-foreground">
           Gerencie suas contas financeiras.
         </p>
       </div>
 
       <AccountForm action={createAccount} />
 
-      <div className="overflow-hidden rounded-3xl border border-white/10 bg-[#111827]">
+      <div className="overflow-hidden rounded-[22px] border border-line bg-surface">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[560px]">
-            <thead className="border-b border-white/10 bg-white/[0.02]">
+            <thead className="border-b border-line bg-tint">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-faint">
                   Conta
                 </th>
 
-                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-faint">
                   Tipo
                 </th>
 
-                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-faint">
                   Saldo
                 </th>
 
-                <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-500">
+                <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-faint">
                   Ações
                 </th>
               </tr>
@@ -51,7 +51,7 @@ export default async function ContasPage() {
             <tbody>
               {accounts.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="py-10 text-center text-slate-500">
+                  <td colSpan={4} className="py-10 text-center text-faint">
                     Nenhuma conta cadastrada.
                   </td>
                 </tr>
@@ -60,10 +60,10 @@ export default async function ContasPage() {
               {accounts.map((account) => (
                 <tr
                   key={account.id}
-                  className="border-b border-white/5 transition hover:bg-white/[0.03]"
+                  className="border-b border-line transition hover:bg-tint"
                 >
                   <td className="px-6 py-5">
-                    <div className="flex items-center gap-3 font-medium text-white">
+                    <div className="flex items-center gap-3 font-medium text-foreground">
                       <div
                         className="h-4 w-4 rounded-full"
                         style={{ backgroundColor: account.color }}
@@ -73,11 +73,11 @@ export default async function ContasPage() {
                     </div>
                   </td>
 
-                  <td className="px-6 py-5 text-slate-300">
+                  <td className="px-6 py-5 text-text-soft">
                     {account.type}
                   </td>
 
-                  <td className="px-6 py-5 text-slate-300">
+                  <td className="px-6 py-5 text-text-soft">
                     {Number(account.current_balance).toLocaleString(
                       "pt-BR",
                       {
@@ -93,7 +93,7 @@ export default async function ContasPage() {
 
                       <button
                         type="submit"
-                        className="rounded-lg p-2 text-slate-500 transition hover:bg-rose-500/10 hover:text-rose-400"
+                        className="rounded-lg p-2 text-faint transition hover:bg-rose-500/10 hover:text-danger"
                       >
                         <Trash2 className="h-5 w-5" />
                       </button>

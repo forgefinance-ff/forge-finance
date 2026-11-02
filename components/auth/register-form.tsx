@@ -46,51 +46,57 @@ export function RegisterForm() {
   return (
     <form
       onSubmit={handleRegister}
-      className="space-y-5 rounded-xl border border-zinc-800 bg-zinc-900 p-6"
+      className="forge-auth-card space-y-5 rounded-2xl p-6 sm:p-8"
     >
       <div>
-        <label className="mb-2 block text-sm text-zinc-300">Nome</label>
+        <label htmlFor="register-name" className="mb-2 block text-sm text-zinc-300">Nome</label>
         <input
+          id="register-name"
+          autoComplete="name"
           required
           value={name}
           onChange={(e) => setName(e.target.value)}
-          className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-blue-500"
+          className="forge-auth-input"
         />
       </div>
 
       <div>
-        <label className="mb-2 block text-sm text-zinc-300">E-mail</label>
+        <label htmlFor="register-email" className="mb-2 block text-sm text-zinc-300">E-mail</label>
         <input
+          id="register-email"
+          autoComplete="email"
           type="email"
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-blue-500"
+          className="forge-auth-input"
         />
       </div>
 
       <div>
-        <label className="mb-2 block text-sm text-zinc-300">Senha</label>
+        <label htmlFor="register-password" className="mb-2 block text-sm text-zinc-300">Senha</label>
         <input
+          id="register-password"
+          autoComplete="new-password"
           type="password"
           required
           minLength={6}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-blue-500"
+          className="forge-auth-input"
         />
       </div>
 
       <button
         disabled={loading}
-        className="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white transition hover:bg-blue-500 disabled:opacity-60"
+        className="forge-auth-button"
       >
         {loading ? "Criando conta..." : "Criar conta"}
       </button>
 
       <p className="text-center text-sm text-zinc-400">
         Já possui uma conta?{" "}
-        <Link href="/login" className="text-blue-400 hover:text-blue-300">
+        <Link href="/login" className="font-medium text-violet-300 transition hover:text-violet-200">
           Entrar
         </Link>
       </p>

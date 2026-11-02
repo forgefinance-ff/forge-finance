@@ -5,7 +5,7 @@ import { useTransition } from "react";
 import { Button } from "@/components/ui/button";
 
 const inputClass =
-  "w-full rounded-xl border border-white/10 bg-[#09090B] px-4 py-3 text-white outline-none transition focus:border-violet-500";
+  "w-full rounded-xl border border-line bg-background-soft px-4 py-3 text-foreground outline-none transition focus:border-violet-500";
 
 type Props = {
   action: (formData: FormData) => Promise<void>;
@@ -25,9 +25,9 @@ export function CategoryForm({ action }: Props) {
     <form
       id="category-form"
       action={handleSubmit}
-      className="space-y-4 rounded-3xl border border-white/10 bg-[#111827] p-6"
+      className="space-y-4 rounded-[22px] border border-line bg-surface p-6"
     >
-      <h2 className="text-xl font-semibold text-white">Nova Categoria</h2>
+      <h2 className="text-xl font-semibold text-foreground">Nova Categoria</h2>
 
       <input
         name="name"
@@ -46,7 +46,7 @@ export function CategoryForm({ action }: Props) {
           type="color"
           name="color"
           defaultValue="#7C3AED"
-          className="h-[50px] w-full cursor-pointer rounded-xl border border-white/10 bg-[#09090B] sm:col-span-1"
+          className="h-[50px] w-full cursor-pointer rounded-xl border border-line bg-background-soft sm:col-span-1"
         />
 
         <input

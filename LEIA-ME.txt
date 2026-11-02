@@ -1,0 +1,13 @@
+Filtro de periodo dos Relatorios (Forge Finance)
+
+Como aplicar: extraia este ZIP na RAIZ do projeto (C:\forge-finance-v2),
+aceite substituir os arquivos e rode: npm run dev
+
+Arquivos em app/(dashboard)/relatorios:
+- page.tsx                      (le o periodo da URL)
+- components/period-filter.tsx  (botoes funcionando + datas personalizadas)
+- data/period.ts                (NOVO: logica do periodo)
+- data/summary.ts, cash-flow.ts, category-expenses.ts (filtram por periodo)
+
+Padrao ao abrir a pagina: "Tudo" (igual ao comportamento anterior).
+O grafico de Evolucao Patrimonial e o card Patrimonio mostram sempre o valor atual.

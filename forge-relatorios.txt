@@ -1,0 +1,527 @@
+﻿=== C:\forge-finance-v2\app\(dashboard)\relatorios\page.tsx ===
+import { CashFlowChart } from "./components/cash-flow-chart";
+import { ExpensesByCategory } from "./components/expenses-by-category";
+import { KpiCards } from "./components/kpi-cards";
+import { NetWorthChart } from "./components/net-worth-chart";
+import { PeriodFilter } from "./components/period-filter";
+import { ReportsHeader } from "./components/reports-header";
+
+import { getSummaryData } from "./data/summary";
+import { getCashFlowData } from "./data/cash-flow";
+import { getCategoryExpenses } from "./data/category-expenses";
+import { getNetWorthData } from "./data/net-worth";
+
+export default async function ReportsPage() {
+  const [summary, cashFlow, categoryExpenses, netWorth] =
+    await Promise.all([
+      getSummaryData(),
+      getCashFlowData(),
+      getCategoryExpenses(),
+      getNetWorthData(),
+    ]);
+
+  return (
+    <div className="space-y-6">
+      <ReportsHeader />
+
+      <PeriodFilter />
+
+      <KpiCards
+        income={summary.income}
+        expenses={summary.expenses}
+        balance={summary.balance}
+        netWorth={summary.netWorth}
+      />
+
+      <div className="grid gap-6 xl:grid-cols-2">
+        <CashFlowChart data={cashFlow} />
+
+        <ExpensesByCategory data={categoryExpenses} />
+      </div>
+
+      <NetWorthChart data={netWorth} />
+    </div>
+  );
+}
+
+=== C:\forge-finance-v2\app\(dashboard)\relatorios\components\cash-flow-chart.tsx ===
+"use client";
+
+import {
+  CartesianGrid,
+  Line,
+  LineChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CashFlowItem } from "../data/cash-flow";
+
+type Props = {
+  data: CashFlowItem[];
+};
+
+export function CashFlowChart({ data }: Props) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Receitas x Despesas</CardTitle>
+      </CardHeader>
+
+      <CardContent>
+        <div className="h-[350px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" />
+
+              <XAxis dataKey="month" />
+
+              <YAxis />
+
+              <Tooltip />
+
+              <Line
+                type="monotone"
+                dataKey="receitas"
+                stroke="#22c55e"
+                strokeWidth={3}
+              />
+
+              <Line
+                type="monotone"
+                dataKey="despesas"
+                stroke="#ef4444"
+                strokeWidth={3}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+=== C:\forge-finance-v2\app\(dashboard)\relatorios\components\expenses-by-category.tsx ===
+"use client";
+
+import {
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+} from "recharts";
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { CategoryExpense } from "../data/category-expenses";
+
+type Props = {
+  data: CategoryExpense[];
+};
+
+const COLORS = [
+  "#a855f7",
+  "#22c55e",
+  "#f59e0b",
+  "#ef4444",
+  "#8b5cf6",
+  "#818cf8",
+  "#f97316",
+];
+
+export function ExpensesByCategory({ data }: Props) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Despesas por Categoria</CardTitle>
+      </CardHeader>
+
+      <CardContent>
+        <div className="h-[350px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={data}
+                dataKey="value"
+                nameKey="name"
+                innerRadius={70}
+                outerRadius={110}
+                paddingAngle={3}
+              >
+                {data.map((entry, index) => (
+                  <Cell
+                    key={entry.name}
+                    fill={COLORS[index % COLORS.length]}
+                  />
+                ))}
+              </Pie>
+
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+=== C:\forge-finance-v2\app\(dashboard)\relatorios\components\kpi-cards.tsx ===
+import { formatCurrency } from "@/lib/formatters";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+type Props = {
+  income: number;
+  expenses: number;
+  balance: number;
+  netWorth: number;
+};
+
+export function KpiCards({
+  income,
+  expenses,
+  balance,
+  netWorth,
+}: Props) {
+  const cards = [
+    {
+      title: "Receitas",
+      value: formatCurrency(income),
+      description: "Total de receitas do período.",
+    },
+    {
+      title: "Despesas",
+      value: formatCurrency(expenses),
+      description: "Total de despesas do período.",
+    },
+    {
+      title: "Saldo",
+      value: formatCurrency(balance),
+      description: "Resultado financeiro.",
+    },
+    {
+      title: "Patrimônio",
+      value: formatCurrency(netWorth),
+      description: "Contas + Investimentos.",
+    },
+  ];
+
+  return (
+    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      {cards.map((card) => (
+        <Card key={card.title}>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-sm font-medium">
+              {card.title}
+            </CardTitle>
+          </CardHeader>
+
+          <CardContent>
+            <p className="text-3xl font-bold">{card.value}</p>
+
+            <p className="mt-1 text-sm text-slate-400">
+              {card.description}
+            </p>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
+  );
+}
+
+=== C:\forge-finance-v2\app\(dashboard)\relatorios\components\net-worth-chart.tsx ===
+"use client";
+
+import {
+  Area,
+  AreaChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { NetWorthItem } from "../data/net-worth";
+
+type Props = {
+  data: NetWorthItem[];
+};
+
+export function NetWorthChart({ data }: Props) {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Evolução Patrimonial</CardTitle>
+      </CardHeader>
+
+      <CardContent>
+        <div className="h-[350px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={data}>
+              <CartesianGrid strokeDasharray="3 3" />
+
+              <XAxis dataKey="month" />
+
+              <YAxis />
+
+              <Tooltip />
+
+              <Area
+                type="monotone"
+                dataKey="patrimonio"
+                stroke="#a855f7"
+                fill="#a855f7"
+                fillOpacity={0.2}
+                strokeWidth={3}
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+=== C:\forge-finance-v2\app\(dashboard)\relatorios\components\period-filter.tsx ===
+"use client";
+
+import { CalendarDays } from "lucide-react";
+import { Button } from "@/components/ui/button";
+
+export function PeriodFilter() {
+  return (
+    <div className="flex flex-col gap-3 rounded-xl border bg-card p-4 md:flex-row md:items-center md:justify-between">
+      <div>
+        <h2 className="font-semibold">Período de Análise</h2>
+        <p className="text-sm text-slate-400">
+          Selecione o período para atualizar todos os indicadores e gráficos.
+        </p>
+      </div>
+
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" size="sm">
+          Hoje
+        </Button>
+
+        <Button variant="outline" size="sm">
+          7 dias
+        </Button>
+
+        <Button variant="outline" size="sm">
+          30 dias
+        </Button>
+
+        <Button variant="outline" size="sm">
+          90 dias
+        </Button>
+
+        <Button variant="default" size="sm" className="gap-2">
+          <CalendarDays className="h-4 w-4" />
+          Personalizado
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+=== C:\forge-finance-v2\app\(dashboard)\relatorios\components\reports-header.tsx ===
+export function ReportsHeader() {
+  return (
+    <div className="rounded-[22px] border border-white/[0.07] bg-surface p-8">
+      <span className="text-sm font-medium uppercase tracking-[0.25em] text-violet-400">
+        Financeiro
+      </span>
+
+      <h1 className="mt-2 text-4xl font-bold tracking-tight text-white">
+        Relatórios
+      </h1>
+
+      <p className="mt-2 max-w-xl text-slate-400">
+        Analise receitas, despesas, patrimônio e a evolução financeira em
+        um único lugar.
+      </p>
+    </div>
+  );
+}
+
+=== C:\forge-finance-v2\app\(dashboard)\relatorios\data\cash-flow.ts ===
+import { createClient } from "@/lib/supabase/server";
+
+export type CashFlowItem = {
+  month: string;
+  receitas: number;
+  despesas: number;
+};
+
+export async function getCashFlowData(): Promise<CashFlowItem[]> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return [];
+
+  const { data: transactions, error } = await supabase
+    .from("transactions")
+    .select("type, amount, transaction_date")
+    .eq("user_id", user.id)
+    .order("transaction_date", { ascending: true });
+
+  if (error) {
+    throw error;
+  }
+
+  const months = new Map<string, CashFlowItem>();
+
+  for (const transaction of transactions ?? []) {
+    const date = new Date(transaction.transaction_date);
+
+    const month = date.toLocaleDateString("pt-BR", {
+      month: "short",
+      year: "2-digit",
+    });
+
+    if (!months.has(month)) {
+      months.set(month, {
+        month,
+        receitas: 0,
+        despesas: 0,
+      });
+    }
+
+    const item = months.get(month)!;
+
+    if (transaction.type === "income") {
+      item.receitas += Number(transaction.amount);
+    } else {
+      item.despesas += Number(transaction.amount);
+    }
+  }
+
+  return [...months.values()];
+}
+
+=== C:\forge-finance-v2\app\(dashboard)\relatorios\data\category-expenses.ts ===
+import { createClient } from "@/lib/supabase/server";
+import { firstRelation } from "@/lib/relations";
+
+export type CategoryExpense = {
+  name: string;
+  value: number;
+};
+
+export async function getCategoryExpenses(): Promise<CategoryExpense[]> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return [];
+
+  const { data, error } = await supabase
+    .from("transactions")
+    .select(`
+      amount,
+      type,
+      categories(name)
+    `)
+    .eq("user_id", user.id)
+    .eq("type", "expense");
+
+  if (error) throw error;
+
+  const totals = new Map<string, number>();
+
+  for (const item of data ?? []) {
+    const name =
+      firstRelation(item.categories as unknown as { name?: string } | { name?: string }[] | null)
+        ?.name ?? "Sem categoria";
+
+    totals.set(name, (totals.get(name) ?? 0) + Number(item.amount));
+  }
+
+  return [...totals.entries()].map(([name, value]) => ({
+    name,
+    value,
+  }));
+}
+
+
+=== C:\forge-finance-v2\app\(dashboard)\relatorios\data\net-worth.ts ===
+import { createClient } from "@/lib/supabase/server";
+
+export type NetWorthItem = {
+  month: string;
+  patrimonio: number;
+};
+
+export async function getNetWorthData(): Promise<NetWorthItem[]> {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) return [];
+
+  const { data: accounts, error: accountsError } = await supabase
+    .from("accounts")
+    .select("current_balance")
+    .eq("user_id", user.id);
+
+  if (accountsError) throw accountsError;
+
+  const { data: investments, error: investmentsError } = await supabase
+    .from("investments")
+    .select("current_value")
+    .eq("user_id", user.id);
+
+  if (investmentsError) throw investmentsError;
+
+  const totalAccounts =
+    accounts?.reduce(
+      (sum, account) => sum + Number(account.current_balance),
+      0
+    ) ?? 0;
+
+  const totalInvestments =
+    investments?.reduce(
+      (sum, investment) => sum + Number(investment.current_value),
+      0
+    ) ?? 0;
+
+  const total = totalAccounts + totalInvestments;
+
+  const month = new Date().toLocaleDateString("pt-BR", {
+    month: "short",
+    year: "2-digit",
+  });
+
+  return [
+    {
+      month,
+      patrimonio: total,
+    },
+  ];
+}
+
+=== C:\forge-finance-v2\app\(dashboard)\relatorios\data\summary.ts ===
+import { getReportSummary } from "@/lib/reports";
+
+export async function getSummaryData() {
+  const summary = await getReportSummary();
+
+  return {
+    income: summary.income,
+    expenses: summary.expenses,
+    balance: summary.balance,
+    netWorth: summary.netWorth,
+  };
+}
+

@@ -1,4 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
+﻿import { createClient } from "@/lib/supabase/server";
+import { getActiveScope } from "@/lib/scope-server";
 
 export type NetWorthItem = {
   month: string;
@@ -14,17 +15,21 @@ export async function getNetWorthData(): Promise<NetWorthItem[]> {
 
   if (!user) return [];
 
+  const scope = await getActiveScope();
+
   const { data: accounts, error: accountsError } = await supabase
     .from("accounts")
     .select("current_balance")
-    .eq("user_id", user.id);
+    .eq("user_id", user.id)
+    .eq("scope", scope);
 
   if (accountsError) throw accountsError;
 
   const { data: investments, error: investmentsError } = await supabase
     .from("investments")
-    .select("current_amount")
-    .eq("user_id", user.id);
+    .select("current_value")
+    .eq("user_id", user.id)
+    .eq("scope", scope);
 
   if (investmentsError) throw investmentsError;
 
@@ -36,7 +41,7 @@ export async function getNetWorthData(): Promise<NetWorthItem[]> {
 
   const totalInvestments =
     investments?.reduce(
-      (sum, investment) => sum + Number(investment.current_amount),
+      (sum, investment) => sum + Number(investment.current_value),
       0
     ) ?? 0;
 

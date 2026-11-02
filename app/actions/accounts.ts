@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { getActiveScope } from "@/lib/scope-server";
 
 export async function createAccount(formData: FormData) {
   const supabase = await createClient();
@@ -26,6 +27,7 @@ export async function createAccount(formData: FormData) {
     color,
     initial_balance: initialBalance,
     current_balance: initialBalance,
+    scope: await getActiveScope(),
   });
 
   if (error) {
@@ -33,6 +35,7 @@ export async function createAccount(formData: FormData) {
   }
 
   revalidatePath("/contas");
+  revalidatePath("/dashboard");
 }
 
 export async function deleteAccount(formData: FormData) {

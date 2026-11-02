@@ -39,39 +39,43 @@ export function LoginForm() {
   return (
     <form
       onSubmit={handleLogin}
-      className="space-y-5 rounded-xl border border-zinc-800 bg-zinc-900 p-6"
+      className="forge-auth-card space-y-5 rounded-2xl p-6 sm:p-8"
     >
       <div>
-        <label className="mb-2 block text-sm text-zinc-300">
+        <label htmlFor="login-email" className="mb-2 block text-sm text-zinc-300">
           E-mail
         </label>
 
         <input
+          id="login-email"
           type="email"
+          autoComplete="email"
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-blue-500"
+          className="forge-auth-input"
         />
       </div>
 
       <div>
-        <label className="mb-2 block text-sm text-zinc-300">
+        <label htmlFor="login-password" className="mb-2 block text-sm text-zinc-300">
           Senha
         </label>
 
         <input
+          id="login-password"
           type="password"
+          autoComplete="current-password"
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-blue-500"
+          className="forge-auth-input"
         />
       </div>
 
       <button
         disabled={loading}
-        className="w-full rounded-lg bg-blue-600 py-3 font-semibold text-white transition hover:bg-blue-500 disabled:opacity-60"
+        className="forge-auth-button"
       >
         {loading ? "Entrando..." : "Entrar"}
       </button>
@@ -80,7 +84,7 @@ export function LoginForm() {
         Ainda não possui uma conta?{" "}
         <Link
           href="/cadastro"
-          className="font-medium text-blue-400 hover:text-blue-300"
+          className="font-medium text-violet-300 transition hover:text-violet-200"
         >
           Criar conta
         </Link>

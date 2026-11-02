@@ -8,6 +8,12 @@ import {
   Tooltip,
 } from "recharts";
 
+import {
+  chartTooltipItemStyle,
+  chartTooltipLabelStyle,
+  chartTooltipStyle,
+} from "@/lib/chart-theme";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CategoryExpense } from "../data/category-expenses";
 
@@ -16,12 +22,12 @@ type Props = {
 };
 
 const COLORS = [
-  "#3b82f6",
+  "#a855f7",
   "#22c55e",
   "#f59e0b",
   "#ef4444",
   "#8b5cf6",
-  "#06b6d4",
+  "#818cf8",
   "#f97316",
 ];
 
@@ -52,7 +58,11 @@ export function ExpensesByCategory({ data }: Props) {
                 ))}
               </Pie>
 
-              <Tooltip />
+              <Tooltip
+                contentStyle={chartTooltipStyle}
+                labelStyle={chartTooltipLabelStyle}
+                itemStyle={chartTooltipItemStyle}
+              />
             </PieChart>
           </ResponsiveContainer>
         </div>

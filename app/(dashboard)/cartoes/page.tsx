@@ -9,27 +9,27 @@ export default async function CartoesPage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-3xl border border-white/10 bg-[#111827] p-8">
-        <span className="text-sm font-medium uppercase tracking-[0.25em] text-violet-400">
+      <div className="rounded-[22px] border border-line bg-surface p-8">
+        <span className="text-sm font-medium uppercase tracking-[0.25em] text-brand-soft">
           Financeiro
         </span>
 
-        <h1 className="mt-2 text-4xl font-bold tracking-tight text-white">
+        <h1 className="mt-2 text-4xl font-bold tracking-tight text-foreground">
           Cartões
         </h1>
 
-        <p className="mt-2 max-w-xl text-slate-400">
+        <p className="mt-2 max-w-xl text-muted-foreground">
           Gerencie seus cartões de crédito.
         </p>
       </div>
 
       <CardForm />
 
-      <div className="overflow-hidden rounded-3xl border border-white/10 bg-[#111827]">
+      <div className="overflow-hidden rounded-[22px] border border-line bg-surface">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[600px]">
-          <thead className="border-b border-white/10">
-            <tr className="text-left text-slate-400">
+          <thead className="border-b border-line">
+            <tr className="text-left text-muted-foreground">
               <th className="p-4">Nome</th>
               <th className="p-4">Limite</th>
               <th className="p-4">Fechamento</th>
@@ -43,7 +43,7 @@ export default async function CartoesPage() {
               <tr>
                 <td
                   colSpan={5}
-                  className="p-6 text-center text-slate-500"
+                  className="p-6 text-center text-faint"
                 >
                   Nenhum cartão cadastrado.
                 </td>
@@ -53,9 +53,9 @@ export default async function CartoesPage() {
             {cards.map((card) => (
               <tr
                 key={card.id}
-                className="border-b border-white/5 transition hover:bg-white/[0.03]"
+                className="border-b border-line transition hover:bg-tint"
               >
-                <td className="p-4 text-white">
+                <td className="p-4 text-foreground">
                   <div className="flex items-center gap-3">
                     <div
                       className="h-4 w-4 rounded-full"
@@ -68,18 +68,18 @@ export default async function CartoesPage() {
                   </div>
                 </td>
 
-                <td className="p-4 text-slate-300">
+                <td className="p-4 text-text-soft">
                   {new Intl.NumberFormat("pt-BR", {
                     style: "currency",
                     currency: "BRL",
                   }).format(card.limit_amount)}
                 </td>
 
-                <td className="p-4 text-slate-300">
+                <td className="p-4 text-text-soft">
                   Dia {card.closing_day}
                 </td>
 
-                <td className="p-4 text-slate-300">
+                <td className="p-4 text-text-soft">
                   Dia {card.due_day}
                 </td>
 
@@ -93,7 +93,7 @@ export default async function CartoesPage() {
 
                     <button
                       type="submit"
-                      className="rounded-lg p-2 text-slate-500 transition hover:bg-rose-500/10 hover:text-rose-400"
+                      className="rounded-lg p-2 text-faint transition hover:bg-rose-500/10 hover:text-danger"
                     >
                       <Trash2 className="h-5 w-5" />
                     </button>

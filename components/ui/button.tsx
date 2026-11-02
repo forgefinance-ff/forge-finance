@@ -17,9 +17,9 @@ const buttonVariants = cva(
     "disabled:pointer-events-none",
     "disabled:opacity-50",
     "focus-visible:ring-2",
-    "focus-visible:ring-[#7C3AED]/50",
+    "focus-visible:ring-brand/50",
     "focus-visible:ring-offset-2",
-    "focus-visible:ring-offset-[#09090B]",
+    "focus-visible:ring-offset-background",
     "[&_svg]:pointer-events-none",
     "[&_svg]:size-4",
   ].join(" "),
@@ -28,8 +28,8 @@ const buttonVariants = cva(
       variant: {
         default: [
           "bg-gradient-to-r",
-          "from-[#2563EB]",
-          "to-[#7C3AED]",
+          "from-brand",
+          "to-[#2563EB]",
           "text-white",
           "shadow-lg",
           "shadow-blue-900/30",
@@ -39,25 +39,25 @@ const buttonVariants = cva(
         ].join(" "),
 
         secondary: [
-          "bg-[#171F30]",
-          "text-white",
+          "bg-surface-elevated",
+          "text-foreground",
           "border",
-          "border-[#2B3650]",
-          "hover:bg-[#202A40]",
+          "border-line",
+          "hover:bg-tint-strong",
         ].join(" "),
 
         outline: [
           "border",
-          "border-[#2B3650]",
+          "border-line-strong",
           "bg-transparent",
-          "text-white",
-          "hover:bg-[#171F30]",
+          "text-foreground",
+          "hover:bg-tint-strong",
         ].join(" "),
 
         ghost: [
-          "text-[#CBD5E1]",
-          "hover:bg-[#171F30]",
-          "hover:text-white",
+          "text-text-soft",
+          "hover:bg-tint-strong",
+          "hover:text-foreground",
         ].join(" "),
 
         destructive: [
@@ -67,7 +67,7 @@ const buttonVariants = cva(
         ].join(" "),
 
         link: [
-          "text-[#60A5FA]",
+          "text-brand-soft",
           "hover:underline",
           "underline-offset-4",
           "bg-transparent",

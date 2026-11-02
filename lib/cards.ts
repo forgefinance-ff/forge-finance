@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getActiveScope } from "@/lib/scope-server";
 
 export type Card = {
   id: string;
@@ -25,6 +26,7 @@ export async function getCards() {
     .from("cards")
     .select("*")
     .eq("user_id", user.id)
+    .eq("scope", await getActiveScope())
     .order("created_at", { ascending: true });
 
   if (error) {
@@ -60,6 +62,7 @@ export async function createCard(input: CreateCardInput) {
     closing_day: input.closing_day,
     due_day: input.due_day,
     color: input.color,
+    scope: await getActiveScope(),
   });
 
   if (error) {

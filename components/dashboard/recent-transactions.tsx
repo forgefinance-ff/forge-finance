@@ -4,6 +4,8 @@ import {
   ReceiptText,
 } from "lucide-react";
 
+import { formatDateBR } from "@/lib/dates";
+
 import { RecentTransaction } from "@/lib/dashboard";
 
 type RecentTransactionsProps = {
@@ -15,20 +17,20 @@ export function RecentTransactions({
 }: RecentTransactionsProps) {
   if (transactions.length === 0) {
     return (
-      <section className="rounded-3xl border border-white/10 bg-[#111827] p-6">
+      <section className="rounded-[22px] border border-line bg-surface p-6">
         <div className="flex flex-col items-center justify-center py-14 text-center">
-          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/5">
+          <div className="mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-tint">
             <ReceiptText
-              className="text-slate-500"
+              className="text-faint"
               size={30}
             />
           </div>
 
-          <h3 className="text-lg font-semibold text-white">
+          <h3 className="text-lg font-semibold text-foreground">
             Nenhuma transação encontrada
           </h3>
 
-          <p className="mt-2 max-w-sm text-sm text-slate-400">
+          <p className="mt-2 max-w-sm text-sm text-muted-foreground">
             Quando você cadastrar sua primeira movimentação,
             ela aparecerá aqui.
           </p>
@@ -38,14 +40,14 @@ export function RecentTransactions({
   }
 
   return (
-    <section className="rounded-3xl border border-white/10 bg-[#111827] p-6">
+    <section className="rounded-[22px] border border-line bg-surface p-6">
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h3 className="text-xl font-semibold text-white">
+          <h3 className="text-xl font-semibold text-foreground">
             Últimas transações
           </h3>
 
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-muted-foreground">
             Movimentações mais recentes
           </p>
         </div>
@@ -58,7 +60,7 @@ export function RecentTransactions({
           return (
             <div
               key={transaction.id}
-              className="flex items-center justify-between rounded-2xl border border-white/5 bg-white/[0.03] p-4 transition hover:border-violet-500/20 hover:bg-white/[0.05]"
+              className="flex items-center justify-between rounded-2xl border border-line bg-tint p-4 transition hover:border-violet-500/20 hover:bg-tint"
             >
               <div className="flex items-center gap-4">
                 <div
@@ -71,30 +73,28 @@ export function RecentTransactions({
                   {income ? (
                     <ArrowDownLeft
                       size={20}
-                      className="text-emerald-400"
+                      className="text-success"
                     />
                   ) : (
                     <ArrowUpRight
                       size={20}
-                      className="text-rose-400"
+                      className="text-danger"
                     />
                   )}
                 </div>
 
                 <div>
-                  <h4 className="font-medium text-white">
+                  <h4 className="font-medium text-foreground">
                     {transaction.title}
                   </h4>
 
                   <div className="mt-1 flex items-center gap-2">
-                    <span className="rounded-full bg-white/5 px-2 py-1 text-xs text-slate-400">
+                    <span className="rounded-full bg-tint px-2 py-1 text-xs text-muted-foreground">
                       {transaction.category}
                     </span>
 
-                    <span className="text-xs text-slate-500">
-                      {new Date(
-                        transaction.transactionDate
-                      ).toLocaleDateString("pt-BR")}
+                    <span className="text-xs text-faint">
+                      {formatDateBR(String(transaction.transactionDate))}
                     </span>
                   </div>
                 </div>
@@ -103,8 +103,8 @@ export function RecentTransactions({
               <span
                 className={`text-lg font-semibold ${
                   income
-                    ? "text-emerald-400"
-                    : "text-rose-400"
+                    ? "text-success"
+                    : "text-danger"
                 }`}
               >
                 {income ? "+" : "-"}{" "}

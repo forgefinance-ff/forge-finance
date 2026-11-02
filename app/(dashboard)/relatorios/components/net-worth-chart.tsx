@@ -10,6 +10,15 @@ import {
   YAxis,
 } from "recharts";
 
+import {
+  chartAxisStroke,
+  chartAxisTick,
+  chartGridStroke,
+  chartTooltipItemStyle,
+  chartTooltipLabelStyle,
+  chartTooltipStyle,
+} from "@/lib/chart-theme";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { NetWorthItem } from "../data/net-worth";
 
@@ -28,19 +37,34 @@ export function NetWorthChart({ data }: Props) {
         <div className="h-[350px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" />
+              <CartesianGrid stroke={chartGridStroke} strokeDasharray="3 3" vertical={false} />
 
-              <XAxis dataKey="month" />
+              <XAxis
+                dataKey="month"
+                stroke={chartAxisStroke}
+                tick={chartAxisTick}
+                tickLine={false}
+                axisLine={false}
+              />
 
-              <YAxis />
+              <YAxis
+                stroke={chartAxisStroke}
+                tick={chartAxisTick}
+                tickLine={false}
+                axisLine={false}
+              />
 
-              <Tooltip />
+              <Tooltip
+                contentStyle={chartTooltipStyle}
+                labelStyle={chartTooltipLabelStyle}
+                itemStyle={chartTooltipItemStyle}
+              />
 
               <Area
                 type="monotone"
                 dataKey="patrimonio"
-                stroke="#3b82f6"
-                fill="#3b82f6"
+                stroke="#a855f7"
+                fill="#a855f7"
                 fillOpacity={0.2}
                 strokeWidth={3}
               />
