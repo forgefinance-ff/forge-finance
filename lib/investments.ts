@@ -13,14 +13,6 @@ export type Investment = {
   updated_at: string;
 };
 
-type CreateInvestmentInput = {
-  name: string;
-  type: string;
-  invested_amount: number;
-  current_value: number;
-  institution: string;
-};
-
 export async function getInvestments() {
   const supabase = await createClient();
 
@@ -40,42 +32,4 @@ export async function getInvestments() {
   if (error) throw error;
 
   return (data ?? []) as Investment[];
-}
-
-export async function createInvestment(input: CreateInvestmentInput) {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    throw new Error("Usuário não autenticado.");
-  }
-
-  const { error } = await supabase.from("investments").insert({
-    user_id: user.id,
-    name: input.name,
-    type: input.type,
-    invested_amount: input.invested_amount,
-    current_value: input.current_value,
-    institution: input.institution,
-    scope: await getActiveScope(),
-  });
-
-  if (error) {
-    console.error(error);
-    throw error;
-  }
-}
-
-export async function deleteInvestment(id: string) {
-  const supabase = await createClient();
-
-  const { error } = await supabase
-    .from("investments")
-    .delete()
-    .eq("id", id);
-
-  if (error) throw error;
 }
