@@ -141,7 +141,14 @@ export async function POST(request: Request) {
     });
 
     if (!response.ok) {
-      console.error("AI provider error", response.status);
+      // Registra só o tipo/mensagem de erro do provedor (sem chave e sem texto do usuário).
+      const err = (await response.json().catch(() => null)) as {
+        error?: { type?: string; message?: string };
+      } | null;
+      console.error("AI provider error", response.status, {
+        type: err?.error?.type,
+        message: err?.error?.message?.slice(0, 300),
+      });
       return NextResponse.json(
         { error: "O provedor de IA retornou um erro. Tente novamente." },
         { status: 502 }

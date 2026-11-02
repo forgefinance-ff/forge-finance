@@ -11,7 +11,19 @@ export type AiQuota = {
 export async function consumeAiQuota(): Promise<AiQuota | null> {
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("consume_my_ai_quota");
-  if (error || !data || !Array.isArray(data) || !data[0]) return null;
+  if (error) {
+    // Só metadados do erro do PostgREST/Postgres; nada do usuário.
+    console.error("consume_my_ai_quota failed", {
+      code: error.code,
+      message: error.message?.slice(0, 300),
+      hint: error.hint?.slice(0, 300),
+    });
+    return null;
+  }
+  if (!data || !Array.isArray(data) || !data[0]) {
+    console.error("consume_my_ai_quota returned no row");
+    return null;
+  }
   const row = data[0] as {
     allowed: boolean;
     used: number;
