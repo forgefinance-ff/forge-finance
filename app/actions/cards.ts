@@ -1,15 +1,17 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { createCard, deleteCard } from "@/lib/cards";
+
+import { appCtx } from "@/lib/services/app";
+import { createCard, deleteCard } from "@/lib/services/registry";
 
 export async function createCardAction(formData: FormData) {
-  await createCard({
-    name: String(formData.get("name")),
-    limit_amount: Number(formData.get("limit_amount")),
-    closing_day: Number(formData.get("closing_day")),
-    due_day: Number(formData.get("due_day")),
-    color: String(formData.get("color")),
+  await createCard(await appCtx(), {
+    name: String(formData.get("name") ?? ""),
+    limit_amount: String(formData.get("limit_amount") ?? ""),
+    closing_day: String(formData.get("closing_day") ?? ""),
+    due_day: String(formData.get("due_day") ?? ""),
+    color: String(formData.get("color") ?? ""),
   });
 
   revalidatePath("/cartoes");
@@ -17,9 +19,7 @@ export async function createCardAction(formData: FormData) {
 }
 
 export async function deleteCardAction(formData: FormData) {
-  const id = String(formData.get("id"));
-
-  await deleteCard(id);
+  await deleteCard(await appCtx(), String(formData.get("id")));
 
   revalidatePath("/cartoes");
   revalidatePath("/dashboard");
