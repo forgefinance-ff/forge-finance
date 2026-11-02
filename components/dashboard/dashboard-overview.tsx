@@ -23,6 +23,8 @@ type DashboardOverviewProps = {
   cards: Card[];
   userName: string | null;
   aiConfigured: boolean;
+  /** Alertas logo abaixo da saudação (vencimentos, DAS…). */
+  alerts?: React.ReactNode;
 };
 
 function greeting() {
@@ -47,6 +49,7 @@ export function DashboardOverview({
   cards,
   userName,
   aiConfigured,
+  alerts,
 }: DashboardOverviewProps) {
   const firstName = userName?.split(" ")[0];
 
@@ -84,6 +87,8 @@ export function DashboardOverview({
           className="h-11 rounded-full bg-gradient-to-r from-brand to-brand-indigo px-5 text-sm font-semibold text-white shadow-[0_0_24px_rgba(124,58,237,0.45)] transition hover:brightness-110"
         />
       </header>
+
+      {alerts}
 
       <div className="grid gap-4 xl:grid-cols-12">
         <div className="min-w-0 space-y-4 xl:col-span-9">

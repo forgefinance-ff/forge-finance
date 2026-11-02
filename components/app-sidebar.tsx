@@ -11,6 +11,7 @@ import {
   CreditCardIcon,
   MessageCircleIcon,
   ListIcon,
+  ReceiptTextIcon,
   Settings2Icon,
   TagsIcon,
   TargetIcon,
@@ -32,6 +33,7 @@ type NavItem = {
 const mainItems: NavItem[] = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboardIcon },
   { title: "Transações", url: "/transacoes", icon: ListIcon },
+  { title: "Contas a pagar/receber", url: "/contas-a-pagar-receber", icon: ReceiptTextIcon },
   { title: "Contas", url: "/contas", icon: LandmarkIcon },
   { title: "Cartões", url: "/cartoes", icon: WalletCardsIcon },
   { title: "Categorias", url: "/categorias", icon: TagsIcon },

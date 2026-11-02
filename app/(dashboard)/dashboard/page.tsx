@@ -5,12 +5,15 @@ import { getCards } from "@/lib/cards";
 import { getCategories } from "@/lib/categories";
 import { getDashboardData } from "@/lib/dashboard";
 import { getGoals } from "@/lib/goals";
+import { getDueSummary } from "@/lib/payables";
+import { todayInBrazil } from "@/lib/dates";
+import { DueSoonCard } from "@/components/dashboard/due-soon-card";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
 
-  const [dashboard, accounts, categories, goals, cards, userResult] =
+  const [dashboard, accounts, categories, goals, cards, userResult, dueSummary] =
     await Promise.all([
       getDashboardData(),
       getAccounts(),
@@ -18,6 +21,7 @@ export default async function DashboardPage() {
       getGoals(),
       getCards(),
       supabase.auth.getUser(),
+      getDueSummary(),
     ]);
 
   const user = userResult.data.user;
@@ -45,6 +49,7 @@ export default async function DashboardPage() {
       cards={cards}
       userName={userName}
       aiConfigured={getAiStatus().configured}
+      alerts={<DueSoonCard summary={dueSummary} today={todayInBrazil()} />}
     />
   );
 }

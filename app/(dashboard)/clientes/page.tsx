@@ -2,6 +2,8 @@ import { CustomersWorkspace } from "@/components/customers/customers-workspace";
 import { BusinessOnly } from "@/components/mei/business-only";
 import { PageHeader } from "@/components/mei/page-header";
 import { getCustomers } from "@/lib/customers";
+import { todayInBrazil } from "@/lib/dates";
+import { getCustomerReceivables } from "@/lib/payables";
 import { getActiveScope } from "@/lib/scope-server";
 
 type Props = {
@@ -29,12 +31,20 @@ export default async function ClientesPage({ searchParams }: Props) {
     );
   }
 
-  const customers = await getCustomers({ archived });
+  const [customers, receivables] = await Promise.all([
+    getCustomers({ archived }),
+    getCustomerReceivables(),
+  ]);
 
   return (
     <div className="space-y-6">
       {header}
-      <CustomersWorkspace customers={customers} archived={archived} />
+      <CustomersWorkspace
+        customers={customers}
+        archived={archived}
+        receivables={receivables}
+        today={todayInBrazil()}
+      />
     </div>
   );
 }

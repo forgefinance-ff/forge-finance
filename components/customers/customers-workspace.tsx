@@ -5,6 +5,7 @@ import { useMemo, useState, useTransition } from "react";
 import {
   ArchiveIcon,
   ArchiveRestoreIcon,
+  HistoryIcon,
   MailIcon,
   PencilIcon,
   PhoneIcon,
@@ -36,6 +37,9 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import type { Customer } from "@/lib/customers";
+import { formatDateBR } from "@/lib/dates";
+import { formatCurrency } from "@/lib/formatters";
+import { dueBadge, type Payable } from "@/lib/payables-shared";
 import { formatBrPhone } from "@/lib/phone";
 import { cn } from "@/lib/utils";
 
@@ -49,10 +53,31 @@ function normalize(value: string) {
 type Props = {
   customers: Customer[];
   archived: boolean;
+  /** Contas a receber com cliente, para totais e histórico. */
+  receivables: Payable[];
+  today: string;
 };
 
-export function CustomersWorkspace({ customers, archived }: Props) {
+type Totals = { open: number; received: number; count: number };
+
+export function CustomersWorkspace({ customers, archived, receivables, today }: Props) {
   const [query, setQuery] = useState("");
+  const [history, setHistory] = useState<Customer | null>(null);
+
+  const totals = useMemo(() => {
+    const map = new Map<string, Totals>();
+
+    for (const p of receivables) {
+      if (!p.customer_id) continue;
+      const item = map.get(p.customer_id) ?? { open: 0, received: 0, count: 0 };
+      item.count += 1;
+      if (p.status === "pending") item.open += p.amount;
+      if (p.status === "paid") item.received += p.amount;
+      map.set(p.customer_id, item);
+    }
+
+    return map;
+  }, [receivables]);
   const [editing, setEditing] = useState<Customer | "new" | null>(null);
   const [deleting, setDeleting] = useState<Customer | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -221,7 +246,30 @@ export function CustomersWorkspace({ customers, archived }: Props) {
                 <p className="mt-3 line-clamp-2 text-sm text-text-soft">{customer.notes}</p>
               )}
 
+              <dl className="mt-4 grid grid-cols-2 gap-3 rounded-2xl border border-line bg-tint p-3">
+                <div>
+                  <dt className="text-xs text-faint">Em aberto</dt>
+                  <dd className="font-semibold tabular-nums text-foreground">
+                    {formatCurrency(totals.get(customer.id)?.open ?? 0)}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="text-xs text-faint">Já recebido</dt>
+                  <dd className="font-semibold tabular-nums text-success">
+                    {formatCurrency(totals.get(customer.id)?.received ?? 0)}
+                  </dd>
+                </div>
+              </dl>
+
               <div className="mt-4 flex justify-end gap-1 border-t border-line pt-3">
+                <button
+                  type="button"
+                  onClick={() => setHistory(customer)}
+                  className="mr-auto inline-flex items-center gap-1.5 rounded-lg px-2 py-2 text-sm text-text-soft transition hover:bg-brand/10 hover:text-brand-soft"
+                >
+                  <HistoryIcon className="h-4 w-4" />
+                  Histórico
+                </button>
                 {!customer.archived_at && (
                   <button
                     type="button"
@@ -247,6 +295,7 @@ export function CustomersWorkspace({ customers, archived }: Props) {
                     <ArchiveIcon className="h-4 w-4" />
                   )}
                 </button>
+                {!totals.has(customer.id) && (
                 <button
                   type="button"
                   onClick={() => setDeleting(customer)}
@@ -256,6 +305,7 @@ export function CustomersWorkspace({ customers, archived }: Props) {
                 >
                   <Trash2Icon className="h-4 w-4" />
                 </button>
+                )}
               </div>
             </li>
           ))}
@@ -283,12 +333,31 @@ export function CustomersWorkspace({ customers, archived }: Props) {
         </SheetContent>
       </Sheet>
 
+      <Sheet open={history !== null} onOpenChange={(open) => !open && setHistory(null)}>
+        <SheetContent side="right" className="w-full overflow-y-auto sm:max-w-lg">
+          <SheetHeader>
+            <SheetTitle>Histórico de {history?.name}</SheetTitle>
+            <SheetDescription>
+              Contas a receber deste cliente. Registre novas em Contas a pagar/receber.
+            </SheetDescription>
+          </SheetHeader>
+
+          {history && (
+            <CustomerHistory
+              items={receivables.filter((p) => p.customer_id === history.id)}
+              totals={totals.get(history.id) ?? { open: 0, received: 0, count: 0 }}
+              today={today}
+            />
+          )}
+        </SheetContent>
+      </Sheet>
+
       <AlertDialog open={deleting !== null} onOpenChange={(open) => !open && setDeleting(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Excluir {deleting?.name}?</AlertDialogTitle>
             <AlertDialogDescription>
-              O cadastro será apagado de vez. Se você quer só tirar da lista, use
+              Este cliente não tem cobranças. O cadastro será apagado de vez. Se você quer só tirar da lista, use
               Arquivar.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -300,6 +369,72 @@ export function CustomersWorkspace({ customers, archived }: Props) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+    </div>
+  );
+}
+
+function CustomerHistory({
+  items,
+  totals,
+  today,
+}: {
+  items: Payable[];
+  totals: Totals;
+  today: string;
+}) {
+  return (
+    <div className="space-y-4 px-4 pb-6">
+      <dl className="grid grid-cols-2 gap-3">
+        <div className="rounded-2xl border border-line bg-tint p-3">
+          <dt className="text-xs text-faint">Em aberto</dt>
+          <dd className="text-lg font-semibold tabular-nums text-foreground">
+            {formatCurrency(totals.open)}
+          </dd>
+        </div>
+        <div className="rounded-2xl border border-line bg-tint p-3">
+          <dt className="text-xs text-faint">Já recebido</dt>
+          <dd className="text-lg font-semibold tabular-nums text-success">
+            {formatCurrency(totals.received)}
+          </dd>
+        </div>
+      </dl>
+
+      {items.length === 0 ? (
+        <p className="rounded-2xl border border-dashed border-line-strong p-6 text-center text-sm text-faint">
+          Nenhuma cobrança registrada para este cliente ainda.
+        </p>
+      ) : (
+        <ul className="divide-y divide-line rounded-2xl border border-line">
+          {items.map((p) => {
+            const badge = dueBadge(p, today);
+
+            return (
+              <li key={p.id} className="flex items-center justify-between gap-3 p-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-medium text-foreground">{p.description}</p>
+                  <p className="text-xs text-faint">
+                    {p.status === "paid" && p.paid_at
+                      ? `Recebido em ${formatDateBR(p.paid_at)}`
+                      : p.status === "canceled"
+                        ? `Cancelado · vencia em ${formatDateBR(p.due_date)}`
+                        : `Vence em ${formatDateBR(p.due_date)}`}
+                    {badge === "overdue" && <span className="font-semibold text-danger"> · Atrasado</span>}
+                    {badge === "today" && <span className="font-semibold text-warning"> · Vence hoje</span>}
+                  </p>
+                </div>
+                <span
+                  className={cn(
+                    "shrink-0 text-sm font-semibold tabular-nums",
+                    p.status === "paid" ? "text-success" : p.status === "canceled" ? "text-faint line-through" : "text-foreground"
+                  )}
+                >
+                  {formatCurrency(p.amount)}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </div>
   );
 }

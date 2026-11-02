@@ -139,6 +139,19 @@ export async function deleteCustomer(id: string): Promise<ActionResult> {
   try {
     const { supabase, user } = await requireUser();
 
+    const { count } = await supabase
+      .from("payables")
+      .select("id", { count: "exact", head: true })
+      .eq("customer_id", id)
+      .eq("user_id", user.id);
+
+    if ((count ?? 0) > 0) {
+      return {
+        ok: false,
+        error: "Este cliente tem cobranças registradas. Arquive em vez de excluir.",
+      };
+    }
+
     const { error } = await supabase
       .from("customers")
       .delete()
