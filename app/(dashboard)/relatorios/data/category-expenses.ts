@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getActiveScope } from "@/lib/scope-server";
 import { firstRelation } from "@/lib/relations";
 import { shiftDate, type ReportPeriod } from "./period";
 
@@ -26,6 +27,7 @@ export async function getCategoryExpenses(
       categories(name)
     `)
     .eq("user_id", user.id)
+    .eq("scope", await getActiveScope())
     .eq("type", "expense");
 
   if (period.from) query = query.gte("transaction_date", period.from);

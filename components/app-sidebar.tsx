@@ -17,7 +17,9 @@ import {
   WalletCardsIcon,
 } from "lucide-react";
 
+import { ScopeSwitcher } from "@/components/scope-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
+import type { Scope } from "@/lib/scope";
 import { cn } from "@/lib/utils";
 
 type NavItem = {
@@ -92,7 +94,7 @@ function RailItem({ item, active }: { item: NavItem; active: boolean }) {
 }
 
 /** Barra lateral compacta (desktop) — apenas ícones. */
-export function AppSidebar() {
+export function AppSidebar({ scope }: { scope: Scope }) {
   const pathname = usePathname();
 
   return (
@@ -103,7 +105,7 @@ export function AppSidebar() {
       <Link
         href="/dashboard"
         aria-label="Forge Finance"
-        className="mb-6 flex h-12 w-12 items-center justify-center transition-transform duration-300 hover:scale-105"
+        className="mb-4 flex h-12 w-12 items-center justify-center transition-transform duration-300 hover:scale-105"
       >
         <Image
           src="/icon-f.png"
@@ -114,6 +116,8 @@ export function AppSidebar() {
           className="h-12 w-12 object-contain drop-shadow-[0_0_14px_rgba(139,92,246,0.45)]"
         />
       </Link>
+
+      <ScopeSwitcher scope={scope} orientation="vertical" className="mb-4" />
 
       <nav className="flex w-full flex-1 flex-col items-center overflow-y-auto overflow-x-visible py-1">
         <ul className="flex flex-col items-center gap-2 rounded-[28px] border border-line bg-tint p-2">

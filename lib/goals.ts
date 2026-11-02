@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getActiveScope } from "@/lib/scope-server";
 
 export type Goal = {
   id: string;
@@ -24,6 +25,7 @@ export async function getGoals() {
     .from("goals")
     .select("*")
     .eq("user_id", user.id)
+    .eq("scope", await getActiveScope())
     .order("created_at", { ascending: true });
 
   if (error) throw error;
@@ -55,6 +57,7 @@ export async function createGoal(input: CreateGoalInput) {
     target_amount: input.target_amount,
     current_amount: input.current_amount,
     deadline: input.deadline,
+    scope: await getActiveScope(),
   });
 
   if (error) throw error;

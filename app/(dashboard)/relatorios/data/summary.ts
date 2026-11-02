@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getActiveScope } from "@/lib/scope-server";
 import { shiftDate, type ReportPeriod } from "./period";
 
 export async function getSummaryData(period: ReportPeriod) {
@@ -12,10 +13,13 @@ export async function getSummaryData(period: ReportPeriod) {
     return { income: 0, expenses: 0, balance: 0, netWorth: 0 };
   }
 
+  const scope = await getActiveScope();
+
   let transactionsQuery = supabase
     .from("transactions")
     .select("type, amount")
-    .eq("user_id", user.id);
+    .eq("user_id", user.id)
+    .eq("scope", scope);
 
   if (period.from) {
     transactionsQuery = transactionsQuery.gte("transaction_date", period.from);
@@ -33,11 +37,16 @@ export async function getSummaryData(period: ReportPeriod) {
     { data: investments, error: investmentsError },
   ] = await Promise.all([
     transactionsQuery,
-    supabase.from("accounts").select("current_balance").eq("user_id", user.id),
+    supabase
+      .from("accounts")
+      .select("current_balance")
+      .eq("user_id", user.id)
+      .eq("scope", scope),
     supabase
       .from("investments")
       .select("current_value")
-      .eq("user_id", user.id),
+      .eq("user_id", user.id)
+      .eq("scope", scope),
   ]);
 
   if (transactionsError) throw transactionsError;

@@ -1,6 +1,7 @@
 import { revalidatePath } from "next/cache";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { parseScope, SCOPE_EMOJI, SCOPE_LABEL, type Scope } from "@/lib/scope";
 import { downloadMedia, sendConfirmButtons, sendText } from "./meta";
 import { parseTransactionMessage, type ParsedItem } from "./parse";
 import { transcribeAudio } from "./transcribe";
@@ -30,8 +31,8 @@ type Link = {
   default_account_id: string | null;
 };
 
-type Category = { id: string; name: string; type: "income" | "expense" };
-type Account = { id: string; name: string };
+type Category = { id: string; name: string; type: "income" | "expense"; scope: Scope };
+type Account = { id: string; name: string; scope: Scope };
 
 type ResolvedItem = {
   type: "income" | "expense";
@@ -41,6 +42,7 @@ type ResolvedItem = {
   category_name: string;
   account_id: string;
   account_name: string;
+  scope: Scope;
   date: string;
 };
 
@@ -57,6 +59,7 @@ Antes de salvar, eu sempre peço a sua confirmação.
 
 Comandos:
 • *conta padrão Nubank* — define a conta usada quando você não citar nenhuma
+• Citou uma conta da empresa? Eu uso as categorias da empresa 🏢
 • *ajuda* — mostra esta mensagem`;
 
 export async function handleIncoming(message: IncomingMessage) {
@@ -237,14 +240,32 @@ async function handleLinked(admin: Admin, link: Link, message: IncomingMessage) 
 
 async function loadContext(admin: Admin, userId: string) {
   const [{ data: categories }, { data: accounts }] = await Promise.all([
-    admin.from("categories").select("id, name, type").eq("user_id", userId),
-    admin.from("accounts").select("id, name").eq("user_id", userId),
+    admin.from("categories").select("id, name, type, scope").eq("user_id", userId),
+    admin.from("accounts").select("id, name, scope").eq("user_id", userId),
   ]);
 
   return {
-    categories: (categories ?? []) as Category[],
-    accounts: (accounts ?? []) as Account[],
+    categories: ((categories ?? []) as Category[]).map((c) => ({ ...c, scope: parseScope(c.scope) })),
+    accounts: ((accounts ?? []) as Account[]).map((a) => ({ ...a, scope: parseScope(a.scope) })),
   };
+}
+
+/**
+ * Escopo provável antes da IA: conta citada no texto > conta padrão > conta única.
+ * As categorias enviadas à IA são só as desse escopo.
+ */
+function guessScope(text: string, accounts: Account[], defaultId: string | null): Scope {
+  const normalized = normalize(text);
+
+  const cited = accounts
+    .filter((a) => normalize(a.name).length >= 3 && normalized.includes(normalize(a.name)))
+    .sort((a, b) => b.name.length - a.name.length)[0];
+
+  if (cited) return cited.scope;
+
+  const fallback = resolveAccount(null, accounts, defaultId);
+
+  return fallback?.scope ?? "personal";
 }
 
 function resolveCategory(name: string, type: "income" | "expense", categories: Category[]) {
@@ -298,15 +319,45 @@ async function registerFromText(
 
   const today = todayInBrazil();
 
-  const result = await parseTransactionMessage(text, {
-    today,
-    categories: categories.map((c) => ({ name: c.name, type: c.type })),
-    accounts: accounts.map((a) => ({ name: a.name })),
-  });
+  const hasBusiness = accounts.some((a) => a.scope === "business");
+
+  const parseFor = (scope: Scope) =>
+    parseTransactionMessage(text, {
+      today,
+      scope,
+      categories: categories
+        .filter((c) => c.scope === scope)
+        .map((c) => ({ name: c.name, type: c.type })),
+      accounts: accounts.map((a) => ({ name: a.name })),
+    });
+
+  let scope = guessScope(text, accounts, link.default_account_id);
+  let result = await parseFor(scope);
 
   if (!result.ok) {
     await sendText(link.phone, result.reply);
     return;
+  }
+
+  // Se a IA apontou contas de outro escopo, reinterpreta com as categorias certas.
+  const accountScopes = new Set(
+    result.items
+      .map((item) => resolveAccount(item.account, accounts, link.default_account_id)?.scope)
+      .filter((s): s is Scope => !!s)
+  );
+
+  if (accountScopes.size === 1) {
+    const [accountScope] = accountScopes;
+
+    if (accountScope !== scope) {
+      scope = accountScope;
+      result = await parseFor(scope);
+
+      if (!result.ok) {
+        await sendText(link.phone, result.reply);
+        return;
+      }
+    }
   }
 
   const resolved: ResolvedItem[] = [];
@@ -316,18 +367,6 @@ async function registerFromText(
 
     if (problem) {
       await sendText(link.phone, problem);
-      return;
-    }
-
-    const category = resolveCategory(item.category, item.type, categories);
-
-    if (!category) {
-      await sendText(
-        link.phone,
-        `Não encontrei uma categoria de ${
-          item.type === "expense" ? "despesa" : "receita"
-        } para "${item.description}". Crie uma categoria (ex.: "Outros") no app e tente de novo.`
-      );
       return;
     }
 
@@ -343,6 +382,25 @@ async function registerFromText(
       return;
     }
 
+    // A categoria sempre vem do escopo da CONTA escolhida.
+    const category = resolveCategory(
+      item.category,
+      item.type,
+      categories.filter((c) => c.scope === account.scope)
+    );
+
+    if (!category) {
+      const kind = item.type === "expense" ? "despesa" : "receita";
+
+      await sendText(
+        link.phone,
+        account.scope === "business"
+          ? `Não encontrei uma categoria de ${kind} da empresa para "${item.description}". No app, entre no modo *Empresa* e crie as categorias (ex.: "Outros").`
+          : `Não encontrei uma categoria de ${kind} para "${item.description}". Crie uma categoria (ex.: "Outros") no app e tente de novo.`
+      );
+      return;
+    }
+
     resolved.push({
       type: item.type,
       amount: Math.round(item.amount * 100) / 100,
@@ -351,6 +409,7 @@ async function registerFromText(
       category_name: category.name,
       account_id: account.id,
       account_name: account.name,
+      scope: account.scope,
       date: item.date,
     });
   }
@@ -369,7 +428,9 @@ async function registerFromText(
 
   const lines = resolved.map(
     (r) =>
-      `${r.type === "expense" ? "🔴" : "🟢"} ${r.description} — ${formatBRL(r.amount)}\n${r.category_name} • ${r.account_name} • ${formatDayMonth(r.date)}`
+      `${r.type === "expense" ? "🔴" : "🟢"} ${r.description} — ${formatBRL(r.amount)}\n${
+        hasBusiness ? `${SCOPE_EMOJI[r.scope]} ${SCOPE_LABEL[r.scope]} • ` : ""
+      }${r.category_name} • ${r.account_name} • ${formatDayMonth(r.date)}`
   );
 
   const heading = resolved.length > 1 ? "Confirmar estes lançamentos?" : "Confirmar este lançamento?";
@@ -525,5 +586,9 @@ async function setDefaultAccount(admin: Admin, link: Link, wantedRaw: string) {
     .eq("user_id", link.user_id);
 
   revalidatePath("/whatsapp");
-  await sendText(link.phone, `Conta padrão: *${account.name}* ✅`);
+  const scopeNote = accounts.some((a) => a.scope === "business")
+    ? ` (${SCOPE_EMOJI[account.scope]} ${SCOPE_LABEL[account.scope]})`
+    : "";
+
+  await sendText(link.phone, `Conta padrão: *${account.name}*${scopeNote} ✅`);
 }

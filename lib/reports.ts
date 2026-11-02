@@ -1,4 +1,5 @@
 ﻿import { createClient } from "@/lib/supabase/server";
+import { getActiveScope } from "@/lib/scope-server";
 
 export type ReportSummary = {
   income: number;
@@ -23,22 +24,27 @@ export async function getReportSummary(): Promise<ReportSummary> {
     };
   }
 
+  const scope = await getActiveScope();
+
   const [{ data: transactions }, { data: accounts }, { data: investments }] =
     await Promise.all([
       supabase
         .from("transactions")
         .select("type, amount")
-        .eq("user_id", user.id),
+        .eq("user_id", user.id)
+        .eq("scope", scope),
 
       supabase
         .from("accounts")
         .select("current_balance")
-        .eq("user_id", user.id),
+        .eq("user_id", user.id)
+        .eq("scope", scope),
 
       supabase
         .from("investments")
         .select("current_value")
-        .eq("user_id", user.id),
+        .eq("user_id", user.id)
+        .eq("scope", scope),
     ]);
 
   const income =

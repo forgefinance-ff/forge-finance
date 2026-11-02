@@ -30,7 +30,7 @@ export default async function WhatsappPage() {
     .eq("user_id", user.id)
     .maybeSingle();
 
-  const accounts = link ? await getAccounts() : [];
+  const accounts = link ? await getAccounts({ allScopes: true }) : [];
 
   const { data: codeRow } = link
     ? { data: null }

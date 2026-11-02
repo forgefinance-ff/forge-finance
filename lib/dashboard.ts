@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getActiveScope } from "@/lib/scope-server";
 import { buildAnalytics, type DashboardAnalytics } from "@/lib/dashboard-analytics";
 import { firstRelation } from "@/lib/relations";
 
@@ -184,6 +185,8 @@ export async function getDashboardData(): Promise<DashboardData> {
     };
   }
 
+  const scope = await getActiveScope();
+
   const [
     { data: accounts, error: accountsError },
     { data: transactions, error: transactionsError },
@@ -192,7 +195,8 @@ export async function getDashboardData(): Promise<DashboardData> {
     supabase
       .from("accounts")
       .select("current_balance")
-      .eq("user_id", user.id),
+      .eq("user_id", user.id)
+      .eq("scope", scope),
 
     supabase
       .from("transactions")
@@ -207,12 +211,14 @@ export async function getDashboardData(): Promise<DashboardData> {
       `
       )
       .eq("user_id", user.id)
+      .eq("scope", scope)
       .order("transaction_date", { ascending: false }),
 
     supabase
       .from("investments")
       .select("current_value, invested_amount")
-      .eq("user_id", user.id),
+      .eq("user_id", user.id)
+      .eq("scope", scope),
   ]);
 
   if (accountsError) throw accountsError;

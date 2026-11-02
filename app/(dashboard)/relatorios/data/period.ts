@@ -20,20 +20,10 @@ function first(value?: string | string[]) {
   return Array.isArray(value) ? value[0] : value;
 }
 
-/** Data de hoje no fuso de Brasília (o servidor da Vercel roda em UTC). */
-function todayInBrazil(): string {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "America/Sao_Paulo",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date());
-}
+// Hoje no fuso de Brasília (o servidor da Vercel roda em UTC).
+import { shiftDate, todayInBrazil } from "@/lib/dates";
 
-export function shiftDate(date: string, days: number): string {
-  const [y, m, d] = date.split("-").map(Number);
-  return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
-}
+export { shiftDate };
 
 function isValidDate(value: string | undefined): value is string {
   return !!value && DATE_RE.test(value) && shiftDate(value, 0) === value;

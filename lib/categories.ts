@@ -1,4 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
+import { getActiveScope } from "@/lib/scope-server";
+import type { Scope } from "@/lib/scope";
 
 export type Category = {
   id: string;
@@ -7,6 +9,7 @@ export type Category = {
   type: "income" | "expense";
   color: string;
   icon: string;
+  scope: Scope;
   created_at: string;
   updated_at: string;
 };
@@ -47,6 +50,7 @@ async function seedDefaultCategories(userId: string) {
     type: category.type,
     color: category.color,
     icon: category.icon,
+    scope: "personal",
   }));
 
   const { error } = await supabase.from("categories").insert(rows);
@@ -63,25 +67,30 @@ export async function getCategories() {
 
   if (!user) return [];
 
+  const scope = await getActiveScope();
+
   const { data, error } = await supabase
     .from("categories")
     .select("*")
     .eq("user_id", user.id)
+    .eq("scope", scope)
     .order("type", { ascending: true })
     .order("name", { ascending: true });
 
   if (error) throw error;
 
-  // Se o usuário ainda não tem nenhuma categoria (conta nova, ou conta
+  // Se o usuário ainda não tem nenhuma categoria pessoal (conta nova, ou conta
   // criada antes das categorias padrão existirem), cria o conjunto padrão
   // automaticamente na primeira vez que os dados forem buscados.
-  if (!data || data.length === 0) {
+  // No escopo Empresa os padrões só são criados quando o usuário aceita.
+  if ((!data || data.length === 0) && scope === "personal") {
     await seedDefaultCategories(user.id);
 
     const { data: seeded, error: seededError } = await supabase
       .from("categories")
       .select("*")
       .eq("user_id", user.id)
+      .eq("scope", scope)
       .order("type", { ascending: true })
       .order("name", { ascending: true });
 
@@ -90,5 +99,5 @@ export async function getCategories() {
     return (seeded ?? []) as Category[];
   }
 
-  return data as Category[];
+  return (data ?? []) as Category[];
 }

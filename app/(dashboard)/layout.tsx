@@ -1,10 +1,14 @@
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
 import { getAiStatus } from "@/lib/ai/config";
+import { BUSINESS_ONBOARDING_COOKIE } from "@/lib/scope";
+import { getActiveScope } from "@/lib/scope-server";
 
 import { AppSidebar, MobileNav } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
+import { BusinessOnboarding } from "@/components/business-onboarding";
 
 export default async function DashboardLayout({
   children,
@@ -34,21 +38,42 @@ export default async function DashboardLayout({
     "Usuário";
 
   const ai = getAiStatus();
+  const scope = await getActiveScope();
+
+  // Na 1ª visita ao escopo Empresa (sem categorias de empresa e sem resposta
+  // anterior), oferece criar os padrões. Nada é criado sem confirmação.
+  let offerBusinessDefaults = false;
+
+  if (scope === "business") {
+    const answered = (await cookies()).get(BUSINESS_ONBOARDING_COOKIE)?.value;
+
+    if (!answered) {
+      const { count } = await supabase
+        .from("categories")
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", session.user.id)
+        .eq("scope", "business");
+
+      offerBusinessDefaults = (count ?? 0) === 0;
+    }
+  }
 
   return (
     <div className="relative isolate min-h-screen">
       <div aria-hidden className="forge-backdrop" />
 
-      <AppSidebar />
+      <AppSidebar scope={scope} />
 
       <div className="flex min-h-screen min-w-0 flex-col md:pl-20">
         <SiteHeader
           userName={userName}
           avatarUrl={profile?.avatar_url ?? null}
           aiConfigured={ai.configured}
+          scope={scope}
         />
 
         <main className="min-w-0 flex-1 px-4 pb-24 pt-5 md:pb-8 lg:px-8">
+          {offerBusinessDefaults && <BusinessOnboarding />}
           {children}
         </main>
       </div>

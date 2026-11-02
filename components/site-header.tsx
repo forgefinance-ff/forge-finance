@@ -6,7 +6,9 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { SearchIcon, Settings } from "lucide-react";
 
+import { ScopeSwitcher } from "@/components/scope-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
+import type { Scope } from "@/lib/scope";
 import { cn } from "@/lib/utils";
 
 const pages = [
@@ -32,9 +34,10 @@ type SiteHeaderProps = {
   userName: string;
   avatarUrl: string | null;
   aiConfigured: boolean;
+  scope: Scope;
 };
 
-export function SiteHeader({ userName, avatarUrl, aiConfigured }: SiteHeaderProps) {
+export function SiteHeader({ userName, avatarUrl, aiConfigured, scope }: SiteHeaderProps) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -68,7 +71,7 @@ export function SiteHeader({ userName, avatarUrl, aiConfigured }: SiteHeaderProp
             priority
             className="h-9 w-9 object-contain drop-shadow-[0_0_10px_rgba(139,92,246,0.45)] md:hidden"
           />
-          <span className="text-lg font-semibold tracking-tight text-foreground">
+          <span className="hidden text-lg font-semibold tracking-tight text-foreground min-[420px]:inline">
             Forge <span className="text-brand-soft">Finance</span>
           </span>
         </Link>
@@ -97,6 +100,8 @@ export function SiteHeader({ userName, avatarUrl, aiConfigured }: SiteHeaderProp
       </div>
 
       <div className="flex items-center gap-2 sm:gap-3">
+        <ScopeSwitcher scope={scope} className="md:hidden" />
+
         <div className="relative hidden sm:block">
           <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-faint" />
           <input
