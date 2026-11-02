@@ -5,6 +5,7 @@ import {
 } from "@/app/actions/whatsapp";
 import { Button } from "@/components/ui/button";
 import { getAccounts } from "@/lib/accounts";
+import { SCOPE_EMOJI, SCOPE_LABEL } from "@/lib/scope";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -31,6 +32,7 @@ export default async function WhatsappPage() {
     .maybeSingle();
 
   const accounts = link ? await getAccounts({ allScopes: true }) : [];
+  const hasBusinessAccounts = accounts.some((a) => a.scope === "business");
 
   const { data: codeRow } = link
     ? { data: null }
@@ -97,6 +99,8 @@ export default async function WhatsappPage() {
                 {accounts.map((account) => (
                   <option key={account.id} value={account.id}>
                     {account.name}
+                    {hasBusinessAccounts &&
+                      ` (${SCOPE_EMOJI[account.scope]} ${SCOPE_LABEL[account.scope]})`}
                   </option>
                 ))}
               </select>
