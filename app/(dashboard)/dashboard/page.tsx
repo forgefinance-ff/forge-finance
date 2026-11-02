@@ -8,12 +8,17 @@ import { getGoals } from "@/lib/goals";
 import { getDueSummary } from "@/lib/payables";
 import { todayInBrazil } from "@/lib/dates";
 import { DueSoonCard } from "@/components/dashboard/due-soon-card";
+import { DasReminderCard } from "@/components/dashboard/das-reminder-card";
+import { getDasReminder } from "@/lib/mei";
+import { getActiveScope } from "@/lib/scope-server";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
 
-  const [dashboard, accounts, categories, goals, cards, userResult, dueSummary] =
+  const scope = await getActiveScope();
+
+  const [dashboard, accounts, categories, goals, cards, userResult, dueSummary, dasReminder] =
     await Promise.all([
       getDashboardData(),
       getAccounts(),
@@ -22,6 +27,7 @@ export default async function DashboardPage() {
       getCards(),
       supabase.auth.getUser(),
       getDueSummary(),
+      scope === "business" ? getDasReminder() : Promise.resolve(null),
     ]);
 
   const user = userResult.data.user;
@@ -49,7 +55,12 @@ export default async function DashboardPage() {
       cards={cards}
       userName={userName}
       aiConfigured={getAiStatus().configured}
-      alerts={<DueSoonCard summary={dueSummary} today={todayInBrazil()} />}
+      alerts={
+        <>
+          <DasReminderCard reminder={dasReminder} />
+          <DueSoonCard summary={dueSummary} today={todayInBrazil()} />
+        </>
+      }
     />
   );
 }

@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { fail, type ActionResult } from "@/lib/action-result";
 import { isRealDate } from "@/lib/dates";
+import { parseAmount } from "@/lib/money";
 import { getActiveScope } from "@/lib/scope-server";
 import { createClient } from "@/lib/supabase/server";
 
@@ -41,16 +42,6 @@ const payableSchema = z
   .refine((data) => !data.customer_id || data.kind === "receivable", {
     message: "Cliente só pode ser informado em contas a receber.",
   });
-
-/** Aceita "1.234,56", "1234,56" e "1234.56". */
-function parseAmount(raw: string): number {
-  const value = raw.trim();
-  if (!value) return Number.NaN;
-  const normalized = value.includes(",")
-    ? value.replace(/\./g, "").replace(",", ".")
-    : value;
-  return Number(normalized);
-}
 
 function readPayable(formData: FormData) {
   return payableSchema.safeParse({

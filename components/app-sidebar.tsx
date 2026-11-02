@@ -10,6 +10,7 @@ import {
   LayoutDashboardIcon,
   CreditCardIcon,
   MessageCircleIcon,
+  PercentIcon,
   ListIcon,
   ReceiptTextIcon,
   Settings2Icon,
@@ -47,6 +48,7 @@ const mainItems: NavItem[] = [
 /** Itens que só aparecem no escopo Empresa (entram depois de "Categorias"). */
 const businessItems: NavItem[] = [
   { title: "Clientes", url: "/clientes", icon: UsersIcon },
+  { title: "Impostos", url: "/impostos", icon: PercentIcon },
 ];
 
 export function getNavItems(scope: Scope): NavItem[] {
