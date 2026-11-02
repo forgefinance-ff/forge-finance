@@ -11,6 +11,16 @@ import {
   YAxis,
 } from "recharts";
 
+import {
+  chartAxisStroke,
+  chartAxisTick,
+  chartCursorFill,
+  chartGridStroke,
+  chartTooltipItemStyle,
+  chartTooltipLabelStyle,
+  chartTooltipStyle,
+} from "@/lib/chart-theme";
+
 import type { ChartPoint } from "@/lib/dashboard";
 import { formatCurrency } from "@/lib/formatters";
 import { cn } from "@/lib/utils";
@@ -61,8 +71,8 @@ export function DashboardChart({
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <p className="forge-panel-title">Patrimônio e fluxo de caixa</p>
-          <p className="mt-3 text-xs text-zinc-400">Patrimônio atual</p>
-          <p className="text-3xl font-semibold tracking-tight text-white">
+          <p className="mt-3 text-xs text-muted-foreground">Patrimônio atual</p>
+          <p className="text-3xl font-semibold tracking-tight text-foreground">
             {formatCurrency(totalBalance)}
           </p>
         </div>
@@ -70,7 +80,7 @@ export function DashboardChart({
         <div
           role="tablist"
           aria-label="Período do gráfico"
-          className="flex self-start rounded-xl border border-white/[0.08] bg-black/30 p-1"
+          className="flex self-start rounded-xl border border-line bg-black/30 p-1"
         >
           {periods.map((item) => (
             <button
@@ -83,7 +93,7 @@ export function DashboardChart({
                 "rounded-lg px-3 py-1.5 text-xs font-medium transition",
                 period === item.id
                   ? "bg-brand text-white shadow-[0_0_16px_rgba(124,58,237,0.5)]"
-                  : "text-zinc-400 hover:text-zinc-200"
+                  : "text-muted-foreground hover:text-foreground"
               )}
             >
               {item.label}
@@ -94,18 +104,18 @@ export function DashboardChart({
 
       <div className="mt-4 flex flex-wrap items-end gap-x-8 gap-y-2">
         <div>
-          <p className="text-xs text-zinc-400">Resultado no período</p>
+          <p className="text-xs text-muted-foreground">Resultado no período</p>
           <p
             className={cn(
               "text-xl font-semibold",
-              result >= 0 ? "text-emerald-300" : "text-rose-300"
+              result >= 0 ? "text-success" : "text-danger"
             )}
           >
             {result >= 0 ? "+" : "−"}
             {formatCurrency(Math.abs(result))}
           </p>
         </div>
-        <div className="flex items-center gap-4 pb-1 text-xs text-zinc-400">
+        <div className="flex items-center gap-4 pb-1 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-full bg-brand-bright" />
             Receitas {formatCurrency(income)}
@@ -118,11 +128,11 @@ export function DashboardChart({
       </div>
 
       {isEmpty ? (
-        <div className="mt-6 flex h-[260px] flex-col items-center justify-center rounded-2xl border border-dashed border-white/10 text-center">
-          <p className="text-sm font-medium text-zinc-300">
+        <div className="mt-6 flex h-[260px] flex-col items-center justify-center rounded-2xl border border-dashed border-line text-center">
+          <p className="text-sm font-medium text-text-soft">
             Nenhuma movimentação neste período
           </p>
-          <p className="mt-1 text-xs text-zinc-500">
+          <p className="mt-1 text-xs text-faint">
             Registre uma transação para ver o fluxo de caixa aqui.
           </p>
         </div>
@@ -141,32 +151,30 @@ export function DashboardChart({
                 </linearGradient>
               </defs>
 
-              <CartesianGrid stroke="#27272a" strokeDasharray="4 4" vertical={false} />
+              <CartesianGrid stroke={chartGridStroke} strokeDasharray="4 4" vertical={false} />
               <XAxis
                 dataKey="label"
-                stroke="#71717a"
+                stroke={chartAxisStroke}
+                tick={chartAxisTick}
                 tickLine={false}
                 axisLine={false}
                 fontSize={11}
                 minTickGap={16}
               />
               <YAxis
-                stroke="#71717a"
+                stroke={chartAxisStroke}
+                tick={chartAxisTick}
                 tickLine={false}
                 axisLine={false}
                 fontSize={11}
                 tickFormatter={(value) => compactCurrency(Number(value))}
               />
               <Tooltip
-                cursor={{ fill: "rgba(168,85,247,0.08)" }}
+                cursor={{ fill: chartCursorFill }}
                 formatter={(value, name) => [formatCurrency(Number(value)), String(name)]}
-                contentStyle={{
-                  background: "#18181b",
-                  border: "1px solid #3b2a5a",
-                  borderRadius: 14,
-                  fontSize: 12,
-                }}
-                labelStyle={{ color: "#a1a1aa" }}
+                contentStyle={chartTooltipStyle}
+                labelStyle={chartTooltipLabelStyle}
+                itemStyle={chartTooltipItemStyle}
               />
               <Bar
                 dataKey="receitas"

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { SearchIcon, Settings } from "lucide-react";
 
+import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 
 const pages = [
@@ -56,17 +57,18 @@ export function SiteHeader({ userName, avatarUrl, aiConfigured }: SiteHeaderProp
     .join("");
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-white/[0.06] bg-background/80 px-4 backdrop-blur-xl lg:px-8">
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-line bg-background/70 px-4 backdrop-blur-xl lg:px-8">
       <div className="flex items-center gap-3">
         <Link href="/dashboard" className="flex items-center gap-2.5">
           <Image
-            src="/logos/forge-logo.png"
+            src="/icon-f.png"
             alt=""
-            width={32}
-            height={32}
-            className="h-8 w-8 rounded-xl ring-1 ring-brand/40 md:hidden"
+            width={36}
+            height={36}
+            priority
+            className="h-9 w-9 object-contain drop-shadow-[0_0_10px_rgba(139,92,246,0.45)] md:hidden"
           />
-          <span className="text-lg font-semibold tracking-tight text-white">
+          <span className="text-lg font-semibold tracking-tight text-foreground">
             Forge <span className="text-brand-soft">Finance</span>
           </span>
         </Link>
@@ -76,7 +78,7 @@ export function SiteHeader({ userName, avatarUrl, aiConfigured }: SiteHeaderProp
             "ml-2 hidden items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] lg:flex",
             aiConfigured
               ? "border-brand-bright/30 bg-brand/10 text-brand-soft"
-              : "border-white/10 bg-white/[0.03] text-zinc-400"
+              : "border-line bg-tint text-muted-foreground"
           )}
           title={
             aiConfigured
@@ -87,7 +89,7 @@ export function SiteHeader({ userName, avatarUrl, aiConfigured }: SiteHeaderProp
           <span
             className={cn(
               "h-2 w-2 rounded-full",
-              aiConfigured ? "bg-brand-bright shadow-[0_0_8px_#a855f7]" : "bg-zinc-600"
+              aiConfigured ? "bg-brand-bright shadow-[0_0_8px_#a855f7]" : "bg-faint"
             )}
           />
           {aiConfigured ? "IA: chave configurada" : "IA: não configurada"}
@@ -96,7 +98,7 @@ export function SiteHeader({ userName, avatarUrl, aiConfigured }: SiteHeaderProp
 
       <div className="flex items-center gap-2 sm:gap-3">
         <div className="relative hidden sm:block">
-          <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-500" />
+          <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-faint" />
           <input
             value={query}
             onChange={(e) => {
@@ -111,13 +113,13 @@ export function SiteHeader({ userName, avatarUrl, aiConfigured }: SiteHeaderProp
             }}
             aria-label="Ir para uma página"
             placeholder="Ir para uma página…"
-            className="h-10 w-56 rounded-full border border-white/10 bg-surface pl-10 pr-4 text-sm text-white outline-none transition focus:border-brand-bright/50 focus:ring-2 focus:ring-brand-bright/20 lg:w-72"
+            className="h-10 w-56 rounded-full border border-line bg-surface pl-10 pr-4 text-sm text-foreground placeholder:text-faint outline-none transition focus:border-brand-bright/50 focus:ring-2 focus:ring-brand-bright/20 lg:w-72"
           />
 
           {open && query.trim() && (
-            <ul className="absolute right-0 top-12 w-full overflow-hidden rounded-2xl border border-white/10 bg-surface p-1 shadow-2xl">
+            <ul className="absolute right-0 top-12 w-full overflow-hidden rounded-2xl border border-line bg-surface-solid p-1 shadow-2xl">
               {results.length === 0 ? (
-                <li className="px-3 py-2 text-sm text-zinc-500">
+                <li className="px-3 py-2 text-sm text-faint">
                   Nenhuma página encontrada
                 </li>
               ) : (
@@ -126,7 +128,7 @@ export function SiteHeader({ userName, avatarUrl, aiConfigured }: SiteHeaderProp
                     <button
                       type="button"
                       onMouseDown={() => go(page.url)}
-                      className="w-full rounded-xl px-3 py-2 text-left text-sm text-zinc-200 transition hover:bg-accent"
+                      className="w-full rounded-xl px-3 py-2 text-left text-sm text-text-soft transition hover:bg-accent"
                     >
                       {page.title}
                     </button>
@@ -137,10 +139,12 @@ export function SiteHeader({ userName, avatarUrl, aiConfigured }: SiteHeaderProp
           )}
         </div>
 
+        <ThemeToggle />
+
         <Link
           href="/configuracoes"
           aria-label="Configurações"
-          className="flex h-10 w-10 items-center justify-center rounded-full border border-white/10 bg-surface text-zinc-300 transition hover:border-brand-bright/40 hover:text-brand-soft"
+          className="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-surface text-text-soft transition hover:border-brand-bright/40 hover:text-brand-soft"
         >
           <Settings className="h-[18px] w-[18px]" />
         </Link>

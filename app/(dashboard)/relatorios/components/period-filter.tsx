@@ -22,7 +22,7 @@ const PRESETS: { key: PeriodKey; label: string }[] = [
 ];
 
 const dateInputClass =
-  "rounded-lg border border-white/10 bg-[#09090B] px-3 py-2 text-sm text-white outline-none transition focus:border-violet-500";
+  "rounded-lg border border-line bg-background-soft px-3 py-2 text-sm text-foreground outline-none transition focus:border-violet-500";
 
 export function PeriodFilter({ period, from, to }: Props) {
   const router = useRouter();
@@ -60,7 +60,7 @@ export function PeriodFilter({ period, from, to }: Props) {
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
           <h2 className="font-semibold">Período de Análise</h2>
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-muted-foreground">
             Selecione o período para atualizar todos os indicadores e gráficos.
           </p>
         </div>
@@ -93,7 +93,7 @@ export function PeriodFilter({ period, from, to }: Props) {
 
       {showCustom && (
         <div className="flex flex-wrap items-end gap-3">
-          <label className="flex flex-col gap-1 text-xs text-slate-400">
+          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
             De
             <input
               type="date"
@@ -103,7 +103,7 @@ export function PeriodFilter({ period, from, to }: Props) {
             />
           </label>
 
-          <label className="flex flex-col gap-1 text-xs text-slate-400">
+          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
             Até
             <input
               type="date"

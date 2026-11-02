@@ -39,39 +39,43 @@ export function LoginForm() {
   return (
     <form
       onSubmit={handleLogin}
-      className="space-y-5 rounded-xl border border-zinc-800 bg-zinc-900 p-6"
+      className="forge-auth-card space-y-5 rounded-2xl p-6 sm:p-8"
     >
       <div>
-        <label className="mb-2 block text-sm text-zinc-300">
+        <label htmlFor="login-email" className="mb-2 block text-sm text-zinc-300">
           E-mail
         </label>
 
         <input
+          id="login-email"
           type="email"
+          autoComplete="email"
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-brand-bright"
+          className="forge-auth-input"
         />
       </div>
 
       <div>
-        <label className="mb-2 block text-sm text-zinc-300">
+        <label htmlFor="login-password" className="mb-2 block text-sm text-zinc-300">
           Senha
         </label>
 
         <input
+          id="login-password"
           type="password"
+          autoComplete="current-password"
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          className="w-full rounded-lg border border-zinc-700 bg-zinc-950 px-4 py-3 text-white outline-none focus:border-brand-bright"
+          className="forge-auth-input"
         />
       </div>
 
       <button
         disabled={loading}
-        className="w-full rounded-lg bg-brand py-3 font-semibold text-white transition hover:bg-brand-bright disabled:opacity-60"
+        className="forge-auth-button"
       >
         {loading ? "Entrando..." : "Entrar"}
       </button>
@@ -80,7 +84,7 @@ export function LoginForm() {
         Ainda não possui uma conta?{" "}
         <Link
           href="/cadastro"
-          className="font-medium text-brand-soft hover:text-brand-soft"
+          className="font-medium text-violet-300 transition hover:text-violet-200"
         >
           Criar conta
         </Link>

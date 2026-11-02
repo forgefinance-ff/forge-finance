@@ -7,16 +7,16 @@ import { LogoutButton } from "./components/logout-button";
 export default function SettingsPage() {
   return (
     <div className="space-y-8">
-      <div className="rounded-[22px] border border-white/[0.07] bg-surface p-8">
-        <span className="text-sm font-medium uppercase tracking-[0.25em] text-violet-400">
+      <div className="rounded-[22px] border border-line bg-surface p-8">
+        <span className="text-sm font-medium uppercase tracking-[0.25em] text-brand-soft">
           Financeiro
         </span>
 
-        <h1 className="mt-2 text-4xl font-bold tracking-tight text-white">
+        <h1 className="mt-2 text-4xl font-bold tracking-tight text-foreground">
           Configurações
         </h1>
 
-        <p className="mt-2 max-w-xl text-slate-400">
+        <p className="mt-2 max-w-xl text-muted-foreground">
           Gerencie sua conta e preferências do Forge Finance.
         </p>
       </div>
@@ -31,7 +31,7 @@ export default function SettingsPage() {
         <CardContent className="space-y-6">
           <ChangePasswordForm />
 
-          <div className="border-t border-white/10 pt-6">
+          <div className="border-t border-line pt-6">
             <LogoutButton />
           </div>
         </CardContent>

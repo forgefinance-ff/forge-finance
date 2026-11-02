@@ -28,25 +28,25 @@ export function TransactionsSummary({ transactions }: Props) {
       title: "Receitas",
       value: income,
       icon: ArrowUpCircle,
-      iconColor: "bg-emerald-500/15 text-emerald-400",
+      iconColor: "bg-emerald-500/15 text-success",
     },
     {
       title: "Despesas",
       value: expense,
       icon: ArrowDownCircle,
-      iconColor: "bg-rose-500/15 text-rose-400",
+      iconColor: "bg-rose-500/15 text-danger",
     },
     {
       title: "Saldo",
       value: balance,
       icon: Wallet,
-      iconColor: "bg-violet-500/15 text-violet-400",
+      iconColor: "bg-violet-500/15 text-brand-soft",
     },
     {
       title: "Transações",
       value: transactions.length,
       icon: TrendingUp,
-      iconColor: "bg-indigo-500/15 text-indigo-300",
+      iconColor: "bg-indigo-500/15 text-indigo-600 dark:text-indigo-300",
       isCount: true,
     },
   ];
@@ -59,10 +59,10 @@ export function TransactionsSummary({ transactions }: Props) {
         return (
           <div
             key={card.title}
-            className="rounded-[22px] border border-white/[0.07] bg-surface p-6 transition hover:-translate-y-1 hover:border-violet-500/30"
+            className="rounded-[22px] border border-line bg-surface p-6 transition hover:-translate-y-1 hover:border-violet-500/30"
           >
             <div className="flex items-center justify-between">
-              <span className="text-sm text-slate-400">{card.title}</span>
+              <span className="text-sm text-muted-foreground">{card.title}</span>
 
               <div
                 className={`flex h-11 w-11 items-center justify-center rounded-2xl ${card.iconColor}`}
@@ -72,7 +72,7 @@ export function TransactionsSummary({ transactions }: Props) {
             </div>
 
             <div className="mt-5">
-              <p className="text-3xl font-bold tracking-tight text-white">
+              <p className="text-3xl font-bold tracking-tight text-foreground">
                 {card.isCount
                   ? card.value
                   : card.value.toLocaleString("pt-BR", {

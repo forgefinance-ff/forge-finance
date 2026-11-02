@@ -48,8 +48,8 @@ export function AssistantBox({ configured }: AssistantBoxProps) {
   if (!configured) {
     return (
       <div>
-        <p className="text-xs font-semibold text-zinc-200">Assistente de IA</p>
-        <p className="mt-1 text-[11px] leading-relaxed text-zinc-500">
+        <p className="text-xs font-semibold text-foreground">Assistente de IA</p>
+        <p className="mt-1 text-[11px] leading-relaxed text-faint">
           Desativado. Para ativar, defina <code className="text-brand-soft">ANTHROPIC_API_KEY</code>{" "}
           nas variáveis de ambiente do servidor. Até lá, nenhuma resposta de IA é
           exibida.
@@ -60,8 +60,8 @@ export function AssistantBox({ configured }: AssistantBoxProps) {
 
   return (
     <div>
-      <p className="text-xs font-semibold text-zinc-200">Pergunte sobre suas finanças</p>
-      <p className="mt-0.5 text-[11px] text-zinc-500">
+      <p className="text-xs font-semibold text-foreground">Pergunte sobre suas finanças</p>
+      <p className="mt-0.5 text-[11px] text-faint">
         Somente consultas. O assistente não altera seus registros.
       </p>
 
@@ -72,7 +72,7 @@ export function AssistantBox({ configured }: AssistantBoxProps) {
           maxLength={500}
           placeholder="Quanto gastei com transporte este mês?"
           aria-label="Pergunta para o assistente"
-          className="h-10 min-w-0 flex-1 rounded-xl border border-white/10 bg-black/30 px-3 text-xs text-white outline-none placeholder:text-zinc-600 focus:border-brand-bright/50"
+          className="h-10 min-w-0 flex-1 rounded-xl border border-line bg-black/30 px-3 text-xs text-foreground outline-none placeholder:text-faint focus:border-brand-bright/50"
         />
         <button
           type="submit"
@@ -84,14 +84,14 @@ export function AssistantBox({ configured }: AssistantBoxProps) {
         </button>
       </form>
 
-      {loading && <p className="mt-3 text-xs text-zinc-500">Analisando seus dados…</p>}
+      {loading && <p className="mt-3 text-xs text-faint">Analisando seus dados…</p>}
       {error && (
-        <p role="alert" className="mt-3 rounded-xl bg-rose-500/10 px-3 py-2 text-xs text-rose-300">
+        <p role="alert" className="mt-3 rounded-xl bg-rose-500/10 px-3 py-2 text-xs text-danger">
           {error}
         </p>
       )}
       {answer && (
-        <p className="mt-3 whitespace-pre-wrap rounded-xl bg-white/[0.04] px-3 py-2.5 text-xs leading-relaxed text-zinc-200">
+        <p className="mt-3 whitespace-pre-wrap rounded-xl bg-tint px-3 py-2.5 text-xs leading-relaxed text-foreground">
           {answer}
         </p>
       )}

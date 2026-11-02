@@ -10,6 +10,15 @@ import {
   YAxis,
 } from "recharts";
 
+import {
+  chartAxisStroke,
+  chartAxisTick,
+  chartGridStroke,
+  chartTooltipItemStyle,
+  chartTooltipLabelStyle,
+  chartTooltipStyle,
+} from "@/lib/chart-theme";
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { CashFlowItem } from "../data/cash-flow";
 
@@ -28,13 +37,28 @@ export function CashFlowChart({ data }: Props) {
         <div className="h-[350px] w-full">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={data}>
-              <CartesianGrid strokeDasharray="3 3" />
+              <CartesianGrid stroke={chartGridStroke} strokeDasharray="3 3" vertical={false} />
 
-              <XAxis dataKey="month" />
+              <XAxis
+                dataKey="month"
+                stroke={chartAxisStroke}
+                tick={chartAxisTick}
+                tickLine={false}
+                axisLine={false}
+              />
 
-              <YAxis />
+              <YAxis
+                stroke={chartAxisStroke}
+                tick={chartAxisTick}
+                tickLine={false}
+                axisLine={false}
+              />
 
-              <Tooltip />
+              <Tooltip
+                contentStyle={chartTooltipStyle}
+                labelStyle={chartTooltipLabelStyle}
+                itemStyle={chartTooltipItemStyle}
+              />
 
               <Line
                 type="monotone"

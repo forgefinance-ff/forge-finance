@@ -67,11 +67,11 @@ export function DashboardOverview({
     <section className="space-y-4">
       <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
             {greeting()}
             {firstName ? `, ${firstName}` : ""} 👋
           </h1>
-          <p className="mt-1 text-sm text-zinc-400">
+          <p className="mt-1 text-sm text-muted-foreground">
             Suas finanças em um só lugar, com dados em tempo real.
           </p>
         </div>

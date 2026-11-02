@@ -68,7 +68,7 @@ export function DashboardCards({
       value: formatCurrency(monthIncome),
       subtitle: `Histórico: ${formatCurrency(totalIncome)}`,
       icon: ArrowUpRight,
-      iconClass: "bg-emerald-500/15 text-emerald-300",
+      iconClass: "bg-emerald-500/15 text-success",
       badge: null,
     },
     {
@@ -76,7 +76,7 @@ export function DashboardCards({
       value: formatCurrency(monthExpense),
       subtitle: `Histórico: ${formatCurrency(totalExpense)}`,
       icon: ArrowDownRight,
-      iconClass: "bg-rose-500/15 text-rose-300",
+      iconClass: "bg-rose-500/15 text-danger",
       badge:
         expenseChange === null
           ? null
@@ -94,7 +94,7 @@ export function DashboardCards({
           ? `Aportado: ${formatCurrency(investedAmount)}`
           : "Nenhum aporte registrado",
       icon: investmentsTotal > 0 ? LineChart : Landmark,
-      iconClass: "bg-indigo-500/15 text-indigo-300",
+      iconClass: "bg-indigo-500/15 text-indigo-600 dark:text-indigo-300",
       badge:
         yieldChange === null
           ? null
@@ -129,9 +129,9 @@ export function DashboardCards({
                 <span
                   className={cn(
                     "rounded-full px-2 py-0.5 text-[10px] font-semibold",
-                    card.badge.tone === "up" && "bg-emerald-500/15 text-emerald-300",
-                    card.badge.tone === "down" && "bg-rose-500/15 text-rose-300",
-                    card.badge.tone === "neutral" && "bg-white/10 text-zinc-300"
+                    card.badge.tone === "up" && "bg-emerald-500/15 text-success",
+                    card.badge.tone === "down" && "bg-rose-500/15 text-danger",
+                    card.badge.tone === "neutral" && "bg-tint-strong text-text-soft"
                   )}
                 >
                   {card.badge.text}
@@ -139,11 +139,11 @@ export function DashboardCards({
               )}
             </div>
 
-            <p className="mt-3 text-xs text-zinc-400">{card.title}</p>
-            <h3 className="mt-0.5 truncate text-2xl font-semibold tracking-tight text-white">
+            <p className="mt-3 text-xs text-muted-foreground">{card.title}</p>
+            <h3 className="mt-0.5 truncate text-2xl font-semibold tracking-tight text-foreground">
               {card.value}
             </h3>
-            <p className="mt-1 truncate text-[11px] text-zinc-500">
+            <p className="mt-1 truncate text-[11px] text-faint">
               {card.subtitle}
             </p>
           </article>

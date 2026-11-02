@@ -15,7 +15,7 @@ type TransactionsFiltersProps = {
 };
 
 const inputClass =
-  "h-12 w-full rounded-xl border border-white/10 bg-[#09090B] px-4 text-white outline-none transition focus:border-violet-500";
+  "h-12 w-full rounded-xl border border-line bg-background-soft px-4 text-foreground outline-none transition focus:border-violet-500";
 
 export function TransactionsFilters({
   search,
@@ -27,16 +27,16 @@ export function TransactionsFilters({
   onReset,
 }: TransactionsFiltersProps) {
   return (
-    <section className="rounded-[22px] border border-white/[0.07] bg-surface p-6">
+    <section className="rounded-[22px] border border-line bg-surface p-6">
       <div className="flex items-center gap-2">
-        <Filter className="h-5 w-5 text-violet-400" />
+        <Filter className="h-5 w-5 text-brand-soft" />
 
-        <h2 className="text-lg font-semibold text-white">Filtros</h2>
+        <h2 className="text-lg font-semibold text-foreground">Filtros</h2>
       </div>
 
       <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
         <div className="relative xl:col-span-2">
-          <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
+          <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-faint" />
 
           <input
             type="text"
@@ -60,7 +60,7 @@ export function TransactionsFilters({
         </select>
 
         <div className="relative">
-          <CalendarDays className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-500" />
+          <CalendarDays className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-faint" />
 
           <input
             type="date"
@@ -73,7 +73,7 @@ export function TransactionsFilters({
         <button
           type="button"
           onClick={onReset}
-          className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-5 text-slate-300 transition hover:border-white/20 hover:bg-white/[0.06]"
+          className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-line bg-tint px-5 text-text-soft transition hover:border-line-strong hover:bg-tint"
         >
           <RotateCcw className="h-4 w-4" />
           Limpar

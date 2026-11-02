@@ -25,40 +25,40 @@ export function FinancialInsights({
   const positive = balance >= 0;
 
   return (
-    <section className="rounded-[22px] border border-white/[0.07] bg-surface p-6">
+    <section className="rounded-[22px] border border-line bg-surface p-6">
       <div className="flex items-center gap-3">
         <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-500/10">
           <TrendingUp
-            className="text-violet-400"
+            className="text-brand-soft"
             size={22}
           />
         </div>
 
         <div>
-          <h3 className="text-xl font-semibold text-white">
+          <h3 className="text-xl font-semibold text-foreground">
             Insights Financeiros
           </h3>
 
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-muted-foreground">
             Indicadores rápidos do período
           </p>
         </div>
       </div>
 
       <div className="mt-8 space-y-4">
-        <div className="flex items-center justify-between rounded-2xl border border-white/5 bg-white/[0.03] p-4">
+        <div className="flex items-center justify-between rounded-2xl border border-line bg-tint p-4">
           <div className="flex items-center gap-3">
             <ArrowUp
-              className="text-emerald-400"
+              className="text-success"
               size={18}
             />
 
-            <span className="text-slate-300">
+            <span className="text-text-soft">
               Receitas
             </span>
           </div>
 
-          <span className="font-semibold text-emerald-400">
+          <span className="font-semibold text-success">
             {totalIncome.toLocaleString("pt-BR", {
               style: "currency",
               currency: "BRL",
@@ -66,19 +66,19 @@ export function FinancialInsights({
           </span>
         </div>
 
-        <div className="flex items-center justify-between rounded-2xl border border-white/5 bg-white/[0.03] p-4">
+        <div className="flex items-center justify-between rounded-2xl border border-line bg-tint p-4">
           <div className="flex items-center gap-3">
             <ArrowDown
-              className="text-rose-400"
+              className="text-danger"
               size={18}
             />
 
-            <span className="text-slate-300">
+            <span className="text-text-soft">
               Despesas
             </span>
           </div>
 
-          <span className="font-semibold text-rose-400">
+          <span className="font-semibold text-danger">
             {totalExpense.toLocaleString("pt-BR", {
               style: "currency",
               currency: "BRL",
@@ -86,14 +86,14 @@ export function FinancialInsights({
           </span>
         </div>
 
-        <div className="flex items-center justify-between rounded-2xl border border-white/5 bg-white/[0.03] p-4">
+        <div className="flex items-center justify-between rounded-2xl border border-line bg-tint p-4">
           <div className="flex items-center gap-3">
             <BadgeDollarSign
-              className="text-violet-400"
+              className="text-brand-soft"
               size={18}
             />
 
-            <span className="text-slate-300">
+            <span className="text-text-soft">
               Resultado
             </span>
           </div>
@@ -101,8 +101,8 @@ export function FinancialInsights({
           <span
             className={`font-semibold ${
               positive
-                ? "text-emerald-400"
-                : "text-rose-400"
+                ? "text-success"
+                : "text-danger"
             }`}
           >
             {balance.toLocaleString("pt-BR", {
@@ -116,15 +116,15 @@ export function FinancialInsights({
           <div className="mb-2 flex items-center gap-2">
             <PiggyBank
               size={18}
-              className="text-emerald-400"
+              className="text-success"
             />
 
-            <span className="font-medium text-emerald-300">
+            <span className="font-medium text-success">
               Taxa de economia
             </span>
           </div>
 
-          <div className="mb-3 h-2 overflow-hidden rounded-full bg-white/10">
+          <div className="mb-3 h-2 overflow-hidden rounded-full bg-tint-strong">
             <div
               className="h-full rounded-full bg-emerald-400 transition-all"
               style={{
@@ -136,7 +136,7 @@ export function FinancialInsights({
             />
           </div>
 
-          <p className="text-sm text-emerald-300">
+          <p className="text-sm text-success">
             {savingsRate.toFixed(1)}% da sua receita foi preservada.
           </p>
         </div>

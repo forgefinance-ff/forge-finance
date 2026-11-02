@@ -10,27 +10,27 @@ export default async function MetasPage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-[22px] border border-white/[0.07] bg-surface p-8">
-        <span className="text-sm font-medium uppercase tracking-[0.25em] text-violet-400">
+      <div className="rounded-[22px] border border-line bg-surface p-8">
+        <span className="text-sm font-medium uppercase tracking-[0.25em] text-brand-soft">
           Financeiro
         </span>
 
-        <h1 className="mt-2 text-4xl font-bold tracking-tight text-white">
+        <h1 className="mt-2 text-4xl font-bold tracking-tight text-foreground">
           Metas
         </h1>
 
-        <p className="mt-2 max-w-xl text-slate-400">
+        <p className="mt-2 max-w-xl text-muted-foreground">
           Acompanhe seus objetivos financeiros.
         </p>
       </div>
 
       <GoalForm />
 
-      <div className="rounded-[22px] border border-white/[0.07] bg-surface overflow-hidden">
+      <div className="rounded-[22px] border border-line bg-surface overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[560px]">
-          <thead className="border-b border-white/10">
-            <tr className="text-left text-slate-400">
+          <thead className="border-b border-line">
+            <tr className="text-left text-muted-foreground">
               <th className="p-4">Meta</th>
               <th className="p-4">Progresso</th>
               <th className="p-4">Prazo</th>
@@ -43,7 +43,7 @@ export default async function MetasPage() {
               <tr>
                 <td
                   colSpan={4}
-                  className="p-6 text-center text-slate-500"
+                  className="p-6 text-center text-faint"
                 >
                   Nenhuma meta cadastrada.
                 </td>
@@ -62,14 +62,14 @@ export default async function MetasPage() {
               return (
                 <tr
                   key={goal.id}
-                  className="border-b border-white/5 transition hover:bg-white/[0.03]"
+                  className="border-b border-line transition hover:bg-tint"
                 >
                   <td className="p-4">
-                    <div className="font-medium text-white">
+                    <div className="font-medium text-foreground">
                       {goal.title}
                     </div>
 
-                    <div className="mt-1 text-sm text-slate-400">
+                    <div className="mt-1 text-sm text-muted-foreground">
                       {new Intl.NumberFormat("pt-BR", {
                         style: "currency",
                         currency: "BRL",
@@ -83,19 +83,19 @@ export default async function MetasPage() {
                   </td>
 
                   <td className="p-4 w-80">
-                    <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+                    <div className="h-2 w-full overflow-hidden rounded-full bg-tint-strong">
                       <div
                         className="h-full rounded-full bg-gradient-to-r from-brand to-brand-soft transition-all"
                         style={{ width: `${percentage}%` }}
                       />
                     </div>
 
-                    <div className="mt-2 text-sm text-slate-400">
+                    <div className="mt-2 text-sm text-muted-foreground">
                       {percentage.toFixed(1)}%
                     </div>
                   </td>
 
-                  <td className="p-4 text-slate-300">
+                  <td className="p-4 text-text-soft">
                     {new Date(goal.deadline).toLocaleDateString("pt-BR")}
                   </td>
 
@@ -112,7 +112,7 @@ export default async function MetasPage() {
 
                         <button
                           type="submit"
-                          className="rounded-lg p-2 text-slate-500 transition hover:bg-rose-500/10 hover:text-rose-400"
+                          className="rounded-lg p-2 text-faint transition hover:bg-rose-500/10 hover:text-danger"
                         >
                           <Trash2 className="h-5 w-5" />
                         </button>

@@ -17,16 +17,16 @@ export default async function CategoriasPage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-[22px] border border-white/[0.07] bg-surface p-8">
-        <span className="text-sm font-medium uppercase tracking-[0.25em] text-violet-400">
+      <div className="rounded-[22px] border border-line bg-surface p-8">
+        <span className="text-sm font-medium uppercase tracking-[0.25em] text-brand-soft">
           Financeiro
         </span>
 
-        <h1 className="mt-2 text-4xl font-bold tracking-tight text-white">
+        <h1 className="mt-2 text-4xl font-bold tracking-tight text-foreground">
           Categorias
         </h1>
 
-        <p className="mt-2 max-w-xl text-slate-400">
+        <p className="mt-2 max-w-xl text-muted-foreground">
           Organize suas receitas e despesas por categoria. Já criamos um
           conjunto padrão pra você — sinta-se à vontade para editar ou
           adicionar novas.
@@ -60,11 +60,11 @@ function CategoryGroup({
   deleteAction: (formData: FormData) => Promise<void>;
 }) {
   return (
-    <section className="rounded-[22px] border border-white/[0.07] bg-surface p-6">
-      <h2 className="mb-5 text-lg font-semibold text-white">{title}</h2>
+    <section className="rounded-[22px] border border-line bg-surface p-6">
+      <h2 className="mb-5 text-lg font-semibold text-foreground">{title}</h2>
 
       {categories.length === 0 ? (
-        <p className="text-sm text-slate-500">
+        <p className="text-sm text-faint">
           Nenhuma categoria de {title.toLowerCase()} cadastrada.
         </p>
       ) : (
@@ -72,7 +72,7 @@ function CategoryGroup({
           {categories.map((category) => (
             <div
               key={category.id}
-              className="group flex items-center justify-between rounded-2xl border border-white/5 bg-white/[0.03] p-4 transition hover:border-violet-500/20 hover:bg-white/[0.05]"
+              className="group flex items-center justify-between rounded-2xl border border-line bg-tint p-4 transition hover:border-violet-500/20 hover:bg-tint"
             >
               <div className="flex items-center gap-3">
                 <div
@@ -82,7 +82,7 @@ function CategoryGroup({
                   {category.icon}
                 </div>
 
-                <span className="font-medium text-white">
+                <span className="font-medium text-foreground">
                   {category.name}
                 </span>
               </div>
@@ -92,7 +92,7 @@ function CategoryGroup({
 
                 <button
                   type="submit"
-                  className="rounded-lg p-2 text-slate-500 opacity-0 transition hover:bg-rose-500/10 hover:text-rose-400 group-hover:opacity-100"
+                  className="rounded-lg p-2 text-faint opacity-0 transition hover:bg-rose-500/10 hover:text-danger group-hover:opacity-100"
                 >
                   <Trash2 className="h-4 w-4" />
                 </button>

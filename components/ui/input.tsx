@@ -18,21 +18,21 @@ function Input({
           "h-11",
           "rounded-xl",
           "border",
-          "border-[#2B3650]",
-          "bg-[#111827]",
+          "border-line-strong",
+          "bg-surface-solid",
           "px-4",
           "text-sm",
-          "text-white",
-          "placeholder:text-[#94A3B8]",
+          "text-foreground",
+          "placeholder:text-faint",
           "transition-all",
           "duration-300",
           "outline-none",
 
-          "hover:border-[#3B82F6]/40",
+          "hover:border-brand-bright/40",
 
-          "focus:border-[#3B82F6]",
+          "focus:border-brand-bright",
           "focus:ring-4",
-          "focus:ring-[#3B82F6]/15",
+          "focus:ring-brand-bright/15",
 
           "disabled:opacity-50",
           "disabled:cursor-not-allowed",
@@ -40,8 +40,8 @@ function Input({
           "aria-invalid:border-red-500",
           "aria-invalid:ring-red-500/20",
 
-          "[&:-webkit-autofill]:shadow-[inset_0_0_0_1000px_#111827]",
-          "[&:-webkit-autofill]:[-webkit-text-fill-color:white]",
+          "[&:-webkit-autofill]:shadow-[inset_0_0_0_1000px_var(--surface-solid)]",
+          "[&:-webkit-autofill]:[-webkit-text-fill-color:var(--text)]",
         ].join(" "),
         className
       )}

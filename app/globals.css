@@ -1,85 +1,201 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* O modo escuro segue a classe .dark aplicada pelo next-themes no <html>. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* =====================================================================
    FORGE FINANCE — tokens de design (identidade roxa)
-   Todos os componentes (shadcn/ui inclusive) consomem estes tokens.
+   Os valores reais ficam em :root (claro) e .dark (escuro); o @theme
+   apenas aponta para eles, então toda classe (bg-surface, text-foreground,
+   border-line...) troca sozinha quando o tema muda.
    ===================================================================== */
-@theme {
+:root {
   /* Superfícies */
-  --color-background: #09090b;
-  --color-background-soft: #111118;
-  --color-surface: #18181b;
-  --color-surface-elevated: #20182c;
-
-  /* Marca */
-  --color-brand: #7c3aed;
-  --color-brand-bright: #a855f7;
-  --color-brand-soft: #c084fc;
-  --color-brand-indigo: #4f46e5;
+  --background: #f6f3fc;
+  --background-soft: #efeaf9;
+  --surface: rgba(255, 255, 255, 0.86);
+  --surface-solid: #ffffff;
+  --surface-elevated: #f7f2ff;
+  --surface-glass: rgba(255, 255, 255, 0.78);
 
   /* Texto */
-  --color-text: #f4f4f5;
-  --color-text-muted: #a1a1aa;
+  --text: #1c1530;
+  --text-soft: #3b3452;
+  --text-muted: #625b78;
+  --text-faint: #857e9a;
+
+  /* Linhas e tintas (substituem border-white/x e bg-white/x) */
+  --line: rgba(76, 29, 149, 0.12);
+  --line-strong: rgba(76, 29, 149, 0.22);
+  --tint: rgba(76, 29, 149, 0.04);
+  --tint-strong: rgba(76, 29, 149, 0.08);
+
+  /* Marca */
+  --brand: #7c3aed;
+  --brand-bright: #9333ea;
+  --brand-soft: #7e22ce;
+  --brand-indigo: #4f46e5;
+
+  /* Semânticas */
+  --success: #059669;
+  --danger: #e11d48;
+  --warning: #d97706;
+
+  --muted: #f1ecfa;
+  --accent: #ede4ff;
+  --accent-foreground: #5b21b6;
+  --input: #ddd3f0;
+
+  --sidebar: rgba(255, 255, 255, 0.82);
+  --sidebar-foreground: #625b78;
+
+  /* Fundo com profundidade */
+  --grid-line: rgba(76, 29, 149, 0.055);
+  --glow-1: rgba(139, 92, 246, 0.18);
+  --glow-2: rgba(79, 70, 229, 0.1);
+
+  --chart-grid: rgba(76, 29, 149, 0.12);
+  --chart-axis: #7a7391;
+
+  --scrollbar: #d6cbea;
+  --scrollbar-hover: #b9a6dc;
+
+  --shadow-panel: 0 18px 40px -28px rgba(76, 29, 149, 0.35);
+}
+
+.dark {
+  --background: #06060c;
+  --background-soft: #0d0d16;
+  --surface: rgba(21, 20, 30, 0.78);
+  --surface-solid: #15141c;
+  --surface-elevated: #20182c;
+  --surface-glass: rgba(21, 20, 30, 0.62);
+
+  --text: #f4f4f5;
+  --text-soft: #d4d4d8;
+  --text-muted: #a1a1aa;
+  --text-faint: #71717a;
+
+  --line: rgba(255, 255, 255, 0.08);
+  --line-strong: rgba(255, 255, 255, 0.16);
+  --tint: rgba(255, 255, 255, 0.03);
+  --tint-strong: rgba(255, 255, 255, 0.08);
+
+  --brand: #7c3aed;
+  --brand-bright: #a855f7;
+  --brand-soft: #c084fc;
+  --brand-indigo: #4f46e5;
+
+  --success: #34d399;
+  --danger: #fb7185;
+  --warning: #fbbf24;
+
+  --muted: #1c1c24;
+  --accent: #2a1f3d;
+  --accent-foreground: #e9d5ff;
+  --input: #2a2a33;
+
+  --sidebar: rgba(10, 10, 18, 0.82);
+  --sidebar-foreground: #a1a1aa;
+
+  --grid-line: rgba(255, 255, 255, 0.045);
+  --glow-1: rgba(124, 58, 237, 0.28);
+  --glow-2: rgba(79, 70, 229, 0.14);
+
+  --chart-grid: rgba(255, 255, 255, 0.07);
+  --chart-axis: #71717a;
+
+  --scrollbar: #2f2a3d;
+  --scrollbar-hover: #4a3d66;
+
+  --shadow-panel: 0 18px 40px -24px rgba(0, 0, 0, 0.9);
+}
+
+@theme inline {
+  /* Superfícies */
+  --color-background: var(--background);
+  --color-background-soft: var(--background-soft);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-surface-glass: var(--surface-glass);
+
+  /* Marca */
+  --color-brand: var(--brand);
+  --color-brand-bright: var(--brand-bright);
+  --color-brand-soft: var(--brand-soft);
+  --color-brand-indigo: var(--brand-indigo);
+
+  /* Texto */
+  --color-text: var(--text);
+  --color-text-soft: var(--text-soft);
+  --color-text-muted: var(--text-muted);
+  --color-faint: var(--text-faint);
+
+  /* Linhas e tintas */
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-tint: var(--tint);
+  --color-tint-strong: var(--tint-strong);
 
   /* Semânticas pontuais */
-  --color-success: #34d399;
-  --color-danger: #fb7185;
-  --color-warning: #fbbf24;
+  --color-success: var(--success);
+  --color-danger: var(--danger);
+  --color-warning: var(--warning);
 
   /* Aliases legados (usados pelo código anterior) */
-  --color-card-hover: #20182c;
-  --color-primary: #7c3aed;
-  --color-border: #27272a;
+  --color-card-hover: var(--surface-elevated);
+  --color-primary: var(--brand);
+  --color-border: var(--line);
 
   /* Tokens semânticos esperados pelo shadcn/ui */
-  --color-foreground: #f4f4f5;
-  --color-card: #18181b;
-  --color-card-foreground: #f4f4f5;
-  --color-popover: #18181b;
-  --color-popover-foreground: #f4f4f5;
+  --color-foreground: var(--text);
+  --color-card: var(--surface);
+  --color-card-foreground: var(--text);
+  --color-popover: var(--surface-solid);
+  --color-surface-solid: var(--surface-solid);
+  --color-popover-foreground: var(--text);
   --color-primary-foreground: #ffffff;
-  --color-secondary: #20182c;
-  --color-secondary-foreground: #f4f4f5;
-  --color-muted: #1c1c22;
-  --color-muted-foreground: #a1a1aa;
-  --color-accent: #2a1f3d;
-  --color-accent-foreground: #e9d5ff;
-  --color-destructive: #fb7185;
-  --color-input: #27272a;
-  --color-ring: #a855f7;
+  --color-secondary: var(--surface-elevated);
+  --color-secondary-foreground: var(--text);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--text-muted);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--danger);
+  --color-input: var(--input);
+  --color-ring: var(--brand-bright);
 
-  --color-sidebar: #0d0d12;
-  --color-sidebar-foreground: #a1a1aa;
-  --color-sidebar-accent: #2a1f3d;
-  --color-sidebar-accent-foreground: #e9d5ff;
-  --color-sidebar-border: #27272a;
-  --color-sidebar-ring: #a855f7;
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-accent: var(--accent);
+  --color-sidebar-accent-foreground: var(--accent-foreground);
+  --color-sidebar-border: var(--line);
+  --color-sidebar-ring: var(--brand-bright);
 
   --radius-lg: 14px;
   --radius-xl: 18px;
 
   --shadow-glow: 0 0 24px rgba(168, 85, 247, 0.35);
-  --shadow-panel: 0 18px 40px -24px rgba(0, 0, 0, 0.9);
+  --shadow-panel: var(--shadow-panel);
+}
+
+html {
+  color-scheme: light;
+}
+html.dark {
+  color-scheme: dark;
 }
 
 html,
 body {
-  background: var(--color-background);
-  color: var(--color-text);
+  background-color: var(--background);
+  color: var(--text);
   font-family: Inter, system-ui, sans-serif;
-  color-scheme: dark;
-}
-
-body {
-  background-image:
-    radial-gradient(900px 500px at 85% -10%, rgba(124, 58, 237, 0.12), transparent 60%),
-    radial-gradient(700px 400px at 0% 100%, rgba(79, 70, 229, 0.08), transparent 60%);
-  background-attachment: fixed;
 }
 
 * {
-  border-color: var(--color-border);
+  border-color: var(--line);
 }
 
 ::selection {
@@ -91,19 +207,203 @@ body {
   height: 8px;
 }
 ::-webkit-scrollbar-thumb {
-  background: #2f2a3d;
+  background: var(--scrollbar);
   border-radius: 999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #4a3d66;
+  background: var(--scrollbar-hover);
 }
 
-/* Painel padrão do produto */
+/* =====================================================================
+   Fundo com profundidade: base escura azulada + grade fina com máscara
+   radial + brilho roxo no topo. Fica fixo atrás de todo o conteúdo.
+   ===================================================================== */
+.forge-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+  background-color: var(--background);
+}
+
+.forge-backdrop::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse 75% 65% at 50% 20%, #000 30%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 75% 65% at 50% 20%, #000 30%, transparent 100%);
+}
+
+.forge-backdrop::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(60% 45% at 50% -8%, var(--glow-1), transparent 70%),
+    radial-gradient(40% 35% at 100% 0%, var(--glow-2), transparent 70%);
+}
+
+/* =====================================================================
+   Tela de login — sempre escura, com foco de luz roxo animado.
+   ===================================================================== */
+.forge-auth {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background-color: #05050b;
+  color: #f4f4f5;
+  color-scheme: dark;
+}
+
+.forge-auth-grid {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 70% 60% at 50% 45%, #000 25%, transparent 100%);
+  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 45%, #000 25%, transparent 100%);
+}
+
+.forge-auth-orb {
+  position: absolute;
+  z-index: -2;
+  width: 46rem;
+  height: 46rem;
+  max-width: 140vw;
+  max-height: 140vw;
+  border-radius: 9999px;
+  filter: blur(110px);
+  opacity: 0.55;
+  will-change: transform;
+}
+
+.forge-auth-orb--violet {
+  top: -18rem;
+  left: 50%;
+  margin-left: -23rem;
+  background: radial-gradient(circle, #7c3aed 0%, #6d28d9 35%, transparent 70%);
+  animation: forge-orb-a 26s ease-in-out infinite;
+}
+
+.forge-auth-orb--indigo {
+  bottom: -22rem;
+  right: -12rem;
+  width: 34rem;
+  height: 34rem;
+  opacity: 0.4;
+  background: radial-gradient(circle, #4f46e5 0%, #2563eb 40%, transparent 70%);
+  animation: forge-orb-b 30s ease-in-out infinite;
+}
+
+@keyframes forge-orb-a {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  25% {
+    transform: translate3d(18vw, 14vh, 0) scale(1.1);
+  }
+  50% {
+    transform: translate3d(-4vw, 30vh, 0) scale(0.95);
+  }
+  75% {
+    transform: translate3d(-20vw, 10vh, 0) scale(1.08);
+  }
+}
+
+@keyframes forge-orb-b {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  33% {
+    transform: translate3d(-30vw, -20vh, 0) scale(1.15);
+  }
+  66% {
+    transform: translate3d(-8vw, -36vh, 0) scale(0.9);
+  }
+}
+
+.forge-auth-card {
+  background: rgba(17, 16, 26, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow:
+    0 30px 60px -30px rgba(0, 0, 0, 0.9),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+.forge-auth-input {
+  width: 100%;
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(5, 5, 11, 0.6);
+  padding: 0.75rem 1rem;
+  color: #f4f4f5;
+  outline: none;
+  transition:
+    border-color 150ms,
+    box-shadow 150ms;
+}
+.forge-auth-input::placeholder {
+  color: #71717a;
+}
+.forge-auth-input:focus {
+  border-color: rgba(168, 85, 247, 0.7);
+  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2);
+}
+
+.forge-auth-button {
+  position: relative;
+  width: 100%;
+  border-radius: 0.75rem;
+  padding: 0.8rem 1rem;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(90deg, #7c3aed 0%, #6366f1 50%, #2563eb 100%);
+  box-shadow: 0 10px 30px -12px rgba(124, 58, 237, 0.8);
+  transition:
+    box-shadow 200ms,
+    filter 200ms,
+    transform 200ms;
+}
+.forge-auth-button:hover:not(:disabled) {
+  filter: brightness(1.12);
+  box-shadow:
+    0 0 28px rgba(139, 92, 246, 0.65),
+    0 10px 30px -12px rgba(37, 99, 235, 0.9);
+  transform: translateY(-1px);
+}
+.forge-auth-button:disabled {
+  opacity: 0.6;
+}
+
+/* Cards bg-surface: leve transparência com blur sobre o fundo com grade */
+@layer utilities {
+  .bg-surface,
+  .bg-card {
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+  }
+}
+
+/* Painel padrão do produto: translúcido com blur */
 .forge-panel {
-  background: linear-gradient(180deg, #1a1a1f 0%, #151519 100%);
-  border: 1px solid rgba(255, 255, 255, 0.07);
+  background: var(--surface-glass);
+  border: 1px solid var(--line);
   border-radius: 22px;
   box-shadow: var(--shadow-panel);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 .forge-panel-title {
@@ -111,12 +411,15 @@ body {
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--color-text-muted);
+  color: var(--text-muted);
 }
 
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
+  }
+  .forge-auth-orb {
+    animation: none !important;
   }
 }

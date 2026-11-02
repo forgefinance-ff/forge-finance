@@ -36,7 +36,9 @@ export default async function DashboardLayout({
   const ai = getAiStatus();
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="relative isolate min-h-screen">
+      <div aria-hidden className="forge-backdrop" />
+
       <AppSidebar />
 
       <div className="flex min-h-screen min-w-0 flex-col md:pl-20">

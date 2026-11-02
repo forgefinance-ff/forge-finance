@@ -136,8 +136,8 @@ function buildInsights(
 
 const toneClasses = {
   neutral: "text-brand-soft bg-brand/15",
-  warn: "text-amber-300 bg-amber-400/10",
-  good: "text-emerald-300 bg-emerald-400/10",
+  warn: "text-amber-700 dark:text-amber-300 bg-amber-400/10",
+  good: "text-success bg-emerald-400/10",
 } as const;
 
 export function ForgeIntelligence({
@@ -160,13 +160,13 @@ export function ForgeIntelligence({
         </span>
       </div>
 
-      <p className="relative mt-3 text-[11px] text-zinc-500">
+      <p className="relative mt-3 text-[11px] text-faint">
         Análises calculadas por regras sobre os seus dados reais — não são
         geradas por IA.
       </p>
 
       {insights.length === 0 ? (
-        <div className="relative mt-4 rounded-2xl border border-dashed border-white/10 p-4 text-center text-xs text-zinc-500">
+        <div className="relative mt-4 rounded-2xl border border-dashed border-line p-4 text-center text-xs text-faint">
           Registre transações, metas ou cartões para receber análises
           personalizadas.
         </div>
@@ -182,8 +182,8 @@ export function ForgeIntelligence({
                   <Icon className="h-4 w-4" />
                 </span>
                 <div className="min-w-0">
-                  <p className="text-xs font-semibold text-zinc-100">{insight.title}</p>
-                  <p className="text-xs leading-relaxed text-zinc-400">{insight.text}</p>
+                  <p className="text-xs font-semibold text-foreground">{insight.title}</p>
+                  <p className="text-xs leading-relaxed text-muted-foreground">{insight.text}</p>
                 </div>
               </li>
             );
@@ -191,7 +191,7 @@ export function ForgeIntelligence({
         </ul>
       )}
 
-      <div className="relative mt-5 border-t border-white/[0.06] pt-4">
+      <div className="relative mt-5 border-t border-line pt-4">
         <AssistantBox configured={aiConfigured} />
       </div>
     </section>

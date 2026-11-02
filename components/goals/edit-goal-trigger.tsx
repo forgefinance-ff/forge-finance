@@ -25,7 +25,7 @@ export function EditGoalTrigger({ goal }: Props) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="rounded-lg p-2 text-slate-500 transition hover:bg-violet-500/10 hover:text-violet-400"
+        className="rounded-lg p-2 text-faint transition hover:bg-violet-500/10 hover:text-brand-soft"
         title="Editar meta"
       >
         <Pencil className="h-5 w-5" />

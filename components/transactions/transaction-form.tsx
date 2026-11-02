@@ -9,7 +9,7 @@ import { Account } from "@/lib/accounts";
 import { Category } from "@/lib/categories";
 
 const inputClass =
-  "w-full rounded-xl border border-white/10 bg-[#09090B] px-4 py-3 text-white outline-none transition focus:border-violet-500";
+  "w-full rounded-xl border border-line bg-background-soft px-4 py-3 text-foreground outline-none transition focus:border-violet-500";
 
 const EMOJI_SUGGESTIONS = [
   "🍔",
@@ -87,9 +87,9 @@ export function TransactionForm({
   return (
     <form
       action={handleSubmit}
-      className="space-y-4 rounded-2xl border border-white/10 bg-surface p-6"
+      className="space-y-4 rounded-2xl border border-line bg-surface p-6"
     >
-      <h2 className="text-xl font-semibold text-white">Nova Transação</h2>
+      <h2 className="text-xl font-semibold text-foreground">Nova Transação</h2>
 
       <input
         name="description"
@@ -142,7 +142,7 @@ export function TransactionForm({
           <button
             type="button"
             onClick={() => setShowNewCategory((value) => !value)}
-            className="flex h-[50px] w-[50px] shrink-0 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] text-slate-300 transition hover:border-violet-500/40 hover:text-violet-300"
+            className="flex h-[50px] w-[50px] shrink-0 items-center justify-center rounded-xl border border-line bg-tint text-text-soft transition hover:border-violet-500/40 hover:text-brand-soft"
             title="Criar nova categoria"
           >
             {showNewCategory ? (
@@ -155,7 +155,7 @@ export function TransactionForm({
 
         {showNewCategory && (
           <div className="mt-3 space-y-3 rounded-xl border border-violet-500/20 bg-violet-500/[0.04] p-4">
-            <p className="text-sm font-medium text-slate-300">
+            <p className="text-sm font-medium text-text-soft">
               Nova categoria de {type === "expense" ? "despesa" : "receita"}
             </p>
 
@@ -175,7 +175,7 @@ export function TransactionForm({
                   className={`flex h-10 w-10 items-center justify-center rounded-lg text-lg transition ${
                     newCategoryIcon === emoji
                       ? "bg-violet-500/30 ring-1 ring-violet-400"
-                      : "bg-white/5 hover:bg-white/10"
+                      : "bg-tint hover:bg-tint-strong"
                   }`}
                 >
                   {emoji}
@@ -188,7 +188,7 @@ export function TransactionForm({
                 type="color"
                 value={newCategoryColor}
                 onChange={(event) => setNewCategoryColor(event.target.value)}
-                className="h-10 w-14 shrink-0 cursor-pointer rounded-lg border border-white/10 bg-[#09090B]"
+                className="h-10 w-14 shrink-0 cursor-pointer rounded-lg border border-line bg-background-soft"
               />
 
               <button

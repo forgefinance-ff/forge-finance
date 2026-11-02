@@ -34,18 +34,18 @@ export function QuickActionsCard({
   ];
 
   return (
-    <div className="rounded-[22px] border border-white/[0.07] bg-surface p-6">
+    <div className="rounded-[22px] border border-line bg-surface p-6">
       <div className="mb-6 flex items-center gap-3">
         <div className="rounded-xl bg-violet-500/15 p-3">
-          <ListPlus className="text-violet-400" size={20} />
+          <ListPlus className="text-brand-soft" size={20} />
         </div>
 
         <div>
-          <h3 className="text-lg font-semibold text-white">
+          <h3 className="text-lg font-semibold text-foreground">
             Ações Rápidas
           </h3>
 
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-muted-foreground">
             Crie novos registros sem sair do dashboard
           </p>
         </div>
@@ -67,9 +67,9 @@ export function QuickActionsCard({
             <Link
               key={link.href}
               href={link.href}
-              className="flex w-full items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm font-medium text-slate-300 transition hover:border-violet-500/30 hover:bg-white/[0.06] hover:text-white"
+              className="flex w-full items-center gap-3 rounded-xl border border-line bg-tint px-4 py-3 text-sm font-medium text-text-soft transition hover:border-violet-500/30 hover:bg-tint hover:text-foreground"
             >
-              <Icon className="h-4 w-4 text-violet-400" />
+              <Icon className="h-4 w-4 text-brand-soft" />
               {link.label}
             </Link>
           );

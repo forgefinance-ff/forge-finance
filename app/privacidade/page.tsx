@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+import { ThemeToggle } from "@/components/theme-toggle";
+
 export const metadata: Metadata = {
   title: "Política de Privacidade | Forge Finance",
   description:
@@ -129,26 +131,30 @@ const SECTIONS: Section[] = [
 
 export default function PrivacyPage() {
   return (
-    <main className="min-h-screen bg-[#09090B] px-4 py-12 text-slate-300">
+    <main className="relative isolate min-h-screen px-4 py-12 text-text-soft">
+      <div aria-hidden className="forge-backdrop" />
+
       <div className="mx-auto max-w-3xl space-y-6">
-        <header className="rounded-[22px] border border-white/[0.07] bg-white/[0.03] p-8">
-          <span className="text-sm font-medium uppercase tracking-[0.25em] text-violet-400">
+        <header className="relative rounded-[22px] border border-line bg-surface p-8">
+          <ThemeToggle className="absolute right-5 top-5" />
+
+          <span className="text-sm font-medium uppercase tracking-[0.25em] text-brand-soft">
             Forge Finance
           </span>
 
-          <h1 className="mt-2 text-4xl font-bold tracking-tight text-white">
+          <h1 className="mt-2 text-4xl font-bold tracking-tight text-foreground">
             Política de Privacidade
           </h1>
 
-          <p className="mt-2 text-slate-400">Última atualização: {UPDATED}</p>
+          <p className="mt-2 text-muted-foreground">Última atualização: {UPDATED}</p>
         </header>
 
         {SECTIONS.map((section) => (
           <section
             key={section.title}
-            className="rounded-[22px] border border-white/[0.07] bg-white/[0.03] p-6"
+            className="rounded-[22px] border border-line bg-surface p-6"
           >
-            <h2 className="text-lg font-semibold text-white">{section.title}</h2>
+            <h2 className="text-lg font-semibold text-foreground">{section.title}</h2>
 
             {section.paragraphs?.map((text) => (
               <p key={text} className="mt-3 leading-relaxed">
@@ -166,10 +172,10 @@ export default function PrivacyPage() {
           </section>
         ))}
 
-        <p className="pb-6 text-center text-sm text-slate-500">
+        <p className="pb-6 text-center text-sm text-faint">
           <a
             href={`mailto:${EMAIL}`}
-            className="underline underline-offset-4 hover:text-slate-300"
+            className="underline underline-offset-4 hover:text-text-soft"
           >
             {EMAIL}
           </a>

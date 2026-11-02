@@ -8,7 +8,7 @@ type ActivityHeatmapProps = {
 };
 
 const levelClasses = [
-  "bg-white/[0.05]",
+  "bg-tint",
   "bg-brand/30",
   "bg-brand/55",
   "bg-brand-bright/80",
@@ -44,11 +44,11 @@ export function ActivityHeatmap({ cells, weeks }: ActivityHeatmapProps) {
     <section className="forge-panel p-5">
       <div className="flex items-center justify-between">
         <p className="forge-panel-title">Atividade financeira</p>
-        <span className="text-[11px] text-zinc-500">Últimas {weeks} semanas</span>
+        <span className="text-[11px] text-faint">Últimas {weeks} semanas</span>
       </div>
 
       {totalCount === 0 ? (
-        <div className="mt-4 flex h-28 items-center justify-center rounded-2xl border border-dashed border-white/10 px-4 text-center text-xs text-zinc-500">
+        <div className="mt-4 flex h-28 items-center justify-center rounded-2xl border border-dashed border-line px-4 text-center text-xs text-faint">
           Sem transações neste período para montar o mapa de atividade.
         </div>
       ) : (
@@ -82,7 +82,7 @@ export function ActivityHeatmap({ cells, weeks }: ActivityHeatmapProps) {
             })}
           </div>
 
-          <div className="mt-3 flex items-center justify-between text-[11px] text-zinc-500">
+          <div className="mt-3 flex items-center justify-between text-[11px] text-faint">
             <span>{totalCount} transações no período</span>
             <span className="flex items-center gap-1">
               Menos

@@ -17,6 +17,7 @@ import {
   WalletCardsIcon,
 } from "lucide-react";
 
+import { ThemeToggle } from "@/components/theme-toggle";
 import { cn } from "@/lib/utils";
 
 type NavItem = {
@@ -61,8 +62,8 @@ function RailItem({ item, active }: { item: NavItem; active: boolean }) {
           "relative flex h-11 w-11 items-center justify-center rounded-2xl border transition-all duration-300 outline-none",
           "focus-visible:ring-2 focus-visible:ring-brand-bright/70",
           active
-            ? "border-brand-bright/40 bg-[#2a1646] text-brand-soft shadow-[0_0_22px_rgba(168,85,247,0.55),inset_0_0_12px_rgba(168,85,247,0.25)]"
-            : "border-transparent text-zinc-500 hover:bg-white/5 hover:text-zinc-300"
+            ? "border-brand-bright/40 bg-brand/15 text-brand-soft shadow-[0_0_22px_rgba(168,85,247,0.45),inset_0_0_12px_rgba(168,85,247,0.2)]"
+            : "border-transparent text-faint hover:bg-tint-strong hover:text-text-soft"
         )}
       >
         {active && (
@@ -82,7 +83,7 @@ function RailItem({ item, active }: { item: NavItem; active: boolean }) {
       {/* Tooltip acessível: aparece no hover e no foco por teclado */}
       <span
         role="tooltip"
-        className="pointer-events-none absolute left-full top-1/2 z-50 ml-3 -translate-y-1/2 whitespace-nowrap rounded-lg border border-white/10 bg-[#1a1a1f] px-2.5 py-1.5 text-xs font-medium text-zinc-100 opacity-0 shadow-xl transition-opacity duration-150 group-hover/item:opacity-100 group-focus-within/item:opacity-100"
+        className="pointer-events-none absolute left-full top-1/2 z-50 ml-3 -translate-y-1/2 whitespace-nowrap rounded-lg border border-line bg-surface-solid px-2.5 py-1.5 text-xs font-medium text-foreground opacity-0 shadow-xl transition-opacity duration-150 group-hover/item:opacity-100 group-focus-within/item:opacity-100"
       >
         {item.title}
       </span>
@@ -97,24 +98,25 @@ export function AppSidebar() {
   return (
     <aside
       aria-label="Navegação principal"
-      className="fixed inset-y-0 left-0 z-40 hidden w-20 flex-col items-center border-r border-white/[0.06] bg-sidebar/95 py-5 backdrop-blur-xl md:flex"
+      className="fixed inset-y-0 left-0 z-40 hidden w-20 flex-col items-center border-r border-line bg-sidebar py-5 backdrop-blur-xl md:flex"
     >
       <Link
         href="/dashboard"
         aria-label="Forge Finance"
-        className="mb-6 flex h-11 w-11 items-center justify-center overflow-hidden rounded-2xl ring-1 ring-brand/40"
+        className="mb-6 flex h-12 w-12 items-center justify-center transition-transform duration-300 hover:scale-105"
       >
         <Image
-          src="/logos/forge-logo.png"
+          src="/icon-f.png"
           alt="Forge Finance"
-          width={44}
-          height={44}
-          className="h-full w-full object-cover"
+          width={48}
+          height={48}
+          priority
+          className="h-12 w-12 object-contain drop-shadow-[0_0_14px_rgba(139,92,246,0.45)]"
         />
       </Link>
 
       <nav className="flex w-full flex-1 flex-col items-center overflow-y-auto overflow-x-visible py-1">
-        <ul className="flex flex-col items-center gap-2 rounded-[28px] border border-white/[0.05] bg-white/[0.02] p-2">
+        <ul className="flex flex-col items-center gap-2 rounded-[28px] border border-line bg-tint p-2">
           {mainItems.map((item) => (
             <RailItem
               key={item.url}
@@ -125,7 +127,10 @@ export function AppSidebar() {
         </ul>
       </nav>
 
-      <ul className="mt-3 flex flex-col items-center">
+      <ul className="mt-3 flex flex-col items-center gap-3">
+        <li>
+          <ThemeToggle placement="right" />
+        </li>
         <RailItem
           item={settingsItem}
           active={isActive(pathname, settingsItem.url)}
@@ -143,7 +148,7 @@ export function MobileNav() {
   return (
     <nav
       aria-label="Navegação principal"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-white/[0.08] bg-sidebar/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-sidebar pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden"
     >
       <ul className="flex items-center gap-1 overflow-x-auto px-3 py-2">
         {items.map((item) => {
@@ -159,8 +164,8 @@ export function MobileNav() {
                 className={cn(
                   "flex h-11 w-11 items-center justify-center rounded-2xl border transition-all duration-300",
                   active
-                    ? "border-brand-bright/40 bg-[#2a1646] text-brand-soft shadow-[0_0_18px_rgba(168,85,247,0.5)]"
-                    : "border-transparent text-zinc-500"
+                    ? "border-brand-bright/40 bg-brand/15 text-brand-soft shadow-[0_0_18px_rgba(168,85,247,0.4)]"
+                    : "border-transparent text-faint"
                 )}
               >
                 <Icon className="h-5 w-5" />

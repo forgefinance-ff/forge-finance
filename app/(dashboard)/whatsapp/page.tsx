@@ -10,7 +10,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export const dynamic = "force-dynamic";
 
-const panel = "rounded-[22px] border border-white/[0.07] bg-surface p-6";
+const panel = "rounded-[22px] border border-line bg-surface p-6";
 
 function maskPhone(phone: string) {
   return `+${phone.slice(0, 2)} ${phone.slice(2, 4)} •••••${phone.slice(-4)}`;
@@ -45,16 +45,16 @@ export default async function WhatsappPage() {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-[22px] border border-white/[0.07] bg-surface p-8">
-        <span className="text-sm font-medium uppercase tracking-[0.25em] text-violet-400">
+      <div className="rounded-[22px] border border-line bg-surface p-8">
+        <span className="text-sm font-medium uppercase tracking-[0.25em] text-brand-soft">
           Integrações
         </span>
 
-        <h1 className="mt-2 text-4xl font-bold tracking-tight text-white">
+        <h1 className="mt-2 text-4xl font-bold tracking-tight text-foreground">
           WhatsApp
         </h1>
 
-        <p className="mt-2 max-w-xl text-slate-400">
+        <p className="mt-2 max-w-xl text-muted-foreground">
           Registre gastos e receitas mandando um texto ou um áudio. Você sempre
           confirma antes de salvar.
         </p>
@@ -63,10 +63,10 @@ export default async function WhatsappPage() {
       {link ? (
         <>
           <section className={panel}>
-            <h2 className="text-lg font-semibold text-white">Número vinculado</h2>
-            <p className="mt-1 text-slate-300">{maskPhone(link.phone)}</p>
+            <h2 className="text-lg font-semibold text-foreground">Número vinculado</h2>
+            <p className="mt-1 text-text-soft">{maskPhone(link.phone)}</p>
 
-            <p className="mt-4 text-sm text-slate-400">
+            <p className="mt-4 text-sm text-muted-foreground">
               Exemplos: “gastei 45 no mercado”, “recebi 1500 de freelance”,
               “ontem paguei 80 de uber”. Também funciona por áudio.
             </p>
@@ -79,8 +79,8 @@ export default async function WhatsappPage() {
           </section>
 
           <section className={panel}>
-            <h2 className="text-lg font-semibold text-white">Conta padrão</h2>
-            <p className="mt-1 text-sm text-slate-400">
+            <h2 className="text-lg font-semibold text-foreground">Conta padrão</h2>
+            <p className="mt-1 text-sm text-muted-foreground">
               Usada quando você não citar a conta na mensagem.
             </p>
 
@@ -91,7 +91,7 @@ export default async function WhatsappPage() {
               <select
                 name="account_id"
                 defaultValue={link.default_account_id ?? ""}
-                className="rounded-xl border border-white/10 bg-[#09090B] px-4 py-3 text-white outline-none transition focus:border-violet-500"
+                className="rounded-xl border border-line bg-background-soft px-4 py-3 text-foreground outline-none transition focus:border-violet-500"
               >
                 <option value="">Nenhuma (perguntar sempre)</option>
                 {accounts.map((account) => (
@@ -109,16 +109,16 @@ export default async function WhatsappPage() {
         </>
       ) : (
         <section className={panel}>
-          <h2 className="text-lg font-semibold text-white">Vincular seu número</h2>
+          <h2 className="text-lg font-semibold text-foreground">Vincular seu número</h2>
 
           {codeRow ? (
             <div className="mt-4 space-y-4">
-              <p className="text-sm text-slate-400">
+              <p className="text-sm text-muted-foreground">
                 Envie esta mensagem, do WhatsApp que você quer vincular, para o
                 número do Forge Finance. O código vale por 15 minutos.
               </p>
 
-              <p className="inline-block rounded-xl border border-violet-500/30 bg-violet-500/10 px-5 py-3 font-mono text-2xl tracking-widest text-white">
+              <p className="inline-block rounded-xl border border-violet-500/30 bg-violet-500/10 px-5 py-3 font-mono text-2xl tracking-widest text-foreground">
                 VINCULAR {codeRow.code}
               </p>
 
@@ -130,7 +130,7 @@ export default async function WhatsappPage() {
                     )}`}
                     target="_blank"
                     rel="noreferrer"
-                    className="text-sm font-medium text-violet-300 underline underline-offset-4"
+                    className="text-sm font-medium text-brand-soft underline underline-offset-4"
                   >
                     Abrir no WhatsApp
                   </a>
@@ -138,7 +138,7 @@ export default async function WhatsappPage() {
               )}
             </div>
           ) : (
-            <p className="mt-2 text-sm text-slate-400">
+            <p className="mt-2 text-sm text-muted-foreground">
               Gere um código e envie para o número do Forge Finance no WhatsApp.
             </p>
           )}
