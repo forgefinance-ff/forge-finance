@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/client";
+import { getSiteUrl } from "@/lib/site-url";
 
 export function RegisterForm() {
   const router = useRouter();
@@ -24,6 +25,7 @@ export function RegisterForm() {
       email,
       password,
       options: {
+        emailRedirectTo: `${getSiteUrl()}/auth/callback`,
         data: {
           name,
         },

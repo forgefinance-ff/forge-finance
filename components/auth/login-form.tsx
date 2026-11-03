@@ -2,13 +2,20 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/client";
 
 export function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
+
+  const notice = searchParams.get("confirmado")
+    ? "E-mail confirmado. Entre para continuar."
+    : searchParams.get("erro")
+      ? "Link inválido ou expirado. Tente entrar ou crie a conta novamente."
+      : null;
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -41,6 +48,12 @@ export function LoginForm() {
       onSubmit={handleLogin}
       className="forge-auth-card space-y-5 rounded-2xl p-6 sm:p-8"
     >
+      {notice && (
+        <p role="status" className="text-center text-sm text-violet-300">
+          {notice}
+        </p>
+      )}
+
       <div>
         <label htmlFor="login-email" className="mb-2 block text-sm text-zinc-300">
           E-mail
