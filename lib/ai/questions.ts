@@ -46,6 +46,14 @@ export const STANDARD_QUESTIONS: Record<"personal" | "business", StandardQuestio
   ],
   business: [
     {
+      label: "Saúde do caixa",
+      question: "Analise meu caixa dos próximos 90 dias: vou ficar no negativo em algum momento? O que fazer para evitar?",
+    },
+    {
+      label: "Ponto de equilíbrio",
+      question: "Explique meu ponto de equilíbrio e quanto preciso vender a mais para ter a margem de lucro da minha meta.",
+    },
+    {
       label: "Lucro do mês",
       question: "Qual foi o resultado da empresa este mês (entradas menos saídas)? O que mais pesou nas despesas?",
     },

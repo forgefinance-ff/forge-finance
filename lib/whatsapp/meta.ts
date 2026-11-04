@@ -23,13 +23,13 @@ export function verifySignature(rawBody: string, header: string | null) {
   );
 }
 
-async function sendMessage(to: string, message: Record<string, unknown>) {
+async function sendMessage(to: string, message: Record<string, unknown>): Promise<boolean> {
   const phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID;
   const token = process.env.WHATSAPP_ACCESS_TOKEN;
 
   if (!phoneNumberId || !token) {
     console.error("WhatsApp: WHATSAPP_PHONE_NUMBER_ID/ACCESS_TOKEN ausentes.");
-    return;
+    return false;
   }
 
   const response = await fetch(`${GRAPH}/${phoneNumberId}/messages`, {
@@ -44,13 +44,46 @@ async function sendMessage(to: string, message: Record<string, unknown>) {
 
   if (!response.ok) {
     console.error("WhatsApp send error", response.status, await response.text());
+    return false;
   }
+  return true;
 }
 
 export async function sendText(to: string, body: string) {
-  await sendMessage(to, {
+  return sendMessage(to, {
     type: "text",
     text: { body: body.slice(0, 4000), preview_url: false },
+  });
+}
+
+/**
+ * Mensagem de modelo (template) aprovado na Meta. É o único jeito de o bot
+ * puxar conversa fora da janela de 24 h desde a última mensagem do usuário.
+ * Parâmetros não podem ter quebra de linha.
+ */
+export async function sendTemplate(
+  to: string,
+  name: string,
+  params: string[],
+  language = "pt_BR"
+) {
+  return sendMessage(to, {
+    type: "template",
+    template: {
+      name,
+      language: { code: language },
+      components: params.length
+        ? [
+            {
+              type: "body",
+              parameters: params.map((text) => ({
+                type: "text",
+                text: text.replace(/\s+/g, " ").trim().slice(0, 1000),
+              })),
+            },
+          ]
+        : [],
+    },
   });
 }
 

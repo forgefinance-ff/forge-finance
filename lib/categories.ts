@@ -12,6 +12,8 @@ export type Category = {
   icon: string;
   scope: Scope;
   kind: MovementKind;
+  /** Só despesas da Empresa: classe de custo usada na DRE. */
+  cost_class?: "variable" | "fixed" | "tax" | "prolabore" | null;
   created_at: string;
   updated_at: string;
 };

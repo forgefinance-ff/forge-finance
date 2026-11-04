@@ -6,6 +6,7 @@ import { getDashboardData } from "@/lib/dashboard";
 import { shiftDate, todayInBrazil } from "@/lib/dates";
 import { getGoals } from "@/lib/goals";
 import { getInvestments } from "@/lib/investments";
+import { getBusinessPanel } from "@/lib/business-panel";
 import { getBusinessRevenue, getMeiSettings } from "@/lib/mei";
 import { calcLimit } from "@/lib/mei-shared";
 import { KIND_LABEL, type MovementKind } from "@/lib/movement-kinds";
@@ -130,7 +131,42 @@ export async function buildDeepContext() {
     });
 
   let mei: Record<string, unknown> | null = null;
+  let gestao: Record<string, unknown> | null = null;
   if (scope === "business") {
+    const panel = await getBusinessPanel();
+    if (panel) {
+      gestao = {
+        dreUltimos6Meses: panel.dre.map((m) => ({
+          mes: m.month,
+          faturamento: m.revenue,
+          impostos: m.taxes,
+          custosVariaveis: m.variable,
+          margemContribuicao: m.contributionMargin,
+          custosFixos: m.fixed,
+          proLabore: m.prolabore,
+          naoClassificado: m.unclassified,
+          lucro: m.profit,
+          vendas: m.salesCount,
+          ticketMedio: m.averageTicket,
+          retiradasDeLucro: m.ownerWithdrawals,
+        })),
+        pontoDeEquilibrio: panel.breakeven,
+        caixaHoje: panel.cashToday,
+        projecao90Dias: {
+          menorSaldo: panel.projection.lowest,
+          primeiroDiaNegativo: panel.projection.firstNegative,
+          entradasPrevistas: panel.projection.inflow,
+          saidasPrevistas: panel.projection.outflow,
+        },
+        inadimplencia: {
+          emAtraso: panel.delinquency.overdueTotal,
+          clientesDevendo: panel.delinquency.overdueCustomers,
+          atrasoMedioDias: panel.delinquency.averageDaysLate,
+        },
+        metas: panel.goals,
+      };
+    }
+
     const year = Number(today.slice(0, 4));
     const [settings, revenue] = await Promise.all([getMeiSettings(), getBusinessRevenue(year)]);
     const calc = calcLimit(settings, revenue, today);
@@ -166,5 +202,6 @@ export async function buildDeepContext() {
     },
     historicoMensal: meses,
     mei,
+    gestao,
   };
 }

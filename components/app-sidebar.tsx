@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  BriefcaseIcon,
   ChartBarIcon,
   FolderIcon,
   LandmarkIcon,
@@ -55,11 +56,15 @@ const businessItems: NavItem[] = [
   { title: "Impostos", url: "/impostos", icon: PercentIcon },
 ];
 
+/** No escopo Empresa, "Gestão" fica logo depois do Dashboard. */
+const businessHome: NavItem = { title: "Gestão", url: "/gestao", icon: BriefcaseIcon };
+
 export function getNavItems(scope: Scope): NavItem[] {
   if (scope !== "business") return mainItems;
 
   const at = mainItems.findIndex((item) => item.url === "/categorias") + 1;
-  return [...mainItems.slice(0, at), ...businessItems, ...mainItems.slice(at)];
+  const items = [...mainItems.slice(0, at), ...businessItems, ...mainItems.slice(at)];
+  return [items[0], businessHome, ...items.slice(1)];
 }
 
 const settingsItem: NavItem = {

@@ -9,6 +9,7 @@ import { getDueSummary } from "@/lib/payables";
 import { todayInBrazil } from "@/lib/dates";
 import { DueSoonCard } from "@/components/dashboard/due-soon-card";
 import { DasReminderCard } from "@/components/dashboard/das-reminder-card";
+import { BusinessPanelLink } from "@/components/business/business-panel-link";
 import { getDasReminder } from "@/lib/mei";
 import { getActiveScope } from "@/lib/scope-server";
 import { createClient } from "@/lib/supabase/server";
@@ -57,6 +58,7 @@ export default async function DashboardPage() {
       aiConfigured={getAiStatus().configured}
       alerts={
         <>
+          {scope === "business" && <BusinessPanelLink />}
           <DasReminderCard reminder={dasReminder} />
           <DueSoonCard summary={dueSummary} today={todayInBrazil()} />
         </>

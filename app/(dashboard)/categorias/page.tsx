@@ -2,6 +2,7 @@ import { ArrowDownLeft, ArrowUpRight, Trash2 } from "lucide-react";
 
 import { createCategory, deleteCategory } from "@/app/actions/categories";
 import { CategoryForm } from "@/components/categories/category-form";
+import { CostClassSelect } from "@/components/categories/cost-class-select";
 import { SuggestedBusinessCategories } from "@/components/categories/suggested-business-categories";
 import { getCategories } from "@/lib/categories";
 import { KIND_LABEL } from "@/lib/movement-kinds";
@@ -48,9 +49,15 @@ export default async function CategoriasPage() {
 
       <CategoryGroup
         title="Saídas (despesas)"
+        description={
+          scope === "business"
+            ? "Na Empresa, diga se cada despesa é custo variável, fixo, imposto ou pró-labore: é assim que a DRE e o ponto de equilíbrio são calculados."
+            : undefined
+        }
         tone="expense"
         categories={expenseCategories}
         deleteAction={deleteCategory}
+        showCostClass={scope === "business"}
       />
 
       <CategoryGroup
@@ -71,6 +78,7 @@ function CategoryGroup({
   categories,
   deleteAction,
   showKind = false,
+  showCostClass = false,
 }: {
   title: string;
   description?: string;
@@ -78,6 +86,7 @@ function CategoryGroup({
   categories: CategoryList;
   deleteAction: (formData: FormData) => Promise<void>;
   showKind?: boolean;
+  showCostClass?: boolean;
 }) {
   return (
     <section className="rounded-[22px] border border-line bg-surface p-6">
@@ -109,6 +118,9 @@ function CategoryGroup({
                   <span className="block truncate font-medium text-foreground">
                     {category.name}
                   </span>
+                  {showCostClass && (
+                    <CostClassSelect categoryId={category.id} value={category.cost_class ?? null} />
+                  )}
                   {showKind && (
                     <span
                       className={`text-xs font-medium ${
