@@ -48,7 +48,8 @@ export async function getCashFlowData(
     .from("transactions")
     .select("type, amount, transaction_date")
     .eq("user_id", user.id)
-    .eq("scope", await getActiveScope());
+    .eq("scope", await getActiveScope())
+    .eq("kind", "regular");
 
   if (period.from) query = query.gte("transaction_date", period.from);
   if (period.to) query = query.lt("transaction_date", shiftDate(period.to, 1));

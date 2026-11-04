@@ -19,7 +19,8 @@ export async function getSummaryData(period: ReportPeriod) {
     .from("transactions")
     .select("type, amount")
     .eq("user_id", user.id)
-    .eq("scope", scope);
+    .eq("scope", scope)
+    .eq("kind", "regular"); // aportes, empréstimos e reembolsos ficam fora do resultado
 
   if (period.from) {
     transactionsQuery = transactionsQuery.gte("transaction_date", period.from);

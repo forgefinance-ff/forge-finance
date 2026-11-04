@@ -132,6 +132,7 @@ export const READ_TOOLS: ReadTool[] = [
         .select("type, amount, scope, categories(name)")
         .eq("user_id", ctx.userId)
         .in("scope", scopes(args))
+        .eq("kind", "regular") // aportes, empréstimos e reembolsos não são resultado
         .gte("transaction_date", from)
         .lte("transaction_date", to);
 
@@ -251,6 +252,7 @@ export const READ_TOOLS: ReadTool[] = [
           .eq("user_id", ctx.userId)
           .eq("scope", "business")
           .eq("type", "income")
+          .eq("kind", "regular")
           .gte("transaction_date", `${year}-01-01`)
           .lte("transaction_date", `${year}-12-31`),
         db

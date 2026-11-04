@@ -1,6 +1,7 @@
 "use client";
 import type { getTransactions } from "@/lib/transactions";
 
+import { countsAsResult } from "@/lib/movement-kinds";
 import {
   ArrowDownCircle,
   ArrowUpCircle,
@@ -13,15 +14,20 @@ type Props = {
 };
 
 export function TransactionsSummary({ transactions }: Props) {
-  const income = transactions
-    .filter((transaction) => transaction.type === "income")
-    .reduce((total, transaction) => total + Number(transaction.amount), 0);
+  // Só receitas e despesas de verdade entram no resultado; aportes,
+  // empréstimos e reembolsos aparecem à parte.
+  const regular = transactions.filter((transaction) => countsAsResult(transaction.kind));
+  const others = transactions.filter((transaction) => !countsAsResult(transaction.kind));
 
-  const expense = transactions
-    .filter((transaction) => transaction.type === "expense")
-    .reduce((total, transaction) => total + Number(transaction.amount), 0);
+  const sum = (list: typeof transactions, type: "income" | "expense") =>
+    list
+      .filter((transaction) => transaction.type === type)
+      .reduce((total, transaction) => total + Number(transaction.amount), 0);
 
+  const income = sum(regular, "income");
+  const expense = sum(regular, "expense");
   const balance = income - expense;
+  const othersNet = sum(others, "income") - sum(others, "expense");
 
   const cards = [
     {
@@ -37,17 +43,16 @@ export function TransactionsSummary({ transactions }: Props) {
       iconColor: "bg-rose-500/15 text-danger",
     },
     {
-      title: "Saldo",
+      title: "Resultado",
       value: balance,
       icon: Wallet,
       iconColor: "bg-violet-500/15 text-brand-soft",
     },
     {
-      title: "Transações",
-      value: transactions.length,
+      title: "Aportes, empréstimos e reembolsos",
+      value: othersNet,
       icon: TrendingUp,
       iconColor: "bg-indigo-500/15 text-indigo-600 dark:text-indigo-300",
-      isCount: true,
     },
   ];
 
@@ -73,12 +78,10 @@ export function TransactionsSummary({ transactions }: Props) {
 
             <div className="mt-5">
               <p className="text-3xl font-bold tracking-tight text-foreground">
-                {card.isCount
-                  ? card.value
-                  : card.value.toLocaleString("pt-BR", {
-                      style: "currency",
-                      currency: "BRL",
-                    })}
+                {card.value.toLocaleString("pt-BR", {
+                  style: "currency",
+                  currency: "BRL",
+                })}
               </p>
             </div>
           </div>

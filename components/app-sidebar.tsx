@@ -12,6 +12,8 @@ import {
   MessageCircleIcon,
   PercentIcon,
   ListIcon,
+  SparklesIcon,
+  UploadIcon,
   ReceiptTextIcon,
   Settings2Icon,
   TagsIcon,
@@ -34,6 +36,8 @@ type NavItem = {
 const mainItems: NavItem[] = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboardIcon },
   { title: "Transações", url: "/transacoes", icon: ListIcon },
+  { title: "Importar extrato", url: "/importar", icon: UploadIcon },
+  { title: "Assistente IA", url: "/assistente", icon: SparklesIcon },
   { title: "Contas a pagar/receber", url: "/contas-a-pagar-receber", icon: ReceiptTextIcon },
   { title: "Contas", url: "/contas", icon: LandmarkIcon },
   { title: "Cartões", url: "/cartoes", icon: WalletCardsIcon },

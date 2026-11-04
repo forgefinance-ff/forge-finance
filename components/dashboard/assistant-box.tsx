@@ -1,7 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
-import { SendIcon } from "lucide-react";
+import { ArrowRightIcon, SendIcon } from "lucide-react";
+
+import { QUICK_QUESTIONS } from "@/lib/ai/questions";
 
 type AssistantBoxProps = {
   configured: boolean;
@@ -15,8 +18,13 @@ export function AssistantBox({ configured }: AssistantBoxProps) {
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
-    const trimmed = question.trim();
+    await ask(question);
+  }
+
+  async function ask(text: string) {
+    const trimmed = text.trim();
     if (!trimmed || loading) return;
+    setQuestion(trimmed);
 
     setLoading(true);
     setError(null);
@@ -83,6 +91,28 @@ export function AssistantBox({ configured }: AssistantBoxProps) {
           <SendIcon className="h-4 w-4" />
         </button>
       </form>
+
+      <div className="mt-2 flex flex-wrap gap-1.5">
+        {QUICK_QUESTIONS.map((q) => (
+          <button
+            key={q}
+            type="button"
+            disabled={loading}
+            onClick={() => ask(q)}
+            className="rounded-full border border-line bg-tint px-2.5 py-1 text-[11px] text-text-soft transition hover:border-brand-bright/40 hover:text-brand-soft disabled:opacity-50"
+          >
+            {q}
+          </button>
+        ))}
+      </div>
+
+      <Link
+        href="/assistente"
+        className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-brand-soft hover:underline"
+      >
+        Análises completas no Assistente IA
+        <ArrowRightIcon className="h-3 w-3" />
+      </Link>
 
       {loading && <p className="mt-3 text-xs text-faint">Analisando seus dados…</p>}
       {error && (

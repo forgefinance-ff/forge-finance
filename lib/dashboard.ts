@@ -2,6 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { getActiveScope } from "@/lib/scope-server";
 import { buildAnalytics, type DashboardAnalytics } from "@/lib/dashboard-analytics";
 import { firstRelation } from "@/lib/relations";
+import { countsAsResult } from "@/lib/movement-kinds";
 
 export type RecentTransaction = {
   id: string;
@@ -205,6 +206,7 @@ export async function getDashboardData(): Promise<DashboardData> {
         id,
         amount,
         type,
+        kind,
         description,
         transaction_date,
         categories(name,color,icon)
@@ -250,7 +252,13 @@ export async function getDashboardData(): Promise<DashboardData> {
     }
   >();
 
-  transactions?.forEach((transaction) => {
+  // Aportes, empréstimos e reembolsos mexem no saldo, mas não são receita
+  // nem despesa: ficam fora dos totais, gráficos e análises.
+  const resultTransactions = (transactions ?? []).filter((transaction) =>
+    countsAsResult(transaction.kind)
+  );
+
+  resultTransactions.forEach((transaction) => {
     const value = Number(transaction.amount);
 
     const month = new Date(
@@ -296,11 +304,11 @@ export async function getDashboardData(): Promise<DashboardData> {
     })) ?? [];
 
   const rawTransactions: RawTransaction[] =
-    transactions?.map((transaction) => ({
+    resultTransactions.map((transaction) => ({
       amount: Number(transaction.amount),
       type: transaction.type,
       transaction_date: transaction.transaction_date,
-    })) ?? [];
+    }));
 
   return {
     totalBalance,
@@ -321,7 +329,7 @@ export async function getDashboardData(): Promise<DashboardData> {
         0
       ) ?? 0,
     analytics: buildAnalytics(
-      (transactions ?? []).map((transaction) => ({
+      resultTransactions.map((transaction) => ({
         amount: Number(transaction.amount),
         type: transaction.type,
         description: transaction.description ?? null,
