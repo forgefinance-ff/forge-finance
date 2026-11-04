@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import type { MovementKind } from "@/lib/movement-kinds";
 import { appCtx } from "@/lib/services/app";
 import {
   createCategory as createCategoryService,
@@ -14,6 +15,7 @@ export async function createCategory(formData: FormData) {
     type: String(formData.get("type") ?? "") as "income" | "expense",
     color: String(formData.get("color") ?? ""),
     icon: String(formData.get("icon") ?? ""),
+    kind: String(formData.get("kind") ?? "") as "" | MovementKind,
   });
 
   revalidatePath("/transacoes");

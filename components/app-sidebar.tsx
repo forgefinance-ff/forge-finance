@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  BriefcaseIcon,
   ChartBarIcon,
   FolderIcon,
   LandmarkIcon,
@@ -12,6 +13,8 @@ import {
   MessageCircleIcon,
   PercentIcon,
   ListIcon,
+  SparklesIcon,
+  UploadIcon,
   ReceiptTextIcon,
   Settings2Icon,
   TagsIcon,
@@ -34,6 +37,8 @@ type NavItem = {
 const mainItems: NavItem[] = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboardIcon },
   { title: "Transações", url: "/transacoes", icon: ListIcon },
+  { title: "Importar extrato", url: "/importar", icon: UploadIcon },
+  { title: "Assistente IA", url: "/assistente", icon: SparklesIcon },
   { title: "Contas a pagar/receber", url: "/contas-a-pagar-receber", icon: ReceiptTextIcon },
   { title: "Contas", url: "/contas", icon: LandmarkIcon },
   { title: "Cartões", url: "/cartoes", icon: WalletCardsIcon },
@@ -51,11 +56,15 @@ const businessItems: NavItem[] = [
   { title: "Impostos", url: "/impostos", icon: PercentIcon },
 ];
 
+/** No escopo Empresa, "Gestão" fica logo depois do Dashboard. */
+const businessHome: NavItem = { title: "Gestão", url: "/gestao", icon: BriefcaseIcon };
+
 export function getNavItems(scope: Scope): NavItem[] {
   if (scope !== "business") return mainItems;
 
   const at = mainItems.findIndex((item) => item.url === "/categorias") + 1;
-  return [...mainItems.slice(0, at), ...businessItems, ...mainItems.slice(at)];
+  const items = [...mainItems.slice(0, at), ...businessItems, ...mainItems.slice(at)];
+  return [items[0], businessHome, ...items.slice(1)];
 }
 
 const settingsItem: NavItem = {

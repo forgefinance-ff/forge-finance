@@ -67,6 +67,7 @@ export async function getBusinessRevenue(year: number): Promise<number> {
     .eq("user_id", user.id)
     .eq("scope", "business")
     .eq("type", "income")
+    .eq("kind", "regular") // aporte, empréstimo e reembolso não são faturamento
     .gte("transaction_date", `${year}-01-01`)
     .lte("transaction_date", `${year}-12-31`);
 

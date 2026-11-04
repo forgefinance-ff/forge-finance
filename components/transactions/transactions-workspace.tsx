@@ -11,6 +11,7 @@ import {
 } from "@/components/transactions/transactions-filters";
 import { TransactionsList } from "@/components/transactions/transactions-list";
 import { TransactionsSummary } from "@/components/transactions/transactions-summary";
+import { StatementByCategory } from "@/components/transactions/statement-by-category";
 import {
   Sheet,
   SheetContent,
@@ -70,7 +71,38 @@ export function TransactionsWorkspace({
     <div className="space-y-8">
       <TransactionsHeader onNewTransaction={() => setOpen(true)} />
 
-      <TransactionsSummary transactions={filtered} />
+      <nav
+        aria-label="Extrato"
+        className="flex w-full flex-wrap gap-1 rounded-2xl border border-line bg-tint p-1 text-sm sm:w-fit"
+      >
+        {(
+          [
+            { value: "all", label: "Todas" },
+            { value: "income", label: "Extrato de entradas" },
+            { value: "expense", label: "Extrato de saídas" },
+          ] as const
+        ).map((tab) => (
+          <button
+            key={tab.value}
+            type="button"
+            aria-pressed={type === tab.value}
+            onClick={() => setType(tab.value)}
+            className={`flex-1 rounded-xl px-4 py-2 font-medium transition sm:flex-none ${
+              type === tab.value
+                ? "bg-brand/15 text-brand-soft"
+                : "text-faint hover:text-text-soft"
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </nav>
+
+      {type === "all" ? (
+        <TransactionsSummary transactions={filtered} />
+      ) : (
+        <StatementByCategory transactions={filtered} type={type} />
+      )}
 
       <TransactionsFilters
         search={search}

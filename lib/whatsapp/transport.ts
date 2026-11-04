@@ -10,7 +10,9 @@ export type Transport = {
 };
 
 export const metaTransport: Transport = {
-  text: sendText,
+  text: async (to, body) => {
+    await sendText(to, body);
+  },
   buttons: sendConfirmButtons,
 };
 

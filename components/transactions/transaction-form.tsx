@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { createCategory } from "@/app/actions/categories";
 import { Account } from "@/lib/accounts";
 import { Category } from "@/lib/categories";
+import { KIND_HINT, KIND_LABEL } from "@/lib/movement-kinds";
 
 const inputClass =
   "w-full rounded-xl border border-line bg-background-soft px-4 py-3 text-foreground outline-none transition focus:border-violet-500";
@@ -55,6 +56,10 @@ export function TransactionForm({
 
   const visibleCategories = categoryList.filter(
     (category) => category.type === type
+  );
+
+  const selectedCategory = categoryList.find(
+    (category) => category.id === selectedCategoryId
   );
 
   function handleSubmit(formData: FormData) {
@@ -117,8 +122,8 @@ export function TransactionForm({
         }}
         className={inputClass}
       >
-        <option value="expense">Despesa</option>
-        <option value="income">Receita</option>
+        <option value="expense">Saída (despesa, aporte retirado, empréstimo pago…)</option>
+        <option value="income">Entrada (receita, aporte, empréstimo recebido…)</option>
       </select>
 
       <div>
@@ -132,11 +137,27 @@ export function TransactionForm({
           >
             <option value="">Selecione a categoria</option>
 
-            {visibleCategories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.icon} {category.name}
-              </option>
-            ))}
+            <optgroup label={type === "income" ? "Receitas" : "Despesas"}>
+              {visibleCategories
+                .filter((category) => !category.kind || category.kind === "regular")
+                .map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.icon} {category.name}
+                  </option>
+                ))}
+            </optgroup>
+
+            {visibleCategories.some((category) => category.kind && category.kind !== "regular") && (
+              <optgroup label="Aportes, empréstimos e reembolsos">
+                {visibleCategories
+                  .filter((category) => category.kind && category.kind !== "regular")
+                  .map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.icon} {category.name} ({KIND_LABEL[category.kind]})
+                    </option>
+                  ))}
+              </optgroup>
+            )}
           </select>
 
           <button
@@ -203,6 +224,12 @@ export function TransactionForm({
           </div>
         )}
       </div>
+
+      {selectedCategory && selectedCategory.kind && selectedCategory.kind !== "regular" && (
+        <p className="rounded-xl border border-brand-bright/25 bg-brand/10 px-4 py-3 text-xs text-text-soft">
+          {KIND_HINT[selectedCategory.kind]}
+        </p>
+      )}
 
       <input
         type="number"

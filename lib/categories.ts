@@ -1,6 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { getActiveScope } from "@/lib/scope-server";
 import type { Scope } from "@/lib/scope";
+import type { MovementKind } from "@/lib/movement-kinds";
 
 export type Category = {
   id: string;
@@ -10,6 +11,9 @@ export type Category = {
   color: string;
   icon: string;
   scope: Scope;
+  kind: MovementKind;
+  /** Só despesas da Empresa: classe de custo usada na DRE. */
+  cost_class?: "variable" | "fixed" | "tax" | "prolabore" | null;
   created_at: string;
   updated_at: string;
 };
@@ -79,12 +83,26 @@ export async function getCategories() {
 
   if (error) throw error;
 
+  // Aportes, empréstimos e reembolsos: garante as categorias especiais
+  // (no Pessoal sempre; na Empresa depois que ela tiver categorias).
+  const hasSpecial = (data ?? []).some((c) => c.kind && c.kind !== "regular");
+  const shouldEnsure =
+    !hasSpecial && (scope === "personal" || (data?.length ?? 0) > 0);
+
+  if (shouldEnsure) {
+    const { error: ensureError } = await supabase.rpc("ff_ensure_special_categories", {
+      p_scope: scope,
+    });
+    // Sem a migração aplicada a função não existe: segue sem as especiais.
+    if (ensureError) console.error("ff_ensure_special_categories", ensureError.message);
+  }
+
   // Se o usuário ainda não tem nenhuma categoria pessoal (conta nova, ou conta
   // criada antes das categorias padrão existirem), cria o conjunto padrão
   // automaticamente na primeira vez que os dados forem buscados.
   // No escopo Empresa os padrões só são criados quando o usuário aceita.
-  if ((!data || data.length === 0) && scope === "personal") {
-    await seedDefaultCategories(user.id);
+  if (shouldEnsure || ((!data || data.length === 0) && scope === "personal")) {
+    if (!data || data.length === 0) await seedDefaultCategories(user.id);
 
     const { data: seeded, error: seededError } = await supabase
       .from("categories")

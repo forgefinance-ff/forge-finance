@@ -3,6 +3,7 @@
  * Todos herdam o escopo do contexto e sempre filtram pelo usuário.
  */
 import { z } from "zod";
+import { MOVEMENT_KINDS } from "@/lib/movement-kinds";
 
 import { dbFail, parseInput, ServiceError, type ServiceCtx } from "@/lib/services/context";
 import {
@@ -66,6 +67,9 @@ export const categoryInput = z.object({
   type: z.enum(["income", "expense"], { message: "Escolha se é de receita ou de despesa." }),
   color: hexColor.transform((v) => v ?? "#71717A"),
   icon: optionalText(8).transform((v) => v ?? "📁"),
+  kind: z
+    .union([z.null(), z.undefined(), z.literal(""), z.enum(MOVEMENT_KINDS)])
+    .transform((v) => (v ? v : "regular")),
 });
 
 export async function createCategory(ctx: ServiceCtx, raw: z.input<typeof categoryInput>) {

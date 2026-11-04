@@ -47,5 +47,28 @@ export async function createTransaction(ctx: ServiceCtx, raw: TransactionInput) 
 /** Estorna o saldo e apaga a transação (função atômica do banco). */
 export async function deleteTransaction(ctx: ServiceCtx, transactionId: string) {
   parseInput(id("Transação não encontrada."), transactionId);
+
+  // Transferência Pessoal x Empresa (pró-labore, retirada, aporte): apaga os
+  // dois lados juntos, para os saldos não ficarem desencontrados.
+  const { data: tx } = await ctx.db
+    .from("transactions")
+    .select("transfer_group")
+    .eq("id", transactionId)
+    .eq("user_id", ctx.userId)
+    .maybeSingle();
+
+  if (tx?.transfer_group) {
+    const { data: pair } = await ctx.db
+      .from("transactions")
+      .select("id")
+      .eq("user_id", ctx.userId)
+      .eq("transfer_group", tx.transfer_group);
+
+    for (const row of pair ?? []) {
+      await ctx.atomic("delete_transaction", { id: row.id });
+    }
+    return;
+  }
+
   await ctx.atomic("delete_transaction", { id: transactionId });
 }
