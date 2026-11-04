@@ -85,9 +85,10 @@ export async function getBusinessPanel() {
   }));
 
   const transactions: BizTransaction[] = (txRes.data ?? []).map((t) => {
-    const category = firstRelation(
-      t.categories as { name: string; cost_class: CostClass | null } | null
-    );
+    const category = firstRelation(t.categories) as {
+      name: string;
+      cost_class: CostClass | null;
+    } | null;
     return {
       amount: Number(t.amount),
       type: t.type as "income" | "expense",
@@ -115,7 +116,7 @@ export async function getBusinessPanel() {
     dueDate: String(p.due_date).slice(0, 10),
     recurrence: (p.recurrence as "none" | "monthly") ?? "none",
     customerId: (p.customer_id as string | null) ?? null,
-    customerName: firstRelation(p.customers as { name: string } | null)?.name ?? null,
+    customerName: (firstRelation(p.customers) as { name: string } | null)?.name ?? null,
   }));
 
   const cashToday = accounts.reduce((s, a) => s + a.balance, 0);
@@ -123,7 +124,7 @@ export async function getBusinessPanel() {
 
   const receivables: ReceivableRow[] = (receivablesRes.data ?? []).map((r) => ({
     customerId: (r.customer_id as string | null) ?? null,
-    customerName: firstRelation(r.customers as { name: string } | null)?.name ?? null,
+    customerName: (firstRelation(r.customers) as { name: string } | null)?.name ?? null,
     amount: Number(r.amount),
     dueDate: String(r.due_date).slice(0, 10),
     status: r.status as "pending" | "paid" | "canceled",
