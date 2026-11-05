@@ -17,11 +17,11 @@ const PRODUCTION_URL = "https://forge-finance-app.vercel.app";
 export const FIRST_ACCESS_TEXT = "Quero começar no Forge Finance";
 
 export function appUrl() {
-  const fromEnv =
-    process.env.NEXT_PUBLIC_APP_URL ||
-    (process.env.VERCEL_PROJECT_PRODUCTION_URL
-      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-      : "");
+  // Domínio de produção informado pela própria Vercel vem primeiro: assim o
+  // link enviado pelo bot nunca aponta para um preview ou endereço antigo.
+  const fromEnv = process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : process.env.NEXT_PUBLIC_APP_URL || "";
 
   return (fromEnv || PRODUCTION_URL).replace(/\/+$/, "");
 }
