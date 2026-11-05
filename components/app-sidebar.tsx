@@ -3,23 +3,14 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useCallback, useState } from "react";
 import {
   BriefcaseIcon,
-  ChartBarIcon,
-  FolderIcon,
-  LandmarkIcon,
   LayoutDashboardIcon,
-  CreditCardIcon,
-  MessageCircleIcon,
-  PercentIcon,
   ListIcon,
-  SparklesIcon,
-  UploadIcon,
-  ReceiptTextIcon,
   Settings2Icon,
-  TagsIcon,
+  SparklesIcon,
   TargetIcon,
-  UsersIcon,
   WalletCardsIcon,
 } from "lucide-react";
 
@@ -28,64 +19,164 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import type { Scope } from "@/lib/scope";
 import { cn } from "@/lib/utils";
 
-type NavItem = {
+export type NavLink = {
   title: string;
   url: string;
-  icon: React.ComponentType<{ className?: string }>;
+  /** Página que pertence ao grupo, mas não ganha sub-aba própria. */
+  hidden?: boolean;
 };
 
-const mainItems: NavItem[] = [
-  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboardIcon },
-  { title: "Transações", url: "/transacoes", icon: ListIcon },
-  { title: "Importar extrato", url: "/importar", icon: UploadIcon },
-  { title: "Assistente IA", url: "/assistente", icon: SparklesIcon },
-  { title: "Contas a pagar/receber", url: "/contas-a-pagar-receber", icon: ReceiptTextIcon },
-  { title: "Contas", url: "/contas", icon: LandmarkIcon },
-  { title: "Cartões", url: "/cartoes", icon: WalletCardsIcon },
-  { title: "Categorias", url: "/categorias", icon: TagsIcon },
-  { title: "Relatórios", url: "/relatorios", icon: ChartBarIcon },
-  { title: "WhatsApp", url: "/whatsapp", icon: MessageCircleIcon },
-  { title: "Metas", url: "/metas", icon: TargetIcon },
-  { title: "Investimentos", url: "/investimentos", icon: FolderIcon },
-  { title: "Planos", url: "/planos", icon: CreditCardIcon },
-];
+export type NavGroup = {
+  title: string;
+  icon: React.ComponentType<{ className?: string }>;
+  /** O primeiro item é a página aberta ao clicar no ícone. */
+  items: NavLink[];
+};
 
-/** Itens que só aparecem no escopo Empresa (entram depois de "Categorias"). */
-const businessItems: NavItem[] = [
-  { title: "Clientes", url: "/clientes", icon: UsersIcon },
-  { title: "Impostos", url: "/impostos", icon: PercentIcon },
-];
+const dashboard: NavGroup = {
+  title: "Dashboard",
+  icon: LayoutDashboardIcon,
+  items: [{ title: "Dashboard", url: "/dashboard" }],
+};
 
-/** No escopo Empresa, "Gestão" fica logo depois do Dashboard. */
-const businessHome: NavItem = { title: "Gestão", url: "/gestao", icon: BriefcaseIcon };
+/** Só no escopo Empresa, logo depois do Dashboard. */
+const business: NavGroup = {
+  title: "Empresa",
+  icon: BriefcaseIcon,
+  items: [
+    { title: "Gestão", url: "/gestao" },
+    { title: "Clientes", url: "/clientes" },
+    { title: "Impostos (MEI)", url: "/impostos" },
+  ],
+};
 
-export function getNavItems(scope: Scope): NavItem[] {
-  if (scope !== "business") return mainItems;
+const entries: NavGroup = {
+  title: "Lançamentos",
+  icon: ListIcon,
+  items: [
+    { title: "Transações", url: "/transacoes" },
+    { title: "A pagar e receber", url: "/contas-a-pagar-receber" },
+    { title: "Importar extrato", url: "/importar" },
+    { title: "Categorias", url: "/categorias" },
+  ],
+};
 
-  const at = mainItems.findIndex((item) => item.url === "/categorias") + 1;
-  const items = [...mainItems.slice(0, at), ...businessItems, ...mainItems.slice(at)];
-  return [items[0], businessHome, ...items.slice(1)];
+const wallet: NavGroup = {
+  title: "Contas e cartões",
+  icon: WalletCardsIcon,
+  items: [
+    { title: "Contas", url: "/contas" },
+    { title: "Cartões", url: "/cartoes" },
+    { title: "Investimentos", url: "/investimentos" },
+  ],
+};
+
+const planning: NavGroup = {
+  title: "Metas e relatórios",
+  icon: TargetIcon,
+  items: [
+    { title: "Metas", url: "/metas" },
+    { title: "Relatórios", url: "/relatorios" },
+  ],
+};
+
+const assistant: NavGroup = {
+  title: "Assistente IA",
+  icon: SparklesIcon,
+  items: [{ title: "Assistente IA", url: "/assistente" }],
+};
+
+export const settingsGroup: NavGroup = {
+  title: "Configurações",
+  icon: Settings2Icon,
+  items: [
+    { title: "Configurações", url: "/configuracoes" },
+    { title: "WhatsApp", url: "/whatsapp" },
+    { title: "Planos", url: "/planos" },
+    { title: "Assinatura", url: "/assinatura", hidden: true },
+  ],
+};
+
+export function getNavGroups(scope: Scope): NavGroup[] {
+  return scope === "business"
+    ? [dashboard, business, entries, wallet, planning, assistant]
+    : [dashboard, entries, wallet, planning, assistant];
 }
 
-const settingsItem: NavItem = {
-  title: "Configurações",
-  url: "/configuracoes",
-  icon: Settings2Icon,
-};
+/** Todas as páginas (para a busca "Ir para uma página"). */
+export function getAllPages(scope: Scope): NavLink[] {
+  return [...getNavGroups(scope), settingsGroup].flatMap((group) =>
+    group.items.filter((item) => !item.hidden)
+  );
+}
 
-function isActive(pathname: string, url: string) {
+export function isActive(pathname: string, url: string) {
   return pathname === url || pathname.startsWith(`${url}/`);
 }
 
-function RailItem({ item, active }: { item: NavItem; active: boolean }) {
-  const Icon = item.icon;
+export function findGroup(scope: Scope, pathname: string) {
+  return [...getNavGroups(scope), settingsGroup].find((group) =>
+    group.items.some((item) => isActive(pathname, item.url))
+  );
+}
+
+/* ------------------------------- tooltip ------------------------------- */
+
+type TipState = { top: number; left: number } | null;
+
+/**
+ * Nome da aba ao passar o mouse (ou focar pelo teclado). Usa posição fixa
+ * para não ser cortado pela rolagem da barra lateral.
+ */
+function useRailTooltip() {
+  const [tip, setTip] = useState<TipState>(null);
+
+  const show = useCallback((event: React.SyntheticEvent<HTMLElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    setTip({ top: rect.top + rect.height / 2, left: rect.right + 12 });
+  }, []);
+
+  const hide = useCallback(() => setTip(null), []);
+
+  return { tip, show, hide };
+}
+
+function RailTooltip({ tip, group }: { tip: TipState; group: NavGroup }) {
+  if (!tip) return null;
+  const subpages = group.items.filter((item) => !item.hidden);
 
   return (
-    <li className="group/item relative">
+    <span
+      role="tooltip"
+      style={{ top: tip.top, left: tip.left }}
+      className="pointer-events-none fixed z-[60] -translate-y-1/2 whitespace-nowrap rounded-xl border border-line bg-surface-solid px-3 py-2 text-left shadow-xl"
+    >
+      <span className="block text-sm font-semibold text-foreground">{group.title}</span>
+      {subpages.length > 1 && (
+        <span className="mt-0.5 block text-xs text-muted-foreground">
+          {subpages.map((item) => item.title).join(" · ")}
+        </span>
+      )}
+    </span>
+  );
+}
+
+function RailItem({ group, pathname }: { group: NavGroup; pathname: string }) {
+  const Icon = group.icon;
+  const active = group.items.some((item) => isActive(pathname, item.url));
+  const { tip, show, hide } = useRailTooltip();
+
+  return (
+    <li className="relative">
       <Link
-        href={item.url}
-        aria-label={item.title}
+        href={group.items[0].url}
+        aria-label={group.title}
         aria-current={active ? "page" : undefined}
+        onMouseEnter={show}
+        onMouseLeave={hide}
+        onFocus={show}
+        onBlur={hide}
+        onClick={hide}
         className={cn(
           "relative flex h-11 w-11 items-center justify-center rounded-2xl border transition-all duration-300 outline-none",
           "focus-visible:ring-2 focus-visible:ring-brand-bright/70",
@@ -108,18 +199,12 @@ function RailItem({ item, active }: { item: NavItem; active: boolean }) {
         />
       </Link>
 
-      {/* Tooltip acessível: aparece no hover e no foco por teclado */}
-      <span
-        role="tooltip"
-        className="pointer-events-none absolute left-full top-1/2 z-50 ml-3 -translate-y-1/2 whitespace-nowrap rounded-lg border border-line bg-surface-solid px-2.5 py-1.5 text-xs font-medium text-foreground opacity-0 shadow-xl transition-opacity duration-150 group-hover/item:opacity-100 group-focus-within/item:opacity-100"
-      >
-        {item.title}
-      </span>
+      <RailTooltip tip={tip} group={group} />
     </li>
   );
 }
 
-/** Barra lateral compacta (desktop) — apenas ícones. */
+/** Barra lateral compacta (desktop): um ícone por grupo. */
 export function AppSidebar({ scope }: { scope: Scope }) {
   const pathname = usePathname();
 
@@ -145,14 +230,10 @@ export function AppSidebar({ scope }: { scope: Scope }) {
 
       <ScopeSwitcher scope={scope} orientation="vertical" className="mb-4" />
 
-      <nav className="flex w-full flex-1 flex-col items-center overflow-y-auto overflow-x-visible py-1">
+      <nav className="flex w-full flex-1 flex-col items-center overflow-y-auto py-1">
         <ul className="flex flex-col items-center gap-2 rounded-[28px] border border-line bg-tint p-2">
-          {getNavItems(scope).map((item) => (
-            <RailItem
-              key={item.url}
-              item={item}
-              active={isActive(pathname, item.url)}
-            />
+          {getNavGroups(scope).map((group) => (
+            <RailItem key={group.title} group={group} pathname={pathname} />
           ))}
         </ul>
       </nav>
@@ -161,44 +242,43 @@ export function AppSidebar({ scope }: { scope: Scope }) {
         <li>
           <ThemeToggle placement="right" />
         </li>
-        <RailItem
-          item={settingsItem}
-          active={isActive(pathname, settingsItem.url)}
-        />
+        <RailItem group={settingsGroup} pathname={pathname} />
       </ul>
     </aside>
   );
 }
 
-/** Navegação móvel: barra inferior com rolagem interna (sem rolagem horizontal da página). */
+/** Navegação móvel: barra inferior com um ícone por grupo e o nome embaixo. */
 export function MobileNav({ scope }: { scope: Scope }) {
   const pathname = usePathname();
-  const items = [...getNavItems(scope), settingsItem];
+  const groups = [...getNavGroups(scope), settingsGroup];
 
   return (
     <nav
       aria-label="Navegação principal"
       className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-sidebar pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden"
     >
-      <ul className="flex items-center gap-1 overflow-x-auto px-3 py-2">
-        {items.map((item) => {
-          const Icon = item.icon;
-          const active = isActive(pathname, item.url);
+      <ul className="flex items-stretch justify-between gap-1 overflow-x-auto px-2 py-1.5">
+        {groups.map((group) => {
+          const Icon = group.icon;
+          const active = group.items.some((item) => isActive(pathname, item.url));
+          const short = group.title.split(" ")[0];
 
           return (
-            <li key={item.url} className="shrink-0">
+            <li key={group.title} className="min-w-[56px] flex-1">
               <Link
-                href={item.url}
-                aria-label={item.title}
+                href={group.items[0].url}
+                aria-label={group.title}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex h-11 w-11 items-center justify-center rounded-2xl border transition-all duration-300",
+                  "flex flex-col items-center gap-0.5 rounded-2xl border px-1 py-1.5 text-[10px] font-medium transition-all duration-300",
                   active
-                    ? "border-brand-bright/40 bg-brand/15 text-brand-soft shadow-[0_0_18px_rgba(168,85,247,0.4)]"
+                    ? "border-brand-bright/40 bg-brand/15 text-brand-soft"
                     : "border-transparent text-faint"
                 )}
               >
                 <Icon className="h-5 w-5" />
+                <span className="max-w-full truncate">{short}</span>
               </Link>
             </li>
           );
@@ -207,4 +287,3 @@ export function MobileNav({ scope }: { scope: Scope }) {
     </nav>
   );
 }
-

@@ -7,6 +7,7 @@ import { executePending, remember, runAgent } from "./agent/agent";
 import type { PreparedAction } from "./agent/write-tools";
 import { downloadMedia } from "./meta";
 import { transcribeAudio } from "./transcribe";
+import { connectUrl, getOrCreateOnboardingToken } from "./onboarding";
 import { formatBRL, formatDayMonth, normalize } from "./text";
 import { metaTransport, type Transport } from "./transport";
 
@@ -42,7 +43,7 @@ type LegacyItem = {
 
 const MAX_MESSAGES_PER_HOUR = 30;
 
-const HELP = `*Forge Finance no WhatsApp* 💜
+export const WHATSAPP_HELP = `*Forge Finance no WhatsApp* 💜
 
 Faço tudo o que o app faz, por texto ou áudio. Antes de alterar qualquer coisa, eu sempre peço a sua confirmação.
 
@@ -135,9 +136,13 @@ async function handleUnlinked(admin: Admin, message: IncomingMessage) {
   const match = message.text?.match(/^\s*vincular\s+(\d{6})\s*$/i);
 
   if (!match) {
+    // Primeiro acesso: manda um link que cria a conta (ou entra) e já
+    // conecta este número, sem precisar de código.
+    const token = await getOrCreateOnboardingToken(admin, message.from);
+
     await out.text(
       message.from,
-      "Olá! 👋 Este número ainda não está vinculado ao Forge Finance.\n\nNo app, abra a página *WhatsApp*, gere um código e envie aqui: *VINCULAR 123456*"
+      `Olá! 👋 Eu sou o assistente do *Forge Finance*.\n\nPara começar, toque no link abaixo, crie sua conta (ou entre, se já tiver uma) e este número fica conectado na hora:\n\n${connectUrl(token)}\n\nO link vale por 24 horas e só funciona para este número.\n\nJá usa o app? Também dá para vincular pela página *WhatsApp*, enviando aqui *VINCULAR* e o código.`
     );
     return;
   }
@@ -173,7 +178,7 @@ async function handleUnlinked(admin: Admin, message: IncomingMessage) {
   await admin.from("whatsapp_link_codes").delete().eq("code", codeRow.code);
   revalidatePath("/whatsapp");
 
-  await out.text(message.from, `✅ Número vinculado!\n\n${HELP}`);
+  await out.text(message.from, `✅ Número vinculado!\n\n${WHATSAPP_HELP}`);
 }
 
 /* ------------------------------ fluxo normal ------------------------------ */
@@ -218,7 +223,7 @@ async function handleLinked(admin: Admin, link: Link, message: IncomingMessage) 
     const normalized = normalize(message.text);
 
     if (["ajuda", "menu", "help", "oi", "ola"].includes(normalized)) {
-      await out.text(link.phone, HELP);
+      await out.text(link.phone, WHATSAPP_HELP);
       return;
     }
 

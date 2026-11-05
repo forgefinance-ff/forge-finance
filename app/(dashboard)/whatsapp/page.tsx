@@ -4,10 +4,12 @@ import {
   unlinkWhatsapp,
 } from "@/app/actions/whatsapp";
 import { Button } from "@/components/ui/button";
+import { CopyLink } from "@/components/whatsapp/copy-link";
 import { getAccounts } from "@/lib/accounts";
 import { SCOPE_EMOJI, SCOPE_LABEL } from "@/lib/scope";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { firstAccessWhatsappLink } from "@/lib/whatsapp/onboarding";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +19,12 @@ function maskPhone(phone: string) {
   return `+${phone.slice(0, 2)} ${phone.slice(2, 4)} •••••${phone.slice(-4)}`;
 }
 
-export default async function WhatsappPage() {
+export default async function WhatsappPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ conectado?: string }>;
+}) {
+  const { conectado } = await searchParams;
   const supabase = await createClient();
   const {
     data: { user },
@@ -44,6 +51,7 @@ export default async function WhatsappPage() {
         .maybeSingle();
 
   const botNumber = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER?.replace(/\D/g, "");
+  const firstAccess = firstAccessWhatsappLink();
 
   return (
     <div className="space-y-6">
@@ -61,6 +69,15 @@ export default async function WhatsappPage() {
           confirma antes de salvar.
         </p>
       </div>
+
+      {link && conectado && (
+        <p
+          role="status"
+          className="rounded-[18px] border border-emerald-500/30 bg-emerald-500/10 px-5 py-4 text-sm font-medium text-emerald-700 dark:text-emerald-300"
+        >
+          ✅ WhatsApp conectado! Mandamos uma mensagem de boas-vindas com exemplos do que dá para fazer.
+        </p>
+      )}
 
       {link ? (
         <>
@@ -115,6 +132,25 @@ export default async function WhatsappPage() {
         <section className={panel}>
           <h2 className="text-lg font-semibold text-foreground">Vincular seu número</h2>
 
+          {firstAccess && (
+            <div className="mt-3 space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Jeito mais fácil: abra a conversa com o Forge Finance, mande a mensagem que já vem
+                escrita e toque no link que chegar. O número é conectado à conta em que você está
+                logado.
+              </p>
+              <a
+                href={firstAccess}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex h-10 items-center rounded-xl bg-emerald-600 px-4 text-sm font-semibold text-white transition hover:bg-emerald-500"
+              >
+                Abrir conversa no WhatsApp
+              </a>
+              <p className="pt-2 text-sm font-medium text-foreground">Ou use um código:</p>
+            </div>
+          )}
+
           {codeRow ? (
             <div className="mt-4 space-y-4">
               <p className="text-sm text-muted-foreground">
@@ -152,6 +188,19 @@ export default async function WhatsappPage() {
               {codeRow ? "Gerar novo código" : "Gerar código"}
             </Button>
           </form>
+        </section>
+      )}
+
+      {firstAccess && (
+        <section className={panel}>
+          <h2 className="text-lg font-semibold text-foreground">Link de primeiro acesso</h2>
+          <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+            Envie para quem ainda não usa o Forge Finance. A pessoa abre a conversa, recebe um link
+            para criar a conta e o número dela já fica conectado, sem código.
+          </p>
+          <div className="mt-4">
+            <CopyLink url={firstAccess} />
+          </div>
         </section>
       )}
     </div>

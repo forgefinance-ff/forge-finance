@@ -9,6 +9,7 @@ import { getActiveScope } from "@/lib/scope-server";
 import { AppSidebar, MobileNav } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { BusinessOnboarding } from "@/components/business-onboarding";
+import { SectionTabs } from "@/components/section-tabs";
 
 export default async function DashboardLayout({
   children,
@@ -74,6 +75,7 @@ export default async function DashboardLayout({
 
         <main className="min-w-0 flex-1 px-4 pb-24 pt-5 md:pb-8 lg:px-8">
           {offerBusinessDefaults && <BusinessOnboarding />}
+          <SectionTabs scope={scope} />
           {children}
         </main>
       </div>
