@@ -5,10 +5,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/client";
+import { useNextParam, withNext } from "./use-next-param";
 
 export function RegisterForm() {
   const router = useRouter();
   const supabase = createClient();
+  const next = useNextParam();
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -20,7 +22,7 @@ export function RegisterForm() {
 
     setLoading(true);
 
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
@@ -37,9 +39,16 @@ export function RegisterForm() {
       return;
     }
 
-    alert("Conta criada com sucesso!");
+    // Sem confirmação de e-mail a sessão já vem pronta: segue direto.
+    if (data.session) {
+      router.push(next ?? "/");
+      router.refresh();
+      return;
+    }
 
-    router.push("/login");
+    alert("Conta criada! Confirme pelo e-mail que enviamos e depois entre.");
+
+    router.push(withNext("/login", next));
     router.refresh();
   }
 
@@ -96,7 +105,7 @@ export function RegisterForm() {
 
       <p className="text-center text-sm text-zinc-400">
         Já possui uma conta?{" "}
-        <Link href="/login" className="font-medium text-violet-300 transition hover:text-violet-200">
+        <Link href={withNext("/login", next)} className="font-medium text-violet-300 transition hover:text-violet-200">
           Entrar
         </Link>
       </p>

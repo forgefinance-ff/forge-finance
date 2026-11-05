@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { SearchIcon, Settings } from "lucide-react";
 
-import { getNavItems } from "@/components/app-sidebar";
+import { getAllPages } from "@/components/app-sidebar";
 import { ScopeSwitcher } from "@/components/scope-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
 import type { Scope } from "@/lib/scope";
@@ -32,10 +32,7 @@ export function SiteHeader({ userName, avatarUrl, aiConfigured, scope }: SiteHea
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
 
-  const pages = [
-    ...getNavItems(scope).map(({ title, url }) => ({ title, url })),
-    { title: "Configurações", url: "/configuracoes" },
-  ];
+  const pages = getAllPages(scope).map(({ title, url }) => ({ title, url }));
 
   const results = query.trim()
     ? pages.filter((p) => normalize(p.title).includes(normalize(query.trim())))

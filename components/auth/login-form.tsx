@@ -5,10 +5,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/client";
+import { useNextParam, withNext } from "./use-next-param";
 
 export function LoginForm() {
   const router = useRouter();
   const supabase = createClient();
+  const next = useNextParam();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -32,7 +34,7 @@ export function LoginForm() {
       return;
     }
 
-    router.push("/");
+    router.push(next ?? "/");
     router.refresh();
   }
 
@@ -83,7 +85,7 @@ export function LoginForm() {
       <p className="text-center text-sm text-zinc-400">
         Ainda não possui uma conta?{" "}
         <Link
-          href="/cadastro"
+          href={withNext("/cadastro", next)}
           className="font-medium text-violet-300 transition hover:text-violet-200"
         >
           Criar conta
