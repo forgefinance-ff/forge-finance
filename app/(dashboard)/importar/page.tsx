@@ -1,9 +1,35 @@
 import { StatementImporter } from "@/components/import/statement-importer";
 import { getAccounts } from "@/lib/accounts";
 import { getCategories } from "@/lib/categories";
+import { createClient } from "@/lib/supabase/server";
+
+async function getUserName() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return "";
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("full_name")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  return (
+    profile?.full_name ||
+    (user.user_metadata?.full_name as string | undefined) ||
+    (user.user_metadata?.name as string | undefined) ||
+    ""
+  );
+}
 
 export default async function ImportarPage() {
-  const [accounts, categories] = await Promise.all([getAccounts(), getCategories()]);
+  const [accounts, categories, userName] = await Promise.all([
+    getAccounts(),
+    getCategories(),
+    getUserName(),
+  ]);
 
   return (
     <div className="space-y-8">
@@ -23,7 +49,7 @@ export default async function ImportarPage() {
         </p>
       </div>
 
-      <StatementImporter accounts={accounts} categories={categories} />
+      <StatementImporter accounts={accounts} categories={categories} userName={userName} />
     </div>
   );
 }

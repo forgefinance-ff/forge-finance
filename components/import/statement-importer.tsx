@@ -1,18 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useRef, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { AlertTriangleIcon, CheckCircle2Icon, FileUpIcon, Loader2Icon, UploadIcon } from "lucide-react";
 import { toast } from "sonner";
 
 import {
   findExistingTransactions,
+  getLearnedCategories,
   importTransactions,
   type ExistingTransaction,
 } from "@/app/actions/import";
 import { Button } from "@/components/ui/button";
 import type { Account } from "@/lib/accounts";
 import type { Category } from "@/lib/categories";
+import {
+  guessCategory as guess,
+  isOwnTransfer,
+  learnedKey,
+  type LearnedMap,
+} from "@/lib/import/categorize";
 import {
   detectColumns,
   readStatementFile,
@@ -27,6 +34,8 @@ import { cn } from "@/lib/utils";
 type Props = {
   accounts: Account[];
   categories: Category[];
+  /** Nome do usuário: Pix para si mesmo vem desmarcado. */
+  userName?: string;
 };
 
 type ReviewRow = StatementRow & {
@@ -35,6 +44,12 @@ type ReviewRow = StatementRow & {
   type: "income" | "expense";
   categoryId: string;
   duplicate: boolean;
+  /** Estabelecimento/pessoa, para aplicar a categoria aos parecidos. */
+  key: string;
+  /** Categoria ainda é a sugerida (o usuário não mexeu). */
+  auto: boolean;
+  /** Transferência entre contas da própria pessoa. */
+  own: boolean;
 };
 
 const inputClass =
@@ -55,23 +70,7 @@ function formatDate(iso: string) {
   return `${d}/${m}/${y}`;
 }
 
-/** Sugere a categoria pelo nome que aparece na descrição; senão "Outros". */
-function guessCategory(description: string, type: "income" | "expense", categories: Category[]) {
-  const options = categories.filter((c) => c.type === type);
-  const text = norm(description);
-
-  const byName = options
-    .filter((c) => c.name.length >= 4 && text.includes(norm(c.name)))
-    .sort((a, b) => b.name.length - a.name.length)[0];
-  if (byName) return byName.id;
-
-  const others = options.find(
-    (c) => (!c.kind || c.kind === "regular") && norm(c.name) === "outros"
-  );
-  return others?.id ?? "";
-}
-
-export function StatementImporter({ accounts, categories }: Props) {
+export function StatementImporter({ accounts, categories, userName = "" }: Props) {
   const fileInput = useRef<HTMLInputElement>(null);
   const [accountId, setAccountId] = useState(accounts[0]?.id ?? "");
   const [fileName, setFileName] = useState("");
@@ -80,6 +79,26 @@ export function StatementImporter({ accounts, categories }: Props) {
   const [map, setMap] = useState<ColumnMap | null>(null);
   const [invert, setInvert] = useState(false);
   const [rows, setRows] = useState<ReviewRow[] | null>(null);
+  const [learned, setLearned] = useState<LearnedMap>({});
+  const [onlyPending, setOnlyPending] = useState(false);
+
+  // O que o usuário já categorizou antes vira sugestão neste extrato.
+  useEffect(() => {
+    getLearnedCategories().then(setLearned).catch(() => undefined);
+  }, []);
+
+  const guessCategory = (description: string, type: "income" | "expense") =>
+    guess(description, type, categories, learned).categoryId;
+
+  const othersIds = useMemo(
+    () =>
+      new Set(
+        categories
+          .filter((c) => (!c.kind || c.kind === "regular") && norm(c.name) === "outros")
+          .map((c) => c.id)
+      ),
+    [categories]
+  );
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<{ created: number; failed: number } | null>(null);
   const [isReading, startReading] = useTransition();
@@ -129,6 +148,7 @@ export function StatementImporter({ accounts, categories }: Props) {
         (e) => e.date === row.date && e.type === type && Math.abs(e.amount - amount) < 0.005
       );
       if (match >= 0) pool.splice(match, 1);
+      const own = userName ? isOwnTransfer(row.description, userName) : false;
 
       return {
         ...row,
@@ -136,8 +156,11 @@ export function StatementImporter({ accounts, categories }: Props) {
         id: index,
         type,
         duplicate: match >= 0,
-        include: match < 0,
-        categoryId: guessCategory(row.description, type, categories),
+        own,
+        include: match < 0 && !own,
+        key: learnedKey(type, row.description),
+        auto: true,
+        categoryId: guessCategory(row.description, type),
       };
     });
 
@@ -181,17 +204,43 @@ export function StatementImporter({ accounts, categories }: Props) {
   }
 
   function updateRow(id: number, patch: Partial<ReviewRow>) {
-    setRows((current) =>
-      current?.map((row) => {
-        if (row.id !== id) return row;
-        const next = { ...row, ...patch };
-        // Trocou entrada/saída: a categoria antiga não serve mais.
-        if (patch.type && patch.type !== row.type) {
-          next.categoryId = guessCategory(next.description, patch.type, categories);
+    if (!rows) return;
+    const target = rows.find((row) => row.id === id);
+    if (!target) return;
+    const manualCategory = patch.categoryId !== undefined && !patch.type;
+
+    // Mesma pessoa/estabelecimento e mesmo tipo levam a mesma categoria,
+    // desde que o usuário ainda não tenha escolhido outra para eles.
+    const isSimilar = (row: ReviewRow) =>
+      manualCategory &&
+      !!target.key &&
+      row.id !== id &&
+      row.auto &&
+      row.key === target.key &&
+      row.type === target.type;
+
+    const similar = rows.filter(isSimilar).length;
+
+    setRows(
+      rows.map((row) => {
+        if (row.id === id) {
+          const next = { ...row, ...patch };
+          // Trocou entrada/saída: a categoria antiga não serve mais.
+          if (patch.type && patch.type !== row.type) {
+            next.key = learnedKey(patch.type, next.description);
+            next.categoryId = guessCategory(next.description, patch.type);
+            next.auto = true;
+          }
+          if (manualCategory) next.auto = false;
+          return next;
         }
-        return next;
-      }) ?? null
+        return isSimilar(row) ? { ...row, categoryId: patch.categoryId as string } : row;
+      })
     );
+
+    if (similar > 0) {
+      toast.success(`Categoria aplicada também a ${similar} lançamento(s) parecido(s).`);
+    }
   }
 
   /** Troca entrada por saída em todas as linhas (útil para OFX e faturas). */
@@ -200,7 +249,13 @@ export function StatementImporter({ accounts, categories }: Props) {
       (current) =>
         current?.map((row) => {
           const type = row.type === "income" ? "expense" : "income";
-          return { ...row, type, categoryId: guessCategory(row.description, type, categories) };
+          return {
+            ...row,
+            type,
+            key: learnedKey(type, row.description),
+            auto: true,
+            categoryId: guessCategory(row.description, type),
+          };
         }) ?? null
     );
   }
@@ -213,12 +268,16 @@ export function StatementImporter({ accounts, categories }: Props) {
     setRows(
       (current) =>
         current?.map((row) =>
-          row.include && row.type === type ? { ...row, categoryId } : row
+          row.include && row.type === type ? { ...row, categoryId, auto: false } : row
         ) ?? null
     );
   }
 
   const selected = rows?.filter((row) => row.include) ?? [];
+  const isPending = (row: ReviewRow) => !row.categoryId || othersIds.has(row.categoryId);
+  const pendingCount = rows?.filter((row) => row.include && isPending(row)).length ?? 0;
+  const ownCount = rows?.filter((row) => row.own).length ?? 0;
+  const visibleRows = rows?.filter((row) => !onlyPending || (row.include && isPending(row))) ?? [];
   const totalIn = selected.filter((r) => r.type === "income").reduce((s, r) => s + r.amount, 0);
   const totalOut = selected.filter((r) => r.type === "expense").reduce((s, r) => s + r.amount, 0);
   const duplicates = rows?.filter((row) => row.duplicate).length ?? 0;
@@ -484,6 +543,12 @@ export function StatementImporter({ accounts, categories }: Props) {
                   isso, volte e escolha a coluna de tipo, ou troque linha a linha.
                 </p>
               )}
+              {ownCount > 0 && (
+                <p className="mt-1 text-xs text-brand-soft">
+                  {ownCount} são Pix entre contas suas e vieram desmarcados (não são receita nem
+                  despesa).
+                </p>
+              )}
               {duplicates > 0 && (
                 <p className="mt-1 text-xs text-warning">
                   {duplicates} parecem já estar nesta conta (mesma data, valor e tipo) e vieram
@@ -531,8 +596,33 @@ export function StatementImporter({ accounts, categories }: Props) {
             </label>
           </div>
 
+          <div className="flex flex-col gap-2 rounded-2xl border border-line bg-tint px-4 py-3 text-sm sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-text-soft">
+              {pendingCount > 0
+                ? `${pendingCount} selecionado(s) ainda em "Outros" ou sem categoria.`
+                : "Todos os selecionados têm categoria."}{" "}
+              <span className="text-muted-foreground">
+                Ao mudar a categoria de um, os parecidos (mesma pessoa ou estabelecimento) mudam junto.
+              </span>
+            </p>
+            <label className="flex shrink-0 items-center gap-2 font-medium text-foreground">
+              <input
+                type="checkbox"
+                checked={onlyPending}
+                onChange={(e) => setOnlyPending(e.target.checked)}
+                className="h-4 w-4"
+              />
+              Mostrar só os pendentes
+            </label>
+          </div>
+
           <ul className="divide-y divide-line overflow-hidden rounded-2xl border border-line">
-            {rows.map((row) => (
+            {visibleRows.length === 0 && (
+              <li className="p-6 text-center text-sm text-muted-foreground">
+                Tudo categorizado. 🎉
+              </li>
+            )}
+            {visibleRows.map((row) => (
               <li
                 key={row.id}
                 className={cn(
@@ -551,6 +641,9 @@ export function StatementImporter({ accounts, categories }: Props) {
                   {formatDate(row.date)}
                   {row.duplicate && (
                     <span className="ml-1 block text-[11px] font-semibold text-warning">possível duplicado</span>
+                  )}
+                  {row.own && (
+                    <span className="ml-1 block text-[11px] font-semibold text-brand-soft">entre suas contas</span>
                   )}
                 </span>
                 <input
