@@ -19,16 +19,29 @@ export type ColumnMap = {
   /** Ou colunas separadas de entrada e saída. */
   credit: number;
   debit: number;
+  /** Coluna que diz se é entrada ou saída (C/D, Crédito/Débito, Entrada/Saída…). */
+  direction: number;
 };
 
-const EMPTY_MAP: ColumnMap = { date: -1, description: -1, amount: -1, credit: -1, debit: -1 };
+const EMPTY_MAP: ColumnMap = {
+  date: -1,
+  description: -1,
+  amount: -1,
+  credit: -1,
+  debit: -1,
+  direction: -1,
+};
 
 /* ----------------------------- números e datas ----------------------------- */
 
 /** "1.234,56", "-1234.56", "R$ 1.234,56", "(123,45)", "123,45 D" → número. */
 export function parseMoney(raw: unknown): number | null {
   if (typeof raw === "number") return Number.isFinite(raw) ? raw : null;
-  let text = String(raw ?? "").trim();
+  // Sinal de menos tipográfico (−, –, —) que alguns bancos e o Excel usam.
+  let text = String(raw ?? "")
+    .replace(/[\u2212\u2012\u2013\u2014\uFE63\uFF0D]/g, "-")
+    .replace(/\u00A0/g, " ")
+    .trim();
   if (!text) return null;
 
   let negative = false;
@@ -117,7 +130,32 @@ function excelSerialToDate(serial: number): string | null {
   return validDate(d.getUTCFullYear(), d.getUTCMonth() + 1, d.getUTCDate());
 }
 
+/** "C", "Crédito", "Entrada" → 1 · "D", "Débito", "Saída" → -1 · outro → 0. */
+export function parseDirection(raw: unknown): 1 | -1 | 0 {
+  const original = String(raw ?? "");
+  // Números (valor, saldo, documento) nunca são a coluna de tipo.
+  if (/\d/.test(original)) return 0;
+  const text = norm(original).replace(/[^a-z+-]/g, "");
+  if (!text) return 0;
+  if (/(recebid|enviad)/.test(text)) return text.includes("recebid") ? 1 : -1;
+  if (/^(c|cr|cred|credito|credit|entrada|entradas|receita|recebido|recebimento|deposito|in|\+)$/.test(text)) return 1;
+  if (/^(d|db|deb|debito|debit|saida|saidas|despesa|pagamento|pago|compra|out|-)$/.test(text)) return -1;
+  return 0;
+}
+
 /* ---------------------------------- OFX ----------------------------------- */
+
+const OFX_DEBIT_TYPES = new Set([
+  "DEBIT",
+  "PAYMENT",
+  "CHECK",
+  "FEE",
+  "SRVCHG",
+  "ATM",
+  "POS",
+  "DIRECTDEBIT",
+  "REPEATPMT",
+]);
 
 export function parseOfx(text: string): StatementRow[] {
   const rows: StatementRow[] = [];
@@ -130,9 +168,11 @@ export function parseOfx(text: string): StatementRow[] {
 
   for (const block of blocks) {
     const date = parseDate(tag(block, "DTPOSTED").slice(0, 8));
-    const amount = parseMoney(tag(block, "TRNAMT").replace(",", "."));
+    let amount = parseMoney(tag(block, "TRNAMT").replace(",", "."));
     const description = tag(block, "MEMO") || tag(block, "NAME") || "Sem descrição";
     if (!date || amount === null || amount === 0) continue;
+    // Alguns bancos mandam o valor sem sinal e dizem o tipo em TRNTYPE.
+    if (amount > 0 && OFX_DEBIT_TYPES.has(tag(block, "TRNTYPE").toUpperCase())) amount = -amount;
     rows.push({
       date,
       amount: Math.round(amount * 100) / 100,
@@ -339,7 +379,26 @@ const HEADER_HINTS: Record<keyof ColumnMap, RegExp> = {
   amount: /^(valor|amount|quantia|valor \(r\$\)|valor r\$|montante)/,
   credit: /(entrada|credito|credit)/,
   debit: /(saida|debito|debit)/,
+  direction:
+    /^(tipo|natureza|operacao|d\/c|c\/d|deb\/cred|cred\/deb|credito\/debito|debito\/credito|entrada\/saida|tipo (de )?(lancamento|transacao|movimentacao|operacao))$/,
 };
+
+/** Coluna cujos valores são quase todos "C"/"D", "Crédito"/"Débito" etc. */
+function guessDirectionColumn(table: Table, headerRow: number, skip: number[]) {
+  const body = table.slice(headerRow + 1, headerRow + 61);
+  const width = Math.max(0, ...body.map((row) => row.length));
+
+  for (let c = 0; c < width; c++) {
+    if (skip.includes(c)) continue;
+    const values = body.map((row) => row[c]).filter((v) => v && v.trim());
+    if (values.length < 2) continue;
+    const signs = values.map(parseDirection);
+    const known = signs.filter((v) => v !== 0).length;
+    // Precisa ter os dois tipos ou ser quase toda reconhecida.
+    if (known / values.length >= 0.8) return c;
+  }
+  return -1;
+}
 
 /** Acha a linha de cabeçalho e as colunas mais prováveis. */
 export function detectColumns(table: Table): { headerRow: number; map: ColumnMap } {
@@ -350,14 +409,33 @@ export function detectColumns(table: Table): { headerRow: number; map: ColumnMap
     cells.forEach((cell, i) => {
       if (!cell) return;
       if (map.date < 0 && HEADER_HINTS.date.test(cell)) map.date = i;
+      else if (map.direction < 0 && HEADER_HINTS.direction.test(cell)) map.direction = i;
       else if (map.amount < 0 && HEADER_HINTS.amount.test(cell)) map.amount = i;
       else if (map.credit < 0 && HEADER_HINTS.credit.test(cell)) map.credit = i;
       else if (map.debit < 0 && HEADER_HINTS.debit.test(cell)) map.debit = i;
       else if (map.description < 0 && HEADER_HINTS.description.test(cell)) map.description = i;
     });
 
+    // "Crédito/Débito" ou "Entrada/Saída" como uma coluna só é o tipo, não valor.
+    for (const key of ["credit", "debit"] as const) {
+      const i = map[key];
+      if (i >= 0 && cells[i].includes("/")) {
+        if (map.direction < 0) map.direction = i;
+        map[key] = -1;
+      }
+    }
+
     const hasValue = map.amount >= 0 || (map.credit >= 0 && map.debit >= 0);
-    if (map.date >= 0 && hasValue) return { headerRow: r, map };
+    if (map.date >= 0 && hasValue) {
+      if (map.direction < 0 && map.amount >= 0) {
+        map.direction = guessDirectionColumn(
+          table,
+          r,
+          [map.date, map.amount, map.description].filter((i) => i >= 0)
+        );
+      }
+      return { headerRow: r, map };
+    }
   }
 
   // Sem cabeçalho reconhecível: tenta pelo conteúdo da primeira linha.
@@ -385,8 +463,12 @@ export function tableToRows(
     if (!date) continue;
 
     let amount: number | null = null;
-    if (map.amount >= 0) amount = parseMoney(cells[map.amount]);
-    else {
+    if (map.amount >= 0) {
+      amount = parseMoney(cells[map.amount]);
+      // Valor sem sinal + coluna de tipo: o tipo decide entrada ou saída.
+      const direction = map.direction >= 0 ? parseDirection(cells[map.direction]) : 0;
+      if (amount !== null && direction !== 0) amount = direction * Math.abs(amount);
+    } else {
       const credit = map.credit >= 0 ? parseMoney(cells[map.credit]) : null;
       const debit = map.debit >= 0 ? parseMoney(cells[map.debit]) : null;
       if (credit) amount = Math.abs(credit);

@@ -194,6 +194,17 @@ export function StatementImporter({ accounts, categories }: Props) {
     );
   }
 
+  /** Troca entrada por saída em todas as linhas (útil para OFX e faturas). */
+  function swapAllTypes() {
+    setRows(
+      (current) =>
+        current?.map((row) => {
+          const type = row.type === "income" ? "expense" : "income";
+          return { ...row, type, categoryId: guessCategory(row.description, type, categories) };
+        }) ?? null
+    );
+  }
+
   function setAll(include: boolean) {
     setRows((current) => current?.map((row) => ({ ...row, include })) ?? null);
   }
@@ -376,7 +387,7 @@ export function StatementImporter({ accounts, categories }: Props) {
             </p>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
             {(
               [
                 ["date", "Data"],
@@ -384,6 +395,7 @@ export function StatementImporter({ accounts, categories }: Props) {
                 ["amount", "Valor (com sinal)"],
                 ["credit", "Ou: coluna de entradas"],
                 ["debit", "Ou: coluna de saídas"],
+                ["direction", "Tipo (C/D, entrada/saída)"],
               ] as const
             ).map(([key, label]) => (
               <label key={key} className="block">
@@ -408,6 +420,15 @@ export function StatementImporter({ accounts, categories }: Props) {
             <input type="checkbox" checked={invert} onChange={(e) => setInvert(e.target.checked)} />
             Inverter sinais (fatura de cartão: compras positivas viram saídas)
           </label>
+
+          {map.amount >= 0 && map.direction < 0 && preview.length > 1 &&
+            preview.every((row) => row.amount >= 0) && (
+              <p className="rounded-xl border border-warning/30 bg-warning/10 px-4 py-3 text-sm text-warning">
+                Todos os valores estão vindo como entrada. Se o seu extrato tem uma coluna que diz
+                se é crédito ou débito (por exemplo &quot;Tipo&quot;, &quot;C/D&quot; ou
+                &quot;Natureza&quot;), escolha ela em <strong>Tipo</strong> acima.
+              </p>
+            )}
 
           <div className="overflow-x-auto rounded-2xl border border-line">
             <table className="w-full min-w-[480px] text-sm">
@@ -457,6 +478,12 @@ export function StatementImporter({ accounts, categories }: Props) {
                 <span className="text-success">+ {brl(totalIn)}</span> ·{" "}
                 <span className="text-danger">− {brl(totalOut)}</span>
               </p>
+              {rows.length > 3 && new Set(rows.map((row) => row.type)).size === 1 && (
+                <p className="mt-1 text-xs text-warning">
+                  Todos vieram como {rows[0].type === "income" ? "entrada" : "saída"}. Se não for
+                  isso, volte e escolha a coluna de tipo, ou troque linha a linha.
+                </p>
+              )}
               {duplicates > 0 && (
                 <p className="mt-1 text-xs text-warning">
                   {duplicates} parecem já estar nesta conta (mesma data, valor e tipo) e vieram
@@ -465,6 +492,9 @@ export function StatementImporter({ accounts, categories }: Props) {
               )}
             </div>
             <div className="flex flex-wrap gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={swapAllTypes}>
+                Inverter entradas e saídas
+              </Button>
               <Button type="button" variant="outline" size="sm" onClick={() => setAll(true)}>
                 Marcar todos
               </Button>
