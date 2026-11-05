@@ -1,7 +1,7 @@
 "use client";
 import type { getTransactions } from "@/lib/transactions";
 
-import { countsAsResult } from "@/lib/movement-kinds";
+import { CARD_PAYMENT_KIND, countsAsResult } from "@/lib/movement-kinds";
 import {
   ArrowDownCircle,
   ArrowUpCircle,
@@ -17,7 +17,11 @@ export function TransactionsSummary({ transactions }: Props) {
   // Só receitas e despesas de verdade entram no resultado; aportes,
   // empréstimos e reembolsos aparecem à parte.
   const regular = transactions.filter((transaction) => countsAsResult(transaction.kind));
-  const others = transactions.filter((transaction) => !countsAsResult(transaction.kind));
+  // Pagamento de fatura não entra em nenhum dos cards: as compras já contaram.
+  const others = transactions.filter(
+    (transaction) =>
+      !countsAsResult(transaction.kind) && transaction.kind !== CARD_PAYMENT_KIND
+  );
 
   const sum = (list: typeof transactions, type: "income" | "expense") =>
     list

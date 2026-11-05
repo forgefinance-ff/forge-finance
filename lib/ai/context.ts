@@ -9,7 +9,7 @@ import { getInvestments } from "@/lib/investments";
 import { getBusinessPanel } from "@/lib/business-panel";
 import { getBusinessRevenue, getMeiSettings } from "@/lib/mei";
 import { calcLimit } from "@/lib/mei-shared";
-import { KIND_LABEL, type MovementKind } from "@/lib/movement-kinds";
+import { transactionKindLabel, type MovementKind } from "@/lib/movement-kinds";
 import { getDueSummary } from "@/lib/payables";
 import { firstRelation } from "@/lib/relations";
 import { getActiveScope } from "@/lib/scope-server";
@@ -106,7 +106,7 @@ export async function buildDeepContext() {
     const kind = raw.kind ?? "regular";
 
     if (kind !== "regular") {
-      const key = `${KIND_LABEL[kind]} (${raw.type === "income" ? "entrada" : "saída"})`;
+      const key = `${transactionKindLabel(kind) ?? kind} (${raw.type === "income" ? "entrada" : "saída"})`;
       bucket.outrasMovimentacoes[key] = round((bucket.outrasMovimentacoes[key] ?? 0) + value);
     } else if (raw.type === "income") {
       bucket.receitas[category] = round((bucket.receitas[category] ?? 0) + value);

@@ -11,7 +11,13 @@ import type { Scope } from "@/lib/scope";
 export type Db = SupabaseClient;
 
 /** Operações que mexem em saldo: sempre pelas funções atômicas do banco. */
-export type AtomicFn = "create_transaction" | "delete_transaction" | "settle_payable" | "pay_das";
+export type AtomicFn =
+  | "create_transaction"
+  | "create_card_purchase"
+  | "pay_card_invoice"
+  | "delete_transaction"
+  | "settle_payable"
+  | "pay_das";
 
 export type ServiceCtx = {
   db: Db;
@@ -66,6 +72,28 @@ const RPC: Record<AtomicFn, (a: Record<string, unknown>) => [string, Record<stri
       p_description: a.description,
       p_amount: a.amount,
       p_date: a.date,
+    },
+  ],
+  create_card_purchase: (a) => [
+    "ff_create_card_purchase",
+    {
+      p_card_id: a.card_id,
+      p_category_id: a.category_id ?? null,
+      p_type: a.type,
+      p_title: a.title,
+      p_amount: a.amount,
+      p_date: a.date,
+      p_installments: a.installments ?? 1,
+    },
+  ],
+  pay_card_invoice: (a) => [
+    "ff_pay_card_invoice",
+    {
+      p_card_id: a.card_id,
+      p_account_id: a.account_id,
+      p_amount: a.amount,
+      p_date: a.date,
+      p_title: a.title ?? null,
     },
   ],
   delete_transaction: (a) => ["ff_delete_transaction", { p_id: a.id }],

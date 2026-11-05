@@ -6,6 +6,7 @@ import { Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createCategory } from "@/app/actions/categories";
 import { Account } from "@/lib/accounts";
+import type { Card } from "@/lib/cards";
 import { Category } from "@/lib/categories";
 import { KIND_HINT, KIND_LABEL } from "@/lib/movement-kinds";
 
@@ -34,6 +35,8 @@ type Props = {
   action: (formData: FormData) => Promise<void>;
   accounts: Account[];
   categories: Category[];
+  /** Cartões de crédito: a compra vai para a fatura, sem mexer no saldo. */
+  cards?: Card[];
   onSuccess?: () => void;
 };
 
@@ -41,8 +44,11 @@ export function TransactionForm({
   action,
   accounts,
   categories,
+  cards = [],
   onSuccess,
 }: Props) {
+  const [method, setMethod] = useState<"account" | "card">("account");
+  const onCard = method === "card" && cards.length > 0;
   const [isPending, startTransition] = useTransition();
   const [categoryList, setCategoryList] = useState(categories);
   const [selectedCategoryId, setSelectedCategoryId] = useState("");
@@ -103,15 +109,63 @@ export function TransactionForm({
         className={inputClass}
       />
 
-      <select name="account_id" required className={inputClass}>
-        <option value="">Selecione a conta</option>
+      <input type="hidden" name="payment_method" value={onCard ? "card" : "account"} />
 
-        {accounts.map((account) => (
-          <option key={account.id} value={account.id}>
-            {account.name}
-          </option>
-        ))}
-      </select>
+      {cards.length > 0 && (
+        <div
+          role="radiogroup"
+          aria-label="Forma de pagamento"
+          className="grid grid-cols-2 gap-1 rounded-xl border border-line bg-tint p-1 text-sm"
+        >
+          {(
+            [
+              ["account", "Conta (débito, Pix, dinheiro)"],
+              ["card", "Cartão de crédito"],
+            ] as const
+          ).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              role="radio"
+              aria-checked={method === value}
+              onClick={() => setMethod(value)}
+              className={`rounded-lg px-3 py-2 font-medium transition ${
+                method === value
+                  ? "bg-brand/15 text-brand-soft"
+                  : "text-faint hover:text-text-soft"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {onCard ? (
+        <>
+          <select name="card_id" required className={inputClass}>
+            {cards.map((card) => (
+              <option key={card.id} value={card.id}>
+                💳 {card.name}
+              </option>
+            ))}
+          </select>
+          <p className="-mt-2 text-xs text-muted-foreground">
+            Entra como despesa na data da compra e vai para a fatura. O saldo da conta só muda
+            quando você pagar a fatura (na página Cartões).
+          </p>
+        </>
+      ) : (
+        <select name="account_id" required className={inputClass}>
+          <option value="">Selecione a conta</option>
+
+          {accounts.map((account) => (
+            <option key={account.id} value={account.id}>
+              {account.name}
+            </option>
+          ))}
+        </select>
+      )}
 
       <select
         name="type"
@@ -122,8 +176,17 @@ export function TransactionForm({
         }}
         className={inputClass}
       >
-        <option value="expense">Saída (despesa, aporte retirado, empréstimo pago…)</option>
-        <option value="income">Entrada (receita, aporte, empréstimo recebido…)</option>
+        {onCard ? (
+          <>
+            <option value="expense">Compra</option>
+            <option value="income">Estorno (devolução no cartão)</option>
+          </>
+        ) : (
+          <>
+            <option value="expense">Saída (despesa, aporte retirado, empréstimo pago…)</option>
+            <option value="income">Entrada (receita, aporte, empréstimo recebido…)</option>
+          </>
+        )}
       </select>
 
       <div>
@@ -231,14 +294,29 @@ export function TransactionForm({
         </p>
       )}
 
-      <input
-        type="number"
-        step="0.01"
-        name="amount"
-        required
-        placeholder="Valor"
-        className={inputClass}
-      />
+      <div className={onCard && type === "expense" ? "grid grid-cols-[1fr_120px] gap-3" : undefined}>
+        <input
+          type="number"
+          step="0.01"
+          name="amount"
+          required
+          placeholder={onCard && type === "expense" ? "Valor total" : "Valor"}
+          className={inputClass}
+        />
+
+        {onCard && type === "expense" && (
+          <label className="block">
+            <span className="sr-only">Parcelas</span>
+            <select name="installments" defaultValue="1" className={inputClass} aria-label="Parcelas">
+              {Array.from({ length: 24 }, (_, i) => i + 1).map((n) => (
+                <option key={n} value={n}>
+                  {n === 1 ? "À vista" : `${n}x`}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+      </div>
 
       <input
         type="date"

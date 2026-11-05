@@ -12,12 +12,14 @@ import {
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import type { Account } from "@/lib/accounts";
+import type { Card } from "@/lib/cards";
 import type { Category } from "@/lib/categories";
 
 type Props = {
   action: (formData: FormData) => Promise<void>;
   accounts: Account[];
   categories: Category[];
+  cards?: Card[];
   label?: string;
   className?: string;
 };
@@ -26,6 +28,7 @@ export function NewTransactionTrigger({
   action,
   accounts,
   categories,
+  cards = [],
   label = "Nova Transação",
   className,
 }: Props) {
@@ -56,6 +59,7 @@ export function NewTransactionTrigger({
               action={action}
               accounts={accounts}
               categories={categories}
+              cards={cards}
               onSuccess={() => setOpen(false)}
             />
           </div>

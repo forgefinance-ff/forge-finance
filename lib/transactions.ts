@@ -28,6 +28,7 @@ export async function getTransactions() {
     .select(`
       *,
       accounts(name),
+      cards(name),
       categories(name,color,icon)
     `)
     .eq("user_id", user.id)
