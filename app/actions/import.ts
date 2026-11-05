@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 
+import { learnedKey, type LearnedMap } from "@/lib/import/categorize";
 import { appCtx } from "@/lib/services/app";
 import { errorMessage } from "@/lib/services/context";
 import { createTransaction } from "@/lib/services/transactions";
@@ -53,6 +54,45 @@ export async function findExistingTransactions(
     }));
   } catch {
     return [];
+  }
+}
+
+/**
+ * O que o usuário já categorizou: estabelecimento/pessoa → categoria mais
+ * usada (últimos 12 meses). Assim o próximo extrato já vem certo.
+ */
+export async function getLearnedCategories(): Promise<LearnedMap> {
+  try {
+    const ctx = await appCtx();
+    const since = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const { data, error } = await ctx.db
+      .from("transactions")
+      .select("description, type, category_id, transaction_date")
+      .eq("user_id", ctx.userId)
+      .not("category_id", "is", null)
+      .gte("transaction_date", since)
+      .order("transaction_date", { ascending: false })
+      .limit(5000);
+
+    if (error || !data) return {};
+
+    const counts = new Map<string, Map<string, number>>();
+    for (const t of data) {
+      const key = learnedKey(t.type as "income" | "expense", String(t.description ?? ""));
+      if (!key) continue;
+      const byCategory = counts.get(key) ?? new Map<string, number>();
+      const id = String(t.category_id);
+      byCategory.set(id, (byCategory.get(id) ?? 0) + 1);
+      counts.set(key, byCategory);
+    }
+
+    const learned: LearnedMap = {};
+    for (const [key, byCategory] of counts) {
+      learned[key] = [...byCategory.entries()].sort((a, b) => b[1] - a[1])[0][0];
+    }
+    return learned;
+  } catch {
+    return {};
   }
 }
 
