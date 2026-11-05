@@ -34,6 +34,8 @@ import { cn } from "@/lib/utils";
 type Props = {
   accounts: Account[];
   categories: Category[];
+  /** Cartões de crédito: dá para importar a fatura no cartão. */
+  cards?: { id: string; name: string }[];
   /** Nome do usuário: Pix para si mesmo vem desmarcado. */
   userName?: string;
 };
@@ -70,7 +72,12 @@ function formatDate(iso: string) {
   return `${d}/${m}/${y}`;
 }
 
-export function StatementImporter({ accounts, categories, userName = "" }: Props) {
+// Pagamento de fatura no extrato da conta (não é despesa).
+const INVOICE_PAYMENT = /\b(fatura|pagamento de fatura|pagto fatura|pgto fatura|gastos cartao de credito|cartao de credito)\b/;
+// Na fatura do cartão: a linha do pagamento (já está na conta).
+const CARD_PAYMENT_LINE = /\b(pagamento|pagto|pgto)\b.*\b(recebido|efetuado|fatura|obrigado)\b|\bpagamento recebido\b/;
+
+export function StatementImporter({ accounts, categories, cards = [], userName = "" }: Props) {
   const fileInput = useRef<HTMLInputElement>(null);
   const [accountId, setAccountId] = useState(accounts[0]?.id ?? "");
   const [fileName, setFileName] = useState("");
@@ -86,6 +93,16 @@ export function StatementImporter({ accounts, categories, userName = "" }: Props
   useEffect(() => {
     getLearnedCategories().then(setLearned).catch(() => undefined);
   }, []);
+
+  const onCardTarget = accountId.startsWith("card:");
+
+  /** "card:<id>" do cartão citado na descrição (ou o único cartão). */
+  const invoiceCard = (description: string) => {
+    if (cards.length === 0) return "";
+    const text = norm(description);
+    const named = cards.find((card) => card.name.length >= 3 && text.includes(norm(card.name)));
+    return `card:${(named ?? cards[0]).id}`;
+  };
 
   const contributionId = (type: "income" | "expense") =>
     categories.find((c) => c.type === type && c.kind === "contribution")?.id ?? "";
@@ -152,6 +169,10 @@ export function StatementImporter({ accounts, categories, userName = "" }: Props
       );
       if (match >= 0) pool.splice(match, 1);
       const own = userName ? isOwnTransfer(row.description, userName) : false;
+      const text = norm(row.description);
+      const invoicePayment =
+        !onCardTarget && type === "expense" && cards.length > 0 && INVOICE_PAYMENT.test(text);
+      const paymentLineOnCard = onCardTarget && type === "income" && CARD_PAYMENT_LINE.test(text);
 
       return {
         ...row,
@@ -160,11 +181,13 @@ export function StatementImporter({ accounts, categories, userName = "" }: Props
         type,
         duplicate: match >= 0,
         own,
-        include: match < 0,
+        include: match < 0 && !paymentLineOnCard,
         key: learnedKey(type, row.description),
         auto: true,
         // Entre contas suas: aporte (mexe no saldo, não é receita nem despesa).
-        categoryId: (own && contributionId(type)) || guessCategory(row.description, type),
+        categoryId: invoicePayment
+          ? invoiceCard(row.description)
+          : (own && contributionId(type)) || guessCategory(row.description, type),
       };
     });
 
@@ -253,12 +276,19 @@ export function StatementImporter({ accounts, categories, userName = "" }: Props
       (current) =>
         current?.map((row) => {
           const type = row.type === "income" ? "expense" : "income";
+          const text = norm(row.description);
+          const paymentLineOnCard = onCardTarget && type === "income" && CARD_PAYMENT_LINE.test(text);
+          const invoicePayment =
+            !onCardTarget && type === "expense" && cards.length > 0 && INVOICE_PAYMENT.test(text);
           return {
             ...row,
             type,
+            include: paymentLineOnCard ? false : row.include || (onCardTarget && !row.duplicate),
             key: learnedKey(type, row.description),
             auto: true,
-            categoryId: guessCategory(row.description, type),
+            categoryId: invoicePayment
+              ? invoiceCard(row.description)
+              : guessCategory(row.description, type),
           };
         }) ?? null
     );
@@ -344,6 +374,15 @@ export function StatementImporter({ accounts, categories, userName = "" }: Props
             ))}
           </optgroup>
         )}
+        {!onCardTarget && type === "expense" && cards.length > 0 && (
+          <optgroup label="Pagamento de fatura (não é despesa)">
+            {cards.map((card) => (
+              <option key={card.id} value={`card:${card.id}`}>
+                💳 Fatura {card.name}
+              </option>
+            ))}
+          </optgroup>
+        )}
       </>
     );
   };
@@ -367,19 +406,36 @@ export function StatementImporter({ accounts, categories, userName = "" }: Props
       {/* 1. Conta e arquivo */}
       <section className="grid gap-4 rounded-[22px] border border-line bg-surface p-6 md:grid-cols-2">
         <label className="block">
-          <span className="mb-2 block text-sm text-text-soft">Conta do extrato</span>
+          <span className="mb-2 block text-sm text-text-soft">Conta ou cartão do extrato</span>
           <select
             value={accountId}
             onChange={(e) => setAccountId(e.target.value)}
             className={inputClass}
             disabled={!!rows}
           >
-            {accounts.map((account) => (
-              <option key={account.id} value={account.id}>
-                {account.name}
-              </option>
-            ))}
+            <optgroup label="Contas (extrato bancário)">
+              {accounts.map((account) => (
+                <option key={account.id} value={account.id}>
+                  {account.name}
+                </option>
+              ))}
+            </optgroup>
+            {cards.length > 0 && (
+              <optgroup label="Cartões de crédito (fatura)">
+                {cards.map((card) => (
+                  <option key={card.id} value={`card:${card.id}`}>
+                    💳 {card.name} (fatura)
+                  </option>
+                ))}
+              </optgroup>
+            )}
           </select>
+          {onCardTarget && (
+            <span className="mt-1.5 block text-xs text-muted-foreground">
+              As compras entram na fatura do cartão (despesa na data da compra), sem mexer no saldo
+              das contas. A linha do pagamento da fatura vem desmarcada.
+            </span>
+          )}
         </label>
 
         <div>
@@ -547,6 +603,14 @@ export function StatementImporter({ accounts, categories, userName = "" }: Props
                   isso, volte e escolha a coluna de tipo, ou troque linha a linha.
                 </p>
               )}
+              {onCardTarget &&
+                rows.filter((row) => row.type === "income").length >
+                  rows.filter((row) => row.type === "expense").length && (
+                  <p className="mt-1 text-xs text-warning">
+                    Na fatura, as compras costumam vir com valor positivo. Se elas aparecem como
+                    entrada, use &quot;Inverter entradas e saídas&quot;.
+                  </p>
+                )}
               {ownCount > 0 && (
                 <p className="mt-1 text-xs text-brand-soft">
                   {ownCount} são Pix entre contas suas e foram para Aportes (mexem no saldo, mas

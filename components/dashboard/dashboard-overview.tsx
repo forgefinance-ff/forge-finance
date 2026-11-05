@@ -83,6 +83,7 @@ export function DashboardOverview({
           action={createTransaction}
           accounts={accounts}
           categories={categories}
+          cards={cards}
           label="Registrar transação"
           className="h-11 rounded-full bg-gradient-to-r from-brand to-brand-indigo px-5 text-sm font-semibold text-white shadow-[0_0_24px_rgba(124,58,237,0.45)] transition hover:brightness-110"
         />

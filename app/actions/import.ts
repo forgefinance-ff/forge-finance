@@ -5,15 +5,27 @@ import { revalidatePath } from "next/cache";
 import { learnedKey, type LearnedMap } from "@/lib/import/categorize";
 import { appCtx } from "@/lib/services/app";
 import { errorMessage } from "@/lib/services/context";
-import { createTransaction } from "@/lib/services/transactions";
+import {
+  createCardPurchase,
+  createTransaction,
+  payCardInvoice,
+} from "@/lib/services/transactions";
 
 export type ImportRowInput = {
   date: string;
   description: string;
   amount: number; // sempre positivo
   type: "income" | "expense";
+  /** Categoria, ou "card:<id>" = pagamento da fatura desse cartão. */
   category_id: string;
 };
+
+/** Destino da importação: "<id da conta>" ou "card:<id do cartão>". */
+function parseTarget(target: string) {
+  return target.startsWith("card:")
+    ? { kind: "card" as const, id: target.slice(5) }
+    : { kind: "account" as const, id: target };
+}
 
 export type ImportResult =
   | { ok: true; created: number; failed: { index: number; error: string }[] }
@@ -30,19 +42,24 @@ const MAX_ROWS = 500;
 
 /** Lançamentos que já existem na conta no período, para marcar duplicados. */
 export async function findExistingTransactions(
-  accountId: string,
+  target: string,
   from: string,
   to: string
 ): Promise<ExistingTransaction[]> {
   try {
     const ctx = await appCtx();
-    const { data, error } = await ctx.db
+    const dest = parseTarget(target);
+    let query = ctx.db
       .from("transactions")
       .select("transaction_date, amount, type, description")
       .eq("user_id", ctx.userId)
-      .eq("account_id", accountId)
       .gte("transaction_date", from)
       .lte("transaction_date", to);
+    query =
+      dest.kind === "card"
+        ? query.eq("card_id", dest.id).is("account_id", null)
+        : query.eq("account_id", dest.id);
+    const { data, error } = await query;
 
     if (error) return [];
 
@@ -98,9 +115,10 @@ export async function getLearnedCategories(): Promise<LearnedMap> {
 
 /** Cria as transações do extrato, uma a uma (cada uma ajusta o saldo da conta). */
 export async function importTransactions(
-  accountId: string,
+  target: string,
   rows: ImportRowInput[]
 ): Promise<ImportResult> {
+  const dest = parseTarget(target);
   if (!Array.isArray(rows) || rows.length === 0) {
     return { ok: false, error: "Nenhum lançamento selecionado." };
   }
@@ -120,15 +138,39 @@ export async function importTransactions(
 
   for (let index = 0; index < rows.length; index++) {
     const row = rows[index];
+    const description = String(row.description ?? "").slice(0, 120);
+    const amount = Math.abs(Number(row.amount));
     try {
-      await createTransaction(ctx, {
-        account_id: accountId,
-        category_id: row.category_id || null,
-        type: row.type,
-        description: String(row.description ?? "").slice(0, 120),
-        amount: Math.abs(Number(row.amount)),
-        date: row.date,
-      });
+      if (dest.kind === "card") {
+        // Extrato/fatura do cartão: compras (e estornos) vão para a fatura.
+        await createCardPurchase(ctx, {
+          card_id: dest.id,
+          category_id: row.category_id?.startsWith("card:") ? null : row.category_id || null,
+          type: row.type,
+          description,
+          amount,
+          date: row.date,
+          installments: 1,
+        });
+      } else if (row.category_id?.startsWith("card:") && row.type === "expense") {
+        // Extrato da conta: pagamento da fatura de um cartão (não é despesa).
+        await payCardInvoice(ctx, {
+          card_id: row.category_id.slice(5),
+          account_id: dest.id,
+          amount,
+          date: row.date,
+          description,
+        });
+      } else {
+        await createTransaction(ctx, {
+          account_id: dest.id,
+          category_id: row.category_id?.startsWith("card:") ? null : row.category_id || null,
+          type: row.type,
+          description,
+          amount,
+          date: row.date,
+        });
+      }
       created++;
     } catch (error) {
       failed.push({ index, error: errorMessage(error, "Não foi possível importar.") });
@@ -137,6 +179,7 @@ export async function importTransactions(
 
   if (created > 0) {
     revalidatePath("/transacoes");
+    revalidatePath("/cartoes");
     revalidatePath("/contas");
     revalidatePath("/dashboard");
     revalidatePath("/relatorios");

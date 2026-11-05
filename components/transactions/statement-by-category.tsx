@@ -1,7 +1,7 @@
 "use client";
 
 import type { getTransactions } from "@/lib/transactions";
-import { kindTypeLabel, type MovementKind } from "@/lib/movement-kinds";
+import { CARD_PAYMENT_KIND, kindTypeLabel, type MovementKind } from "@/lib/movement-kinds";
 
 type Props = {
   transactions: Awaited<ReturnType<typeof getTransactions>>;
@@ -33,15 +33,18 @@ export function StatementByCategory({ transactions, type }: Props) {
     if (transaction.type !== type) continue;
 
     const value = Number(transaction.amount);
-    const name: string = transaction.categories?.name ?? "Sem categoria";
+    const isInvoicePayment = transaction.kind === CARD_PAYMENT_KIND;
+    const name: string = isInvoicePayment
+      ? "Pagamento de fatura"
+      : transaction.categories?.name ?? "Sem categoria";
     const kind = (transaction.kind ?? "regular") as MovementKind;
-    const key = `${transaction.category_id ?? "none"}:${type}`;
+    const key = isInvoicePayment ? `card_payment:${type}` : `${transaction.category_id ?? "none"}:${type}`;
 
     const row = rows.get(key) ?? {
       key,
       name,
-      icon: transaction.categories?.icon ?? "📁",
-      label: kindTypeLabel(kind, type),
+      icon: isInvoicePayment ? "💳" : transaction.categories?.icon ?? "📁",
+      label: isInvoicePayment ? "Não é despesa · só sai da conta" : kindTypeLabel(kind, type),
       total: 0,
       count: 0,
     };

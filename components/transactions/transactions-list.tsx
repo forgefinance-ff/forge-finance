@@ -3,7 +3,7 @@ import type { getTransactions } from "@/lib/transactions";
 
 import { ReceiptText, Trash2 } from "lucide-react";
 
-import { KIND_LABEL, type MovementKind } from "@/lib/movement-kinds";
+import { transactionKindLabel } from "@/lib/movement-kinds";
 import { formatDateBR } from "@/lib/dates";
 
 type Props = {
@@ -48,7 +48,7 @@ export function TransactionsList({
               </th>
 
               <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-faint">
-                Conta
+                Conta / cartão
               </th>
 
               <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-faint">
@@ -85,7 +85,13 @@ export function TransactionsList({
                   </td>
 
                   <td className="px-6 py-5 text-text-soft">
-                    {transaction.accounts?.name}
+                    {transaction.accounts?.name ?? (transaction.cards?.name ? `💳 ${transaction.cards.name}` : "—")}
+                    {transaction.cards?.name && transaction.accounts?.name && (
+                      <span className="block text-xs text-faint">fatura 💳 {transaction.cards.name}</span>
+                    )}
+                    {transaction.cards?.name && !transaction.accounts?.name && (
+                      <span className="block text-xs text-faint">crédito · na fatura</span>
+                    )}
                   </td>
 
                   <td className="px-6 py-5 text-text-soft">
@@ -93,9 +99,9 @@ export function TransactionsList({
                       {transaction.categories?.icon}
                     </span>
                     {transaction.categories?.name}
-                    {transaction.kind && transaction.kind !== "regular" && (
+                    {transactionKindLabel(transaction.kind) && (
                       <span className="ml-2 rounded-full border border-brand-bright/30 bg-brand/10 px-2 py-0.5 text-[11px] font-medium text-brand-soft">
-                        {KIND_LABEL[transaction.kind as MovementKind]}
+                        {transactionKindLabel(transaction.kind)}
                       </span>
                     )}
                   </td>

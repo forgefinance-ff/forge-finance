@@ -19,12 +19,14 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import type { Account } from "@/lib/accounts";
+import type { Card } from "@/lib/cards";
 import type { Category } from "@/lib/categories";
 
 type Props = {
   transactions: Awaited<ReturnType<typeof getTransactions>>;
   accounts: Account[];
   categories: Category[];
+  cards?: Card[];
   createAction: (formData: FormData) => Promise<void>;
   deleteAction: (formData: FormData) => Promise<void>;
 };
@@ -33,6 +35,7 @@ export function TransactionsWorkspace({
   transactions,
   accounts,
   categories,
+  cards = [],
   createAction,
   deleteAction,
 }: Props) {
@@ -52,7 +55,7 @@ export function TransactionsWorkspace({
       if (search) {
         const haystack = `${transaction.description ?? ""} ${
           transaction.categories?.name ?? ""
-        } ${transaction.accounts?.name ?? ""}`.toLowerCase();
+        } ${transaction.accounts?.name ?? ""} ${transaction.cards?.name ?? ""}`.toLowerCase();
 
         if (!haystack.includes(search.toLowerCase())) return false;
       }
@@ -134,6 +137,7 @@ export function TransactionsWorkspace({
               action={createAction}
               accounts={accounts}
               categories={categories}
+              cards={cards}
               onSuccess={() => setOpen(false)}
             />
           </div>

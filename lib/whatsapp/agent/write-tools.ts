@@ -53,7 +53,7 @@ export const WRITE_TOOLS: WriteTool[] = [
   {
     name: "registrar_lancamento",
     description:
-      "Registra uma receita ou despesa que JÁ aconteceu (gastei, paguei, recebi). Para valores futuros use criar_conta_pagar_receber. Uma chamada por lançamento.",
+      "Registra uma receita ou despesa que JÁ aconteceu (gastei, paguei, recebi). Compra no crédito/cartão de crédito: informe `cartao` (vai para a fatura e não mexe no saldo da conta) e, se parcelada, `parcelas`. Para valores futuros use criar_conta_pagar_receber. Uma chamada por lançamento.",
     input_schema: obj(
       {
         tipo: s.enum(["despesa", "receita"], "Despesa ou receita"),
@@ -61,12 +61,44 @@ export const WRITE_TOOLS: WriteTool[] = [
         descricao: s.str("Descrição curta, ex.: Mercado"),
         categoria: s.str("Referência K de uma categoria do mesmo tipo e escopo da conta"),
         conta: s.str("Referência A da conta, só se o usuário citou uma"),
+        cartao: s.str(
+          "Referência T do cartão de crédito, quando a compra foi no crédito (\"no crédito\", \"no cartão\", \"parcelei\"). Com um só cartão, use ele."
+        ),
+        parcelas: s.num("Número de parcelas da compra no cartão (1 = à vista)"),
         data: s.date("Data do lançamento; sem data, hoje"),
       },
       ["tipo", "valor", "descricao"]
     ),
     async prepare(args, ctx) {
       const type = str(args, "tipo") === "receita" ? "income" : "expense";
+
+      // Compra no cartão de crédito: vai para a fatura.
+      const card = optionalRef(ctx, args.cartao, "T");
+      if (card) {
+        const category = pickCategory(ctx, args.categoria, type, card.scope);
+        const installments = Math.max(1, Math.min(48, Math.round(num(args, "parcelas") ?? 1)));
+        const input = {
+          card_id: card.id,
+          category_id: category?.id ?? null,
+          type,
+          description: str(args, "descricao") ?? "",
+          amount: num(args, "valor") ?? NaN,
+          date: str(args, "data") ?? ctx.today,
+          installments: type === "income" ? 1 : installments,
+        } as const;
+        const parsed = parseInput(transactions.cardPurchaseInput, input);
+        const parts =
+          parsed.installments > 1
+            ? ` em ${parsed.installments}x de ${formatBRL(parsed.amount / parsed.installments)}`
+            : "";
+
+        return {
+          scope: card.scope,
+          summary: `💳 ${type === "income" ? "Estorno" : "Compra no crédito"}: ${parsed.description || "Lançamento"} — ${formatBRL(parsed.amount)}${parts}\n${scopeTag(card.scope)} • ${category?.name ?? "Sem categoria"} • cartão ${card.name} • ${brDate(parsed.date)}\nVai para a fatura; o saldo da conta só muda quando você pagar a fatura.`,
+          payload: { ...input, via: "card" },
+        };
+      }
+
       const account = pickAccount(ctx, args.conta, null);
       const category = pickCategory(ctx, args.categoria, type, account.scope);
       const input = {
@@ -723,7 +755,11 @@ export async function executeAction(action: PreparedAction, ctx: ServiceCtx): Pr
 
   switch (action.tool) {
     case "registrar_lancamento":
-      await transactions.createTransaction(ctx, p as never);
+      if (p.via === "card") {
+        await transactions.createCardPurchase(ctx, p as never);
+      } else {
+        await transactions.createTransaction(ctx, p as never);
+      }
       return null;
     case "excluir_transacao":
       await transactions.deleteTransaction(ctx, id);

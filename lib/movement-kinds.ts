@@ -40,3 +40,16 @@ export function isMovementKind(value: unknown): value is MovementKind {
 export function countsAsResult(kind: string | null | undefined) {
   return !kind || kind === "regular";
 }
+
+/**
+ * Natureza só de transação: pagamento da fatura do cartão. Tira o dinheiro da
+ * conta, mas não é despesa (as compras já contaram na data em que foram feitas).
+ */
+export const CARD_PAYMENT_KIND = "card_payment";
+
+/** Rótulo de qualquer natureza de transação (inclui o pagamento de fatura). */
+export function transactionKindLabel(kind: string | null | undefined) {
+  if (!kind || kind === "regular") return null;
+  if (kind === CARD_PAYMENT_KIND) return "Pagamento de fatura";
+  return isMovementKind(kind) ? KIND_LABEL[kind] : null;
+}

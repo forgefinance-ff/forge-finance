@@ -1,5 +1,6 @@
 import { StatementImporter } from "@/components/import/statement-importer";
 import { getAccounts } from "@/lib/accounts";
+import { getCards } from "@/lib/cards";
 import { getCategories } from "@/lib/categories";
 import { createClient } from "@/lib/supabase/server";
 
@@ -25,10 +26,11 @@ async function getUserName() {
 }
 
 export default async function ImportarPage() {
-  const [accounts, categories, userName] = await Promise.all([
+  const [accounts, categories, userName, cards] = await Promise.all([
     getAccounts(),
     getCategories(),
     getUserName(),
+    getCards(),
   ]);
 
   return (
@@ -49,7 +51,12 @@ export default async function ImportarPage() {
         </p>
       </div>
 
-      <StatementImporter accounts={accounts} categories={categories} userName={userName} />
+      <StatementImporter
+        accounts={accounts}
+        categories={categories}
+        userName={userName}
+        cards={cards.map((card) => ({ id: card.id, name: card.name }))}
+      />
     </div>
   );
 }
