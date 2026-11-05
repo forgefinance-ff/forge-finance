@@ -19,7 +19,7 @@ export default async function InvestimentosPage() {
         </h1>
 
         <p className="mt-2 max-w-xl text-muted-foreground">
-          Acompanhe seus investimentos e sua evoluÃ§Ã£o patrimonial.
+          Acompanhe seus investimentos e sua evolução patrimonial.
         </p>
       </div>
 
@@ -31,10 +31,10 @@ export default async function InvestimentosPage() {
           <thead className="border-b border-line">
             <tr className="text-left text-muted-foreground">
               <th className="p-4">Investimento</th>
-              <th className="p-4">InstituiÃ§Ã£o</th>
+              <th className="p-4">Instituição</th>
               <th className="p-4">Tipo</th>
               <th className="p-4">Rentabilidade</th>
-              <th className="p-4 text-right">AÃ§Ãµes</th>
+              <th className="p-4 text-right">Ações</th>
             </tr>
           </thead>
 
