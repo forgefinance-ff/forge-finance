@@ -87,6 +87,9 @@ export function StatementImporter({ accounts, categories, userName = "" }: Props
     getLearnedCategories().then(setLearned).catch(() => undefined);
   }, []);
 
+  const contributionId = (type: "income" | "expense") =>
+    categories.find((c) => c.type === type && c.kind === "contribution")?.id ?? "";
+
   const guessCategory = (description: string, type: "income" | "expense") =>
     guess(description, type, categories, learned).categoryId;
 
@@ -157,10 +160,11 @@ export function StatementImporter({ accounts, categories, userName = "" }: Props
         type,
         duplicate: match >= 0,
         own,
-        include: match < 0 && !own,
+        include: match < 0,
         key: learnedKey(type, row.description),
         auto: true,
-        categoryId: guessCategory(row.description, type),
+        // Entre contas suas: aporte (mexe no saldo, não é receita nem despesa).
+        categoryId: (own && contributionId(type)) || guessCategory(row.description, type),
       };
     });
 
@@ -545,8 +549,8 @@ export function StatementImporter({ accounts, categories, userName = "" }: Props
               )}
               {ownCount > 0 && (
                 <p className="mt-1 text-xs text-brand-soft">
-                  {ownCount} são Pix entre contas suas e vieram desmarcados (não são receita nem
-                  despesa).
+                  {ownCount} são Pix entre contas suas e foram para Aportes (mexem no saldo, mas
+                  não contam como receita nem despesa).
                 </p>
               )}
               {duplicates > 0 && (
