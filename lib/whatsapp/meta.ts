@@ -113,6 +113,25 @@ export async function sendConfirmButtons(
   });
 }
 
+/** Resposta de um lançamento já gravado, com um botão para desfazer. */
+export async function sendUndoButton(to: string, body: string, undoId: string) {
+  await sendMessage(to, {
+    type: "interactive",
+    interactive: {
+      type: "button",
+      body: { text: body.slice(0, 1000) },
+      action: {
+        buttons: [
+          {
+            type: "reply",
+            reply: { id: `undo:${undoId}`, title: "↩️ Desfazer" },
+          },
+        ],
+      },
+    },
+  });
+}
+
 /** Baixa um áudio recebido (2 passos: descobre a URL, depois baixa). */
 export async function downloadMedia(mediaId: string) {
   const token = process.env.WHATSAPP_ACCESS_TOKEN;

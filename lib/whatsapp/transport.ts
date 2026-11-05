@@ -1,4 +1,4 @@
-import { sendConfirmButtons, sendText } from "./meta";
+import { sendConfirmButtons, sendText, sendUndoButton } from "./meta";
 
 /**
  * Para onde vão as respostas do bot. Em produção é a API da Meta; no
@@ -7,6 +7,7 @@ import { sendConfirmButtons, sendText } from "./meta";
 export type Transport = {
   text: (to: string, body: string) => Promise<void>;
   buttons: (to: string, body: string, pendingId: string) => Promise<void>;
+  undo: (to: string, body: string, undoId: string) => Promise<void>;
 };
 
 export const metaTransport: Transport = {
@@ -14,11 +15,13 @@ export const metaTransport: Transport = {
     await sendText(to, body);
   },
   buttons: sendConfirmButtons,
+  undo: sendUndoButton,
 };
 
 export type SimulatedMessage =
   | { kind: "text"; body: string }
-  | { kind: "buttons"; body: string; pendingId: string };
+  | { kind: "buttons"; body: string; pendingId: string }
+  | { kind: "undo"; body: string; undoId: string };
 
 export function memoryTransport(sink: SimulatedMessage[]): Transport {
   return {
@@ -27,6 +30,9 @@ export function memoryTransport(sink: SimulatedMessage[]): Transport {
     },
     buttons: async (_to, body, pendingId) => {
       sink.push({ kind: "buttons", body: body.slice(0, 1000), pendingId });
+    },
+    undo: async (_to, body, undoId) => {
+      sink.push({ kind: "undo", body: body.slice(0, 1000), undoId });
     },
   };
 }

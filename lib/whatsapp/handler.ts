@@ -3,11 +3,12 @@ import { revalidatePath } from "next/cache";
 
 import { createAdminClient } from "@/lib/supabase/admin";
 import { parseScope, SCOPE_EMOJI, SCOPE_LABEL } from "@/lib/scope";
-import { executePending, remember, runAgent } from "./agent/agent";
-import type { PreparedAction } from "./agent/write-tools";
+import { hasWhatsAppAccess } from "@/lib/billing/access";
+import { executeAuto, executePending, remember, runAgent, undoTransactions } from "./agent/agent";
+import { canAutoExecute, type PreparedAction } from "./agent/write-tools";
 import { downloadMedia } from "./meta";
 import { transcribeAudio } from "./transcribe";
-import { connectUrl, getOrCreateOnboardingToken } from "./onboarding";
+import { appUrl, connectUrl, getOrCreateOnboardingToken } from "./onboarding";
 import { formatBRL, formatDayMonth, normalize } from "./text";
 import { metaTransport, type Transport } from "./transport";
 
@@ -45,12 +46,13 @@ const MAX_MESSAGES_PER_HOUR = 30;
 
 export const WHATSAPP_HELP = `*Forge Finance no WhatsApp* 💜
 
-Faço tudo o que o app faz, por texto ou áudio. Antes de alterar qualquer coisa, eu sempre peço a sua confirmação.
+Faço tudo o que o app faz, por texto ou áudio. Lançamentos eu registro na hora, com um botão para *desfazer*. Exclusões e mudanças eu sempre confirmo antes.
 
 *Lançamentos*
 • "gastei 45 no mercado"
 • "recebi 1500 de freelance no Nubank"
 • "apaga o último lançamento"
+• "desfazer" (desfaz o último registro)
 
 *Consultas*
 • "qual meu saldo?"
@@ -77,6 +79,7 @@ const transportStore = new AsyncLocalStorage<Transport>();
 const out: Transport = {
   text: (to, body) => (transportStore.getStore() ?? metaTransport).text(to, body),
   buttons: (to, body, id) => (transportStore.getStore() ?? metaTransport).buttons(to, body, id),
+  undo: (to, body, id) => (transportStore.getStore() ?? metaTransport).undo(to, body, id),
 };
 
 export async function handleIncoming(message: IncomingMessage, transport: Transport = metaTransport) {
@@ -184,11 +187,20 @@ async function handleUnlinked(admin: Admin, message: IncomingMessage) {
 /* ------------------------------ fluxo normal ------------------------------ */
 
 async function handleLinked(admin: Admin, link: Link, message: IncomingMessage) {
+  // WhatsApp é do Forge Pro (com a cobrança desligada, todos usam).
+  if (!(await hasWhatsAppAccess(admin, link.user_id))) {
+    await paywall(admin, link);
+    return;
+  }
+
   if (message.type === "button" && message.buttonId) {
     const [action, pendingId] = message.buttonId.split(":");
 
     if ((action === "confirm" || action === "cancel") && pendingId) {
       await decide(admin, link, action, pendingId);
+    }
+    if (action === "undo" && pendingId) {
+      await undo(admin, link, pendingId);
     }
     return;
   }
@@ -237,6 +249,11 @@ async function handleLinked(admin: Admin, link: Link, message: IncomingMessage) 
       return;
     }
 
+    if (["desfazer", "desfaz", "desfaca"].includes(normalized)) {
+      await undoLatest(admin, link);
+      return;
+    }
+
     const defaultAccount = normalized.match(/^conta padrao\s+(.+)$/);
 
     if (defaultAccount) {
@@ -251,7 +268,10 @@ async function handleLinked(admin: Admin, link: Link, message: IncomingMessage) 
   await out.text(link.phone, "Envie um texto ou um áudio com o seu pedido. 🙂");
 }
 
-/** Pergunta ao agente: responde direto ou pede confirmação das ações. */
+/**
+ * Pergunta ao agente: responde direto, grava lançamentos simples na hora
+ * (uma mensagem só, com botão "Desfazer") ou pede confirmação do resto.
+ */
 async function askAgent(admin: Admin, link: Link, text: string, fromAudio: boolean) {
   const echo = fromAudio ? `🎙️ Entendi: “${text.slice(0, 200)}”\n\n` : "";
   const result = await runAgent(admin, link, text);
@@ -261,6 +281,11 @@ async function askAgent(admin: Admin, link: Link, text: string, fromAudio: boole
   if (result.kind === "reply") {
     await remember(admin, link.user_id, link.phone, "assistant", result.text);
     await out.text(link.phone, `${echo}${result.text}`);
+    return;
+  }
+
+  if (canAutoExecute(result.actions)) {
+    await autoRegister(admin, link, result.actions, echo);
     return;
   }
 
@@ -299,6 +324,108 @@ async function askAgent(admin: Admin, link: Link, text: string, fromAudio: boole
   } else {
     await out.buttons(link.phone, body, pending.id);
   }
+}
+
+/* ------------------------------ registro direto ------------------------------ */
+
+async function autoRegister(admin: Admin, link: Link, actions: PreparedAction[], echo: string) {
+  const { text, transactionIds } = await executeAuto(admin, link, actions);
+  await remember(admin, link.user_id, link.phone, "assistant", text);
+
+  if (!transactionIds.length) {
+    await out.text(link.phone, `${echo}${text}`);
+    return;
+  }
+
+  const { data: undoRow, error } = await admin
+    .from("whatsapp_undo")
+    .insert({
+      user_id: link.user_id,
+      phone: link.phone,
+      transaction_ids: transactionIds,
+      summary: actions.map((a) => a.summary.split("\n")[0]).join("\n"),
+    })
+    .select("id")
+    .single();
+
+  const body = `${echo}${text}`;
+
+  if (error || !undoRow) {
+    console.error("WhatsApp undo save error", error?.code);
+    await out.text(link.phone, `${body}\n\nSe algo estiver errado, mande "apaga o último lançamento".`);
+    return;
+  }
+
+  // O corpo com botão aceita até 1000 caracteres; acima disso, manda o texto antes.
+  if (body.length > 1000) {
+    await out.text(link.phone, body);
+    await out.undo(link.phone, "Algo errado? Toque para desfazer.", undoRow.id);
+  } else {
+    await out.undo(link.phone, body, undoRow.id);
+  }
+}
+
+async function undo(admin: Admin, link: Link, undoId: string) {
+  // DELETE ... RETURNING: só um clique "ganha" (sem desfazer duas vezes).
+  const { data } = await admin
+    .from("whatsapp_undo")
+    .delete()
+    .eq("id", undoId)
+    .eq("user_id", link.user_id)
+    .gt("expires_at", new Date().toISOString())
+    .select("transaction_ids, summary")
+    .maybeSingle();
+
+  if (!data) {
+    await out.text(link.phone, "Esse registro já foi desfeito ou passou do prazo de 24h. Para apagar, mande \"apaga o último lançamento\".");
+    return;
+  }
+
+  const reply = await undoTransactions(admin, link, data.transaction_ids as string[], data.summary as string);
+  await remember(admin, link.user_id, link.phone, "assistant", reply);
+  await out.text(link.phone, reply);
+}
+
+async function undoLatest(admin: Admin, link: Link) {
+  const { data } = await admin
+    .from("whatsapp_undo")
+    .select("id")
+    .eq("user_id", link.user_id)
+    .gt("expires_at", new Date().toISOString())
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (!data) {
+    await out.text(link.phone, "Não há registro recente para desfazer.");
+    return;
+  }
+
+  await undo(admin, link, data.id);
+}
+
+/* ------------------------------ plano ------------------------------ */
+
+/** Aviso de que o WhatsApp é do Forge Pro: no máximo uma vez por dia (cada mensagem custa). */
+async function paywall(admin: Admin, link: Link) {
+  const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+  const { data: recent } = await admin
+    .from("whatsapp_paywall_notices")
+    .select("last_sent_at")
+    .eq("user_id", link.user_id)
+    .gt("last_sent_at", since)
+    .maybeSingle();
+
+  if (recent) return;
+
+  await admin
+    .from("whatsapp_paywall_notices")
+    .upsert({ user_id: link.user_id, last_sent_at: new Date().toISOString() }, { onConflict: "user_id" });
+
+  await out.text(
+    link.phone,
+    `O registro pelo WhatsApp é do *Forge Pro* 💜\n\nCom ele você lança gastos por texto ou áudio, consulta saldo e cria metas sem abrir o app.\n\nAssine aqui: ${appUrl()}/planos\n\nVocê continua usando o app normalmente no plano gratuito.`
+  );
 }
 
 /* ------------------------------ confirmação ------------------------------ */

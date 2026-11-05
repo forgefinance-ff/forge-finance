@@ -1,4 +1,8 @@
-/** Transcreve áudio em português com a API de transcrição da OpenAI (Whisper). */
+/**
+ * Transcreve áudio em português com a API de transcrição da OpenAI.
+ * Padrão: gpt-4o-mini-transcribe (metade do preço do whisper-1). Para voltar,
+ * defina WHISPER_MODEL=whisper-1 na Vercel.
+ */
 export async function transcribeAudio(
   buffer: ArrayBuffer,
   mimeType: string
@@ -17,7 +21,8 @@ export async function transcribeAudio(
 
   const form = new FormData();
   form.append("file", new Blob([buffer], { type: mimeType }), `audio.${extension}`);
-  form.append("model", process.env.WHISPER_MODEL ?? "whisper-1");
+  form.append("model", process.env.WHISPER_MODEL ?? "gpt-4o-mini-transcribe");
+  form.append("response_format", "json");
   form.append("language", "pt");
 
   const response = await fetch("https://api.openai.com/v1/audio/transcriptions", {
@@ -28,7 +33,7 @@ export async function transcribeAudio(
   });
 
   if (!response.ok) {
-    throw new Error(`whisper ${response.status}`);
+    throw new Error(`transcribe ${response.status}`);
   }
 
   const payload = (await response.json()) as { text?: string };

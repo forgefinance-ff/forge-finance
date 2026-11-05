@@ -1,14 +1,16 @@
 /**
  * Agente do WhatsApp: entende o pedido, consulta na hora e PREPARA ações.
- * Ações só são executadas depois que o usuário confirma (executePending).
+ * Lançamentos simples são gravados na hora, com botão "Desfazer" (executeAuto);
+ * o resto só roda depois que o usuário confirma (executePending).
  */
 import { revalidatePath } from "next/cache";
 
 import { botAtomic, errorMessage, type Db } from "@/lib/services/context";
+import * as transactions from "@/lib/services/transactions";
 
 import { describeContext, loadUserContext, type UserContext } from "./context";
 import { READ_TOOLS } from "./read-tools";
-import { executeAction, WRITE_TOOLS, type PreparedAction } from "./write-tools";
+import { executeActionDetailed, WRITE_TOOLS, type PreparedAction } from "./write-tools";
 
 const MAX_ROUNDS = 5;
 const MAX_ACTIONS = 5;
@@ -32,7 +34,8 @@ Regras:
 - Nos argumentos das ferramentas use SEMPRE as referências do contexto (A1, K2, C1, P3, M1, I1, T1, D1, X1). Nunca invente referências.
 - As referências são internas: NUNCA as mostre ao usuário. Nas respostas, use só os nomes (ex.: "Nubank", não "A1 Nubank").
 - Ferramentas de consulta executam na hora: use-as para responder perguntas com números reais.
-- Ferramentas de ação NÃO executam: elas preparam a ação e o sistema pede a confirmação do usuário com botões. Depois de chamá-las, não escreva nada dizendo que foi feito.
+- Ferramentas de ação NÃO executam sozinhas: elas preparam a ação. Lançamentos simples e claros o sistema grava na hora e oferece um botão "Desfazer"; exclusões, edições e casos com dúvida o sistema confirma com o usuário. Depois de chamá-las, não escreva nada dizendo que foi feito.
+- Em registrar_lancamento, use \`confirmar: true\` só quando houver dúvida real (valor ambíguo, categoria ou conta incertas). Pedido claro ("gastei 45 no mercado") não precisa.
 - Compra "no crédito", "no cartão" ou "parcelei em Nx" = registrar_lancamento com \`cartao\` (referência T; com um só cartão, use ele) e \`parcelas\`. Compra no débito, Pix ou dinheiro = registrar_lancamento com \`conta\`. Se não disser a forma de pagamento, use a conta.
 - "gastei", "paguei", "recebi" (já aconteceu) = registrar_lancamento. "vou receber", "conta a receber", "boleto vence dia", "tenho que pagar" = criar_conta_pagar_receber. "fulano pagou"/"paguei o boleto X" quando existe conta pendente correspondente = baixar_conta_pagar_receber.
 - Para excluir uma transação, primeiro use buscar_transacoes para achar a referência X. Se houver mais de uma possível, pergunte qual.
@@ -218,26 +221,43 @@ export async function runAgent(
   };
 }
 
-/** Executa as ações confirmadas, uma a uma, registrando o histórico. */
-export async function executePending(
+const REVALIDATE_PATHS = [
+  "/dashboard",
+  "/transacoes",
+  "/contas",
+  "/categorias",
+  "/cartoes",
+  "/metas",
+  "/investimentos",
+  "/clientes",
+  "/contas-a-pagar-receber",
+  "/impostos",
+  "/relatorios",
+  "/whatsapp",
+];
+
+/** Executa as ações, uma a uma, registrando o histórico. Devolve o texto e os lançamentos criados. */
+async function runActions(
   db: Db,
   link: { user_id: string; phone: string },
   actions: PreparedAction[]
-): Promise<string> {
+): Promise<{ text: string; transactionIds: string[]; failures: number }> {
   const lines: string[] = [];
+  const transactionIds: string[] = [];
   let failures = 0;
 
   for (const action of actions) {
     const firstLine = action.summary.split("\n")[0];
 
     try {
-      const note = await executeAction(action, {
+      const { note, transactionId } = await executeActionDetailed(action, {
         db,
         userId: link.user_id,
         scope: action.scope,
         atomic: botAtomic(db, link.user_id),
       });
 
+      if (transactionId) transactionIds.push(transactionId);
       lines.push(`✅ ${firstLine}${note ? `\n${note}` : ""}`);
       await db.from("whatsapp_action_log").insert({
         user_id: link.user_id,
@@ -263,22 +283,7 @@ export async function executePending(
     }
   }
 
-  for (const path of [
-    "/dashboard",
-    "/transacoes",
-    "/contas",
-    "/categorias",
-    "/cartoes",
-    "/metas",
-    "/investimentos",
-    "/clientes",
-    "/contas-a-pagar-receber",
-    "/impostos",
-    "/relatorios",
-    "/whatsapp",
-  ]) {
-    revalidatePath(path);
-  }
+  for (const path of REVALIDATE_PATHS) revalidatePath(path);
 
   const heading =
     failures === 0
@@ -289,5 +294,70 @@ export async function executePending(
         ? "Não consegui concluir."
         : "Parte foi feita:";
 
-  return `${heading}\n\n${lines.join("\n\n")}`;
+  return { text: `${heading}\n\n${lines.join("\n\n")}`, transactionIds, failures };
+}
+
+/** Executa as ações confirmadas pelo usuário. */
+export async function executePending(
+  db: Db,
+  link: { user_id: string; phone: string },
+  actions: PreparedAction[]
+): Promise<string> {
+  return (await runActions(db, link, actions)).text;
+}
+
+/**
+ * Grava lançamentos simples na hora (sem pedir confirmação). Devolve o texto
+ * da resposta, já com o lembrete de que dá para desfazer, e os ids criados.
+ */
+export async function executeAuto(
+  db: Db,
+  link: { user_id: string; phone: string },
+  actions: PreparedAction[]
+): Promise<{ text: string; transactionIds: string[] }> {
+  const { text, transactionIds } = await runActions(db, link, actions);
+  const lines = text.split("\n\n");
+  // "Pronto!" vira "Registrado!" para deixar claro que já foi gravado.
+  if (lines[0] === "Pronto!") lines[0] = "Registrado! ✍️";
+  return { text: lines.join("\n\n"), transactionIds };
+}
+
+/** Desfaz lançamentos gravados pelo bot (apaga e estorna o saldo). */
+export async function undoTransactions(
+  db: Db,
+  link: { user_id: string; phone: string },
+  transactionIds: string[],
+  summary: string
+): Promise<string> {
+  let failures = 0;
+
+  for (const id of transactionIds) {
+    try {
+      await transactions.deleteTransaction(
+        { db, userId: link.user_id, scope: "personal", atomic: botAtomic(db, link.user_id) },
+        id
+      );
+    } catch (error) {
+      // Já excluído no app, por exemplo: segue com os demais.
+      failures++;
+      console.error("WhatsApp undo error", errorMessage(error, "erro"));
+    }
+  }
+
+  await db.from("whatsapp_action_log").insert({
+    user_id: link.user_id,
+    phone: link.phone,
+    action: "desfazer",
+    summary: summary.slice(0, 1000),
+    payload: { transaction_ids: transactionIds },
+    status: failures === transactionIds.length ? "failed" : "executed",
+  });
+
+  for (const path of REVALIDATE_PATHS) revalidatePath(path);
+
+  if (failures === transactionIds.length) {
+    return "Não encontrei esse lançamento para desfazer. Ele pode já ter sido apagado no app.";
+  }
+
+  return `↩️ Desfeito! Removi:\n${summary}`;
 }

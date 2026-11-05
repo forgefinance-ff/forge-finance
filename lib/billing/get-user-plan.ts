@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import { PLAN_CATALOG, type PlanId } from "./plans";
+import { PLAN_CATALOG, type BillingInterval, type PlanId } from "./plans";
 
 export type UserEntitlement = {
   userId: string;
@@ -7,6 +7,10 @@ export type UserEntitlement = {
   status: "beta" | "active" | "past_due" | "canceled" | "suspended";
   accessSource: "beta" | "subscription" | "admin";
   aiMonthlyLimit: number;
+  billingInterval: BillingInterval | null;
+  currentPeriodEnd: string | null;
+  cancelAtPeriodEnd: boolean;
+  hasBillingAccount: boolean;
 };
 
 /** Busca permissões no banco. Falhas não elevam privilégios: usa apenas o acesso beta de forma explícita. */
@@ -19,17 +23,19 @@ export async function getUserEntitlement(userId?: string): Promise<UserEntitleme
   // Repara, de forma idempotente, contas criadas antes da migration ou com provisionamento ausente.
   const { error: ensureError } = await supabase.rpc("ensure_my_beta_entitlement");
   if (ensureError) {
-    // Não concede Plus/Business se o provisionamento falhar; segue tentando ler o registro existente.
+    // Não concede o Pro se o provisionamento falhar; segue tentando ler o registro existente.
   }
 
   const { data, error } = await supabase
     .from("user_entitlements")
-    .select("user_id, plan_id, status, access_source, plans(ai_monthly_limit)")
+    .select(
+      "user_id, plan_id, status, access_source, billing_interval, current_period_end, cancel_at_period_end, provider_customer_id, plans(ai_monthly_limit)"
+    )
     .eq("user_id", user.id)
     .maybeSingle();
 
   if (error || !data) return null;
-  const planId = (data.plan_id as PlanId);
+  const planId = data.plan_id as PlanId;
   if (!PLAN_CATALOG.some((plan) => plan.id === planId)) return null;
   const joinedPlan = data.plans as unknown as { ai_monthly_limit: number } | null;
 
@@ -39,5 +45,16 @@ export async function getUserEntitlement(userId?: string): Promise<UserEntitleme
     status: data.status as UserEntitlement["status"],
     accessSource: data.access_source as UserEntitlement["accessSource"],
     aiMonthlyLimit: Number(joinedPlan?.ai_monthly_limit ?? 0),
+    billingInterval: (data.billing_interval as BillingInterval | null) ?? null,
+    currentPeriodEnd: (data.current_period_end as string | null) ?? null,
+    cancelAtPeriodEnd: Boolean(data.cancel_at_period_end),
+    hasBillingAccount: Boolean(data.provider_customer_id),
   };
+}
+
+/** Assinante com acesso ao Forge Pro agora (inclui cobrança em nova tentativa). */
+export function isProActive(entitlement: UserEntitlement | null): boolean {
+  if (!entitlement) return false;
+  if (entitlement.accessSource === "admin") return true;
+  return entitlement.planId === "pro" && (entitlement.status === "active" || entitlement.status === "past_due");
 }

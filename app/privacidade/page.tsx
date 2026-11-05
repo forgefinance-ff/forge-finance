@@ -39,7 +39,7 @@ const SECTIONS: Section[] = [
     title: "3. Para que usamos seus dados",
     items: [
       "Prestar o serviço: criar sua conta, mostrar seus lançamentos, relatórios e dashboards.",
-      "Registrar gastos e receitas enviados pelo WhatsApp, sempre com a sua confirmação antes de salvar.",
+      "Registrar gastos e receitas enviados pelo WhatsApp. Lançamentos claros são salvos na hora, com um botão para desfazer por 24 horas; exclusões, alterações e casos com dúvida pedem a sua confirmação antes.",
       "Interpretar o texto das suas mensagens e responder ao assistente de IA do app.",
       "Manter a segurança do serviço, prevenir fraudes e abusos e corrigir falhas.",
       "Cumprir obrigações legais e responder a pedidos seus.",
@@ -69,6 +69,7 @@ const SECTIONS: Section[] = [
       "Meta (WhatsApp Business Platform): envio e recebimento das mensagens do WhatsApp.",
       "Anthropic: interpretação das mensagens e assistente de IA.",
       "OpenAI: transcrição de áudios enviados ao bot.",
+      "Stripe: processamento dos pagamentos das assinaturas. Os dados do cartão são informados diretamente ao Stripe e não passam nem ficam guardados no Forge Finance.",
     ],
   },
   {
@@ -86,7 +87,7 @@ const SECTIONS: Section[] = [
   {
     title: "8. Segurança",
     paragraphs: [
-      "Adotamos medidas técnicas razoáveis para proteger os seus dados, como conexão criptografada (HTTPS), controle de acesso por usuário no banco de dados, verificação de assinatura nas mensagens recebidas da Meta e confirmação antes de gravar lançamentos. Nenhum sistema é totalmente imune a falhas, e por isso recomendamos que você use uma senha forte e exclusiva.",
+      "Adotamos medidas técnicas razoáveis para proteger os seus dados, como conexão criptografada (HTTPS), controle de acesso por usuário no banco de dados, verificação de assinatura nas mensagens recebidas da Meta e do Stripe, e confirmação antes de excluir ou alterar dados pelo WhatsApp. Nenhum sistema é totalmente imune a falhas, e por isso recomendamos que você use uma senha forte e exclusiva.",
     ],
   },
   {

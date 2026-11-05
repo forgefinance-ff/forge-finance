@@ -31,11 +31,35 @@ test('quota is resolved by the database and consumed through an RPC', () => {
   assert.match(aiRoute, /quota\.allowed/);
 });
 
-test('pricing and future plan features are clearly separated from the beta', () => {
-  assert.match(plans, /availableNow: true/);
-  assert.match(plans, /availableNow: false/);
-  assert.match(plans, /1990/);
-  assert.match(plans, /7990/);
+test('Forge Pro pricing (R$19,90 mensal / R$199 anual) and plan pages exist', () => {
+  assert.match(plans, /export type PlanId = "free" \| "pro"/);
+  assert.match(plans, /month: \{ cents: 1990 \}/);
+  assert.match(plans, /year: \{ cents: 19900 \}/);
   assert.ok(existsSync('app/(dashboard)/planos/page.tsx'));
   assert.ok(existsSync('app/(dashboard)/assinatura/page.tsx'));
+});
+
+const checkoutMigration = readFileSync('supabase/migrations/20261108090000_stripe_checkout.sql', 'utf8');
+const billingConfig = readFileSync('lib/billing/config.ts', 'utf8');
+const stripeLib = readFileSync('lib/billing/stripe.ts', 'utf8');
+const webhook = readFileSync('app/api/billing/webhook/route.ts', 'utf8');
+const proxy = readFileSync('proxy.ts', 'utf8');
+
+test('checkout migration adds Forge Pro, retires Plus/Business and locks new tables', () => {
+  assert.match(checkoutMigration, /'pro',\s*'Forge Pro'/);
+  assert.match(checkoutMigration, /set is_active = false[\s\S]*where id in \('plus', 'business'\)/);
+  for (const table of ['billing_events', 'whatsapp_undo', 'whatsapp_paywall_notices']) {
+    assert.match(checkoutMigration, new RegExp(`alter table public\\.${table} enable row level security`));
+  }
+  assert.doesNotMatch(checkoutMigration, /create policy/i);
+});
+
+test('billing is off by default and the Stripe webhook is verified', () => {
+  assert.match(billingConfig, /process\.env\.BILLING_ENABLED === "true"/);
+  assert.match(stripeLib, /createHmac\("sha256"/);
+  assert.match(stripeLib, /timingSafeEqual/);
+  assert.match(webhook, /verifyStripeSignature\(/);
+  assert.match(webhook, /billing_events/);
+  assert.match(proxy, /api\/billing\/webhook/);
+  assert.doesNotMatch(stripeLib + billingConfig, /NEXT_PUBLIC_STRIPE_SECRET/);
 });

@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 
 type Bubble =
   | { from: "user"; text: string }
-  | { from: "bot"; text: string; pendingId?: string; answered?: boolean };
+  | { from: "bot"; text: string; pendingId?: string; undoId?: string; answered?: boolean };
 
 const EXAMPLES = [
   "qual meu saldo?",
@@ -60,7 +60,9 @@ export function WhatsappSimulator() {
                 (m): Bubble =>
                   m.kind === "buttons"
                     ? { from: "bot", text: m.body, pendingId: m.pendingId }
-                    : { from: "bot", text: m.body }
+                    : m.kind === "undo"
+                      ? { from: "bot", text: m.body, undoId: m.undoId }
+                      : { from: "bot", text: m.body }
               )
             : [{ from: "bot" as const, text: "(sem resposta)" }]
           : [{ from: "bot" as const, text: `⚠️ ${result.error}` }]),
@@ -75,11 +77,14 @@ export function WhatsappSimulator() {
     send({ text: value }, value);
   }
 
-  function answer(index: number, pendingId: string, action: "confirm" | "cancel") {
+  function answer(index: number, id: string, action: "confirm" | "cancel" | "undo") {
     setBubbles((current) =>
       current.map((b, i) => (i === index && b.from === "bot" ? { ...b, answered: true } : b))
     );
-    send({ buttonId: `${action}:${pendingId}` }, action === "confirm" ? "✅ Confirmar" : "❌ Cancelar");
+    send(
+      { buttonId: `${action}:${id}` },
+      action === "confirm" ? "✅ Confirmar" : action === "cancel" ? "❌ Cancelar" : "↩️ Desfazer"
+    );
   }
 
   return (
@@ -88,7 +93,7 @@ export function WhatsappSimulator() {
         {bubbles.length === 0 && (
           <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
             <p className="text-sm text-muted-foreground">
-              Converse como no WhatsApp. As ações usam seus dados reais e pedem confirmação.
+              Converse como no WhatsApp. As ações usam seus dados reais: lançamentos são gravados na hora, com opção de desfazer.
             </p>
             <div className="flex flex-wrap justify-center gap-2">
               {EXAMPLES.map((example) => (
@@ -133,6 +138,19 @@ export function WhatsappSimulator() {
                     onClick={() => answer(index, bubble.pendingId!, "cancel")}
                   >
                     ❌ Cancelar
+                  </Button>
+                </div>
+              )}
+
+              {bubble.from === "bot" && bubble.undoId && (
+                <div className="mt-3">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={bubble.answered || isPending}
+                    onClick={() => answer(index, bubble.undoId!, "undo")}
+                  >
+                    ↩️ Desfazer
                   </Button>
                 </div>
               )}

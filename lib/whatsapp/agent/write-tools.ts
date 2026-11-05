@@ -66,11 +66,15 @@ export const WRITE_TOOLS: WriteTool[] = [
         ),
         parcelas: s.num("Número de parcelas da compra no cartão (1 = à vista)"),
         data: s.date("Data do lançamento; sem data, hoje"),
+        confirmar: s.bool(
+          "true só se houver dúvida real (valor ambíguo, categoria ou conta incertas). Lançamentos claros são gravados na hora e o usuário pode desfazer."
+        ),
       },
       ["tipo", "valor", "descricao"]
     ),
     async prepare(args, ctx) {
       const type = str(args, "tipo") === "receita" ? "income" : "expense";
+      const unsure = bool(args, "confirmar") === true;
 
       // Compra no cartão de crédito: vai para a fatura.
       const card = optionalRef(ctx, args.cartao, "T");
@@ -95,7 +99,7 @@ export const WRITE_TOOLS: WriteTool[] = [
         return {
           scope: card.scope,
           summary: `💳 ${type === "income" ? "Estorno" : "Compra no crédito"}: ${parsed.description || "Lançamento"} — ${formatBRL(parsed.amount)}${parts}\n${scopeTag(card.scope)} • ${category?.name ?? "Sem categoria"} • cartão ${card.name} • ${brDate(parsed.date)}\nVai para a fatura; o saldo da conta só muda quando você pagar a fatura.`,
-          payload: { ...input, via: "card" },
+          payload: { ...input, via: "card", needs_confirmation: unsure || !category },
         };
       }
 
@@ -114,7 +118,7 @@ export const WRITE_TOOLS: WriteTool[] = [
       return {
         scope: account.scope,
         summary: `${type === "expense" ? "🔴" : "🟢"} ${parsed.description || "Lançamento"} — ${formatBRL(parsed.amount)}\n${scopeTag(account.scope)} • ${category?.name ?? "Sem categoria"} • ${account.name} • ${brDate(parsed.date)}`,
-        payload: input,
+        payload: { ...input, needs_confirmation: unsure || !category },
       };
     },
   },
@@ -747,6 +751,40 @@ export const WRITE_TOOLS: WriteTool[] = [
 /* ---------------- execução (após confirmação) ---------------- */
 
 type P = Record<string, never> & Record<string, unknown>;
+
+/**
+ * Pode ser gravado direto (sem perguntar), com botão "Desfazer"? Só
+ * lançamentos simples e claros: compra parcelada, exclusões e mudanças
+ * continuam pedindo confirmação.
+ */
+export function canAutoExecute(actions: PreparedAction[]): boolean {
+  return (
+    actions.length > 0 &&
+    actions.every((action) => {
+      if (action.tool !== "registrar_lancamento") return false;
+      const p = action.payload as P;
+      if (p.needs_confirmation) return false;
+      return p.via !== "card" || Number(p.installments ?? 1) <= 1;
+    })
+  );
+}
+
+/** Igual a executeAction, mas devolve o id do lançamento criado (para desfazer). */
+export async function executeActionDetailed(
+  action: PreparedAction,
+  ctx: ServiceCtx
+): Promise<{ note: string | null; transactionId: string | null }> {
+  if (action.tool === "registrar_lancamento") {
+    const p = action.payload as P;
+    const id =
+      p.via === "card"
+        ? await transactions.createCardPurchase(ctx, p as never)
+        : await transactions.createTransaction(ctx, p as never);
+    return { note: null, transactionId: typeof id === "string" ? id : null };
+  }
+
+  return { note: await executeAction(action, ctx), transactionId: null };
+}
 
 /** Executa a ação confirmada com os serviços do app. Retorna um texto curto. */
 export async function executeAction(action: PreparedAction, ctx: ServiceCtx): Promise<string | null> {
