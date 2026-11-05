@@ -375,7 +375,8 @@ function norm(text: string) {
 
 const HEADER_HINTS: Record<keyof ColumnMap, RegExp> = {
   date: /^(data|date|dt|data (do )?lancamento|data mov)/,
-  description: /(descricao|historico|lancamento|title|titulo|description|memo|detalhe|estabelecimento|identificacao)/,
+  description:
+    /(descricao|historico|lancamento|title|titulo|description|memo|detalhe|estabelecimento|identificacao|origem|destino|favorecido|beneficiario|pagador|recebedor|contraparte|^nome)/,
   amount: /^(valor|amount|quantia|valor \(r\$\)|valor r\$|montante)/,
   credit: /(entrada|credito|credit)/,
   debit: /(saida|debito|debit)/,
@@ -476,8 +477,11 @@ export function tableToRows(
     }
     if (amount === null || amount === 0) continue;
 
+    const name = (map.description >= 0 ? cells[map.description] : "")?.trim() ?? "";
+    // Tipo por extenso ("Pix enviado", "Pagamento realizado") ajuda a reconhecer o lançamento.
+    const kind = map.direction >= 0 ? (cells[map.direction] ?? "").trim() : "";
     const description =
-      (map.description >= 0 ? cells[map.description] : "")?.trim() || "Sem descrição";
+      [kind.includes(" ") ? kind : "", name].filter(Boolean).join(" · ") || "Sem descrição";
 
     const cents = Math.round(amount * 100) / 100;
 
