@@ -104,7 +104,7 @@ const RULES: Rule[] = [
     type: "expense",
     categories: ["contas e servicos", "contas", "servicos"],
     pattern: w(
-      "fatura|pagamento de fatura|cartao de credito|picpay card|nubank fatura|light|enel|cemig|copel|celesc|coelba|celpe|cosern|equatorial|energisa|neoenergia|cpfl|eletropaulo|cedae|sabesp|copasa|sanepar|embasa|compesa|aguas|agua e esgoto|naturgy|comgas|ceg|claro|vivo|tim|oi fibra|oi|net servicos|sky|internet|fibra|telefone|telefonia|recarga|recarga de celular|energia|luz|gas|boleto|cartorio|correios|seguro|seguradora|porto seguro|tarifa|anuidade|iof|juros|multa|darf|das mei|simples nacional|inss|receita federal"
+      "fatura|pagamento de fatura|cartao de credito|gastos cartao de credito|pacote de servicos|cesta de servicos|tarifa bancaria|picpay card|nubank fatura|light|enel|cemig|copel|celesc|coelba|celpe|cosern|equatorial|energisa|neoenergia|cpfl|eletropaulo|cedae|sabesp|copasa|sanepar|embasa|compesa|aguas|agua e esgoto|naturgy|comgas|ceg|claro|vivo|tim|oi fibra|oi|net servicos|sky|internet|fibra|telefone|telefonia|recarga|recarga de celular|energia|luz|gas|boleto|cartorio|correios|seguro|seguradora|porto seguro|tarifa|anuidade|iof|juros|multa|darf|das mei|simples nacional|inss|receita federal"
     ),
   },
   {
@@ -144,7 +144,7 @@ const RULES: Rule[] = [
   {
     type: "income",
     categories: ["salario"],
-    pattern: w("salario|folha|folha de pagamento|proventos|pagamento de salario|adiantamento salarial|ferias|decimo terceiro|13o salario|plr"),
+    pattern: w("salario|transf saldo c sal|conta salario|folha|folha de pagamento|proventos|pagamento de salario|adiantamento salarial|ferias|decimo terceiro|13o salario|plr"),
   },
   {
     type: "income",
@@ -153,7 +153,9 @@ const RULES: Rule[] = [
   },
 ];
 
-const LOAN = w("emprestimo|emprestimos|emprestimo pessoal|consignado|financiamento|credito pessoal");
+const LOAN = w(
+  "emprestimo|emprestimos|emprestimo pessoal|consignado|financiamento|credito pessoal|bx ant financ|financ emp|antecipacao de parcela"
+);
 const REFUND = w("devolvido|devolvida|devolucao|estorno|estornado|estornada|reembolso|ressarcimento");
 
 /** Pix/transferência entre contas da própria pessoa (nome dela na descrição). */
