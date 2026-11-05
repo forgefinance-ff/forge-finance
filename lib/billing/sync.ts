@@ -74,7 +74,7 @@ export async function syncSubscription(admin: SupabaseClient, subscriptionId: st
     updated_at: new Date().toISOString(),
   };
 
-  const row = hasAccess
+  const row: Record<string, unknown> = hasAccess
     ? {
         ...base,
         plan_id: "pro",

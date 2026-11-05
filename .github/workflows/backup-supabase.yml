@@ -1,0 +1,72 @@
+# Backup diário e gratuito do banco do Forge Finance (Supabase Free não tem backup).
+#
+# O arquivo é CRIPTOGRAFADO antes de sair do servidor do GitHub: como este
+# repositório é público, só quem tem a senha BACKUP_PASSPHRASE consegue abrir.
+#
+# Secrets necessários (GitHub > Settings > Secrets and variables > Actions):
+#   SUPABASE_DB_URL     -> string do "Session pooler" (Supabase > Connect), com a senha do banco
+#   BACKUP_PASSPHRASE   -> uma senha longa só sua (guarde num lugar seguro)
+#
+# Restaurar: veja docs/ATIVAR-COBRANCA.md, seção "Backup".
+name: Backup do Supabase
+
+on:
+  schedule:
+    - cron: "17 6 * * *" # todo dia, ~03:17 em Brasília
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: supabase-backup
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Conferir secrets
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          if [ -z "$SUPABASE_DB_URL" ] || [ -z "$BACKUP_PASSPHRASE" ]; then
+            echo "::error::Configure os secrets SUPABASE_DB_URL e BACKUP_PASSPHRASE."
+            exit 1
+          fi
+
+      - name: Instalar pg_dump 17
+        run: |
+          sudo install -d /usr/share/postgresql-common/pgdg
+          sudo curl -fsSL -o /usr/share/postgresql-common/pgdg/apt.postgresql.org.asc https://www.postgresql.org/media/keys/ACCC4CF8.asc
+          echo "deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresql.org.asc] https://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" | sudo tee /etc/apt/sources.list.d/pgdg.list
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq postgresql-client-17
+
+      - name: Gerar e criptografar o backup
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          BACKUP_PASSPHRASE: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          set -euo pipefail
+          STAMP=$(date -u +%Y-%m-%d)
+          mkdir -p out
+          /usr/lib/postgresql/17/bin/pg_dump "$SUPABASE_DB_URL" \
+            --format=custom --no-owner --no-privileges \
+            --schema=public --schema=auth --schema=storage \
+            --file=out/forge.dump
+          gpg --batch --yes --pinentry-mode loopback --passphrase "$BACKUP_PASSPHRASE" \
+            --symmetric --cipher-algo AES256 \
+            --output "out/forge-$STAMP.dump.gpg" out/forge.dump
+          rm out/forge.dump
+          ls -lh out
+
+      - name: Guardar por 30 dias
+        uses: actions/upload-artifact@v4
+        with:
+          name: supabase-backup-${{ github.run_id }}
+          path: out/*.dump.gpg
+          retention-days: 30
+          if-no-files-found: error
