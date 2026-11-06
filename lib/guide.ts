@@ -1,15 +1,22 @@
 // Guia de primeiros passos: o que a pessoa já fez e o que falta.
 import crypto from "node:crypto";
 
+import { hasWhatsAppAccess } from "@/lib/billing/access";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export const GUIDE_SKIP_COOKIE = "ff_guide_skip";
 
 export type GuideProgress = {
+  /** "pro": WhatsApp liberado (assinante ou beta). "free": sem WhatsApp. */
+  mode: "pro" | "free";
   whatsapp: boolean;
+  hasAccount: boolean;
   firstEntry: boolean;
   defaultAccount: boolean;
+  /** Primeiro passo do modo atual (o que abre o guia sozinho enquanto falta). */
+  firstStepDone: boolean;
+  next: string;
   done: number;
   total: number;
   complete: boolean;
@@ -18,19 +25,54 @@ export type GuideProgress = {
 export async function getGuideProgress(userId: string): Promise<GuideProgress> {
   const supabase = await createClient();
 
-  const [{ data: link }, { count }] = await Promise.all([
+  const [{ data: link }, { count: entries }, { count: accounts }, whatsappAllowed] = await Promise.all([
     supabase.from("whatsapp_links").select("default_account_id").eq("user_id", userId).maybeSingle(),
     supabase.from("transactions").select("id", { count: "exact", head: true }).eq("user_id", userId),
+    supabase.from("accounts").select("id", { count: "exact", head: true }).eq("user_id", userId),
+    hasWhatsAppAccess(createAdminClient(), userId),
   ]);
 
-  const steps = {
-    whatsapp: Boolean(link),
-    firstEntry: (count ?? 0) > 0,
-    defaultAccount: Boolean(link?.default_account_id),
-  };
-  const done = Object.values(steps).filter(Boolean).length;
+  const whatsapp = Boolean(link);
+  const hasAccount = (accounts ?? 0) > 0;
+  const firstEntry = (entries ?? 0) > 0;
+  const defaultAccount = Boolean(link?.default_account_id);
 
-  return { ...steps, done, total: 3, complete: done === 3 };
+  if (whatsappAllowed) {
+    const steps = [whatsapp, firstEntry, defaultAccount];
+    const done = steps.filter(Boolean).length;
+    return {
+      mode: "pro",
+      whatsapp,
+      hasAccount,
+      firstEntry,
+      defaultAccount,
+      firstStepDone: whatsapp,
+      next: !whatsapp
+        ? "Conecte seu WhatsApp"
+        : !firstEntry
+          ? "Registre seu primeiro gasto pelo WhatsApp"
+          : "Escolha sua conta principal",
+      done,
+      total: 3,
+      complete: done === 3,
+    };
+  }
+
+  // Plano grátis (com a cobrança ligada): tudo pelo app, WhatsApp vira convite.
+  const steps = [hasAccount, firstEntry];
+  const done = steps.filter(Boolean).length;
+  return {
+    mode: "free",
+    whatsapp,
+    hasAccount,
+    firstEntry,
+    defaultAccount,
+    firstStepDone: hasAccount,
+    next: !hasAccount ? "Cadastre sua conta principal" : "Registre seu primeiro lançamento",
+    done,
+    total: 2,
+    complete: done === 2,
+  };
 }
 
 /** Código VINCULAR válido por pelo menos mais 3 minutos (cria um se precisar). */

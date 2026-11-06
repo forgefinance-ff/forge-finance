@@ -21,7 +21,7 @@ import { setWhatsappDefaultAccount } from "@/app/actions/whatsapp";
 import { Button } from "@/components/ui/button";
 import { WaitForStep } from "@/components/guide/wait-for-step";
 import { getAccounts } from "@/lib/accounts";
-import { ensureLinkCode, formatBotNumber, getGuideProgress } from "@/lib/guide";
+import { ensureLinkCode, formatBotNumber, getGuideProgress, type GuideProgress } from "@/lib/guide";
 import { createClient } from "@/lib/supabase/server";
 import { botNumber } from "@/lib/whatsapp/onboarding";
 import { cn } from "@/lib/utils";
@@ -132,6 +132,8 @@ export default async function GuidePage() {
   if (!user) redirect("/login");
 
   const progress = await getGuideProgress(user.id);
+  if (progress.mode === "free") return <FreeGuide progress={progress} />;
+
   const number = botNumber();
   const code = progress.whatsapp ? null : await ensureLinkCode(user.id);
   const accounts = progress.whatsapp && !progress.defaultAccount ? await getAccounts({ allScopes: true }) : [];
@@ -143,26 +145,15 @@ export default async function GuidePage() {
     <div className="mx-auto max-w-3xl space-y-5">
       {waiting && <WaitForStep />}
 
-      <div className={cn(panel, "p-8")}>
-        <span className="text-sm font-medium uppercase tracking-[0.25em] text-brand-soft">Primeiros passos</span>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-          {progress.complete ? "Tudo pronto! 🎉" : "Vamos deixar seu Forge pronto"}
-        </h1>
-        <p className="mt-2 text-muted-foreground">
-          {progress.complete
+      <ProgressHero
+        progress={progress}
+        title={progress.complete ? "Tudo pronto! 🎉" : "Vamos deixar seu Forge pronto"}
+        text={
+          progress.complete
             ? "Agora é só mandar seus gastos pelo WhatsApp. Abaixo tem um resumo de cada parte do app."
-            : "São 3 passos e leva uns 2 minutos. O mais importante é o primeiro: conectar seu WhatsApp, porque é por lá que você vai registrar quase tudo."}
-        </p>
-        <div className="mt-5 h-2 overflow-hidden rounded-full bg-tint-strong">
-          <div
-            className="h-full rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-400 transition-all"
-            style={{ width: `${Math.round((progress.done / progress.total) * 100)}%` }}
-          />
-        </div>
-        <p className="mt-2 text-xs text-muted-foreground">
-          {progress.done} de {progress.total} concluídos
-        </p>
-      </div>
+            : "São 3 passos e leva uns 2 minutos. O mais importante é o primeiro: conectar seu WhatsApp, porque é por lá que você vai registrar quase tudo."
+        }
+      />
 
       {/* Passo 1: conectar o WhatsApp */}
       <section className={cn(panel, current === 1 && "border-violet-500/40 shadow-[0_20px_60px_-30px_rgba(124,58,237,0.6)]")}>
@@ -315,7 +306,138 @@ export default async function GuidePage() {
         )}
       </section>
 
-      {/* Guia rápido do app */}
+      <AppTour />
+
+      {!progress.complete && (
+        <form action={skipGuide} className="text-center">
+          <button type="submit" className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground">
+            Fazer depois
+          </button>
+        </form>
+      )}
+
+      {progress.complete && <DoneButton />}
+    </div>
+  );
+}
+
+function DoneButton() {
+  return (
+    <div className="text-center">
+      <Link href="/dashboard" className="inline-flex h-11 items-center gap-2 rounded-xl bg-violet-600 px-6 font-semibold text-white hover:bg-violet-500">
+        Ir para o painel <ArrowRightIcon className="h-4 w-4" />
+      </Link>
+    </div>
+  );
+}
+
+function ProgressHero({ progress, title, text }: { progress: GuideProgress; title: string; text: string }) {
+  return (
+    <div className={cn(panel, "p-8")}>
+      <span className="text-sm font-medium uppercase tracking-[0.25em] text-brand-soft">Primeiros passos</span>
+      <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">{title}</h1>
+      <p className="mt-2 text-muted-foreground">{text}</p>
+      <div className="mt-5 h-2 overflow-hidden rounded-full bg-tint-strong">
+        <div
+          className="h-full rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-400 transition-all"
+          style={{ width: `${Math.round((progress.done / progress.total) * 100)}%` }}
+        />
+      </div>
+      <p className="mt-2 text-xs text-muted-foreground">
+        {progress.done} de {progress.total} concluídos
+      </p>
+    </div>
+  );
+}
+
+/** Plano grátis (cobrança ligada): tudo pelo app; o WhatsApp aparece como convite ao Pro. */
+function FreeGuide({ progress }: { progress: GuideProgress }) {
+  const current = !progress.hasAccount ? 1 : !progress.firstEntry ? 2 : 0;
+  const highlight = "border-violet-500/40 shadow-[0_20px_60px_-30px_rgba(124,58,237,0.6)]";
+
+  return (
+    <div className="mx-auto max-w-3xl space-y-5">
+      <ProgressHero
+        progress={progress}
+        title={progress.complete ? "Tudo pronto! 🎉" : "Vamos deixar seu Forge pronto"}
+        text={
+          progress.complete
+            ? "Seu Forge já está funcionando. Abaixo tem um resumo de cada parte do app."
+            : "São 2 passos rápidos para você ver seu dinheiro organizado no painel."
+        }
+      />
+
+      <section className={cn(panel, current === 1 && highlight)}>
+        <StepHeader n={1} title="Cadastre sua conta principal" done={progress.hasAccount} current={current === 1} />
+        {!progress.hasAccount && (
+          <>
+            <SubSteps
+              items={[
+                <>Abra Contas e toque em adicionar.</>,
+                <>
+                  Dê um nome (ex.: <strong>Nubank</strong>) e coloque o saldo que tem hoje.
+                </>,
+                <>Salve e volte aqui.</>,
+              ]}
+            />
+            <Link href="/contas" className={cn(greenButton, "mt-5 w-full bg-violet-600 hover:bg-violet-500 sm:w-auto")}>
+              Cadastrar minha conta <ArrowRightIcon className="h-4 w-4" />
+            </Link>
+          </>
+        )}
+      </section>
+
+      <section className={cn(panel, current === 2 && highlight)}>
+        <StepHeader n={2} title="Registre seu primeiro lançamento" done={progress.firstEntry} current={current === 2} />
+        {!progress.firstEntry && (
+          <>
+            <SubSteps
+              items={[
+                <>Abra Transações e toque em nova transação.</>,
+                <>Escolha se é gasto ou receita, o valor, a categoria e a conta.</>,
+                <>Salve: ele já aparece no painel.</>,
+              ]}
+            />
+            {current === 2 && (
+              <Link href="/transacoes" className={cn(greenButton, "mt-5 w-full bg-violet-600 hover:bg-violet-500 sm:w-auto")}>
+                Registrar agora <ArrowRightIcon className="h-4 w-4" />
+              </Link>
+            )}
+          </>
+        )}
+      </section>
+
+      <section className="rounded-[22px] border border-emerald-500/30 bg-emerald-500/[0.06] p-6">
+        <p className="flex items-center gap-2 text-sm font-semibold text-emerald-700 dark:text-emerald-300">
+          <MessageCircleIcon className="h-4 w-4" /> Forge Pro
+        </p>
+        <h2 className="mt-1 text-lg font-semibold text-foreground">Prefere só mandar uma mensagem?</h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          No Forge Pro você registra gastos pelo WhatsApp, por texto ou áudio: “gastei 45 no mercado” e pronto. Sem
+          abrir o app.
+        </p>
+        <Link href="/assinar?plano=anual" className={cn(greenButton, "mt-4 h-11 text-sm")}>
+          Conhecer o Forge Pro <ArrowRightIcon className="h-4 w-4" />
+        </Link>
+      </section>
+
+      <AppTour />
+
+      {!progress.complete && (
+        <form action={skipGuide} className="text-center">
+          <button type="submit" className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground">
+            Fazer depois
+          </button>
+        </form>
+      )}
+
+      {progress.complete && <DoneButton />}
+    </div>
+  );
+}
+
+function AppTour() {
+  return (
       <section className={panel}>
         <h2 className="text-lg font-semibold text-foreground">Conheça o resto do Forge</h2>
         <p className="mt-1 text-sm text-muted-foreground">Toque em qualquer parte para abrir.</p>
@@ -352,22 +474,5 @@ export default async function GuidePage() {
           passos.
         </p>
       </section>
-
-      {!progress.complete && (
-        <form action={skipGuide} className="text-center">
-          <button type="submit" className="text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground">
-            Fazer depois
-          </button>
-        </form>
-      )}
-
-      {progress.complete && (
-        <div className="text-center">
-          <Link href="/dashboard" className="inline-flex h-11 items-center gap-2 rounded-xl bg-violet-600 px-6 font-semibold text-white hover:bg-violet-500">
-            Ir para o painel <ArrowRightIcon className="h-4 w-4" />
-          </Link>
-        </div>
-      )}
-    </div>
   );
 }

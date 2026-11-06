@@ -15,25 +15,18 @@ import { getActiveScope } from "@/lib/scope-server";
 import { createClient } from "@/lib/supabase/server";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { GUIDE_SKIP_COOKIE } from "@/lib/guide";
+import { GUIDE_SKIP_COOKIE, getGuideProgress } from "@/lib/guide";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
 
-  // Primeiro login (ou WhatsApp ainda não conectado): abre o guia, a menos que
+  // Primeiro login (Pro: WhatsApp não conectado; grátis: sem conta cadastrada): abre o guia, a menos que
   // a pessoa tenha escolhido "Fazer depois".
   if (!(await cookies()).get(GUIDE_SKIP_COOKIE)) {
     const {
       data: { user: current },
     } = await supabase.auth.getUser();
-    if (current) {
-      const { data: linked } = await supabase
-        .from("whatsapp_links")
-        .select("user_id")
-        .eq("user_id", current.id)
-        .maybeSingle();
-      if (!linked) redirect("/comecar");
-    }
+    if (current && !(await getGuideProgress(current.id)).firstStepDone) redirect("/comecar");
   }
 
   const scope = await getActiveScope();

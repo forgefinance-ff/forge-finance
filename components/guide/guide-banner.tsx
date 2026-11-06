@@ -12,11 +12,7 @@ export function GuideBanner({ progress }: { progress: GuideProgress }) {
   if (pathname === "/comecar") return null;
 
   const pct = Math.round((progress.done / progress.total) * 100);
-  const next = !progress.whatsapp
-    ? "Conecte seu WhatsApp"
-    : !progress.firstEntry
-      ? "Registre seu primeiro gasto pelo WhatsApp"
-      : "Escolha sua conta padrão";
+  const next = progress.next;
 
   return (
     <Link
