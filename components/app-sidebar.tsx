@@ -94,6 +94,7 @@ export const settingsGroup: NavGroup = {
     { title: "WhatsApp", url: "/whatsapp" },
     { title: "Planos", url: "/planos" },
     { title: "Assinatura", url: "/assinatura", hidden: true },
+    { title: "Primeiros passos", url: "/comecar" },
   ],
 };
 

@@ -10,6 +10,8 @@ import { AppSidebar, MobileNav } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { BusinessOnboarding } from "@/components/business-onboarding";
 import { SectionTabs } from "@/components/section-tabs";
+import { GuideBanner } from "@/components/guide/guide-banner";
+import { GUIDE_SKIP_COOKIE, getGuideProgress } from "@/lib/guide";
 
 export default async function DashboardLayout({
   children,
@@ -59,6 +61,11 @@ export default async function DashboardLayout({
     }
   }
 
+  // Guia de primeiros passos: barra de progresso até concluir (ou "Fazer depois").
+  const cookieStore = await cookies();
+  const guideSkipped = Boolean(cookieStore.get(GUIDE_SKIP_COOKIE)?.value);
+  const guide = await getGuideProgress(session.user.id);
+
   return (
     <div className="relative isolate min-h-screen">
       <div aria-hidden className="forge-backdrop" />
@@ -74,6 +81,7 @@ export default async function DashboardLayout({
         />
 
         <main className="min-w-0 flex-1 px-4 pb-24 pt-5 md:pb-8 lg:px-8">
+          {!guide.complete && !guideSkipped && <GuideBanner progress={guide} />}
           {offerBusinessDefaults && <BusinessOnboarding />}
           <SectionTabs scope={scope} />
           {children}
