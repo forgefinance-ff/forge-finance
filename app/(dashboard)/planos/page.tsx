@@ -138,8 +138,8 @@ export default async function PlansPage({
           ) : (
             <div className="mt-7 grid gap-3 sm:grid-cols-2">
               {/* Anual em destaque */}
-              <form action="/api/billing/checkout" method="post" className="flex flex-col rounded-xl border-2 border-violet-500 bg-violet-500/10 p-4">
-                <input type="hidden" name="interval" value="year" />
+              <form action="/assinar" method="get" className="flex flex-col rounded-xl border-2 border-violet-500 bg-violet-500/10 p-4">
+                <input type="hidden" name="plano" value="anual" />
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-sm font-semibold text-foreground">Anual</p>
                   <span className="rounded-full bg-emerald-400/15 px-2 py-0.5 text-[11px] font-semibold text-success">
@@ -162,8 +162,8 @@ export default async function PlansPage({
                 </button>
               </form>
 
-              <form action="/api/billing/checkout" method="post" className="flex flex-col rounded-xl border border-line bg-surface p-4">
-                <input type="hidden" name="interval" value="month" />
+              <form action="/assinar" method="get" className="flex flex-col rounded-xl border border-line bg-surface p-4">
+                <input type="hidden" name="plano" value="mensal" />
                 <p className="text-sm font-semibold text-foreground">Mensal</p>
                 <p className="mt-2 text-2xl font-bold text-foreground">
                   {formatBRL(PRO_PRICING.month.cents)}

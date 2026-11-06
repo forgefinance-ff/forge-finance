@@ -35,6 +35,12 @@ modo beta: ninguém consegue assinar e o WhatsApp funciona para todos.
      `invoice.paid`, `invoice.payment_failed`
    - Copie o **Segredo de assinatura** (começa com `whsec_...`).
 
+### Visual do pagamento (dentro do site)
+O formulário do cartão aparece na página `/assinar` do Forge. Para ele ficar
+com a cara do Forge: Stripe → Configurações → **Identidade visual (Branding)**
+→ ícone (`icon-f.png`), cor da marca `#7C3AED`, botões arredondados. Em
+**Dados públicos**, use o nome "Forge Finance".
+
 ## 3. Variáveis na Vercel
 
 Projeto → Settings → Environment Variables:
@@ -42,6 +48,7 @@ Projeto → Settings → Environment Variables:
 | Nome | Valor |
 |---|---|
 | `STRIPE_SECRET_KEY` | chave secreta (`sk_test_...` no teste) |
+| `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | chave publicável (`pk_test_...` no teste) — usada no pagamento dentro do site |
 | `STRIPE_WEBHOOK_SECRET` | `whsec_...` do passo 2.5 |
 | `STRIPE_PRICE_PRO_MONTHLY` | `price_...` do mensal |
 | `STRIPE_PRICE_PRO_YEARLY` | `price_...` do anual |
@@ -60,7 +67,7 @@ Para testar o fluxo inteiro antes de lançar, coloque `BILLING_ENABLED=true`
 
 1. No Stripe, desligue o modo teste e **ative a conta** (dados pessoais e banco).
 2. Recrie no modo produção: produto, os 2 preços, o portal e o webhook.
-3. Na Vercel, troque as 4 variáveis do Stripe pelas de produção.
+3. Na Vercel, troque as 5 variáveis do Stripe pelas de produção.
 4. Coloque `BILLING_ENABLED=true` em Production.
 5. Assine o **Vercel Pro** (o plano grátis não permite uso comercial).
 
