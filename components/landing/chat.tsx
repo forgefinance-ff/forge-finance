@@ -32,7 +32,10 @@ export type ChatTheme = "dark" | "light";
 function Rich({ text }: { text: string }) {
   return (
     <>
-      {text.split("\n").map((line, i) => (
+      {text.split("\n").map((line, i) =>
+        line === "" ? (
+          <span key={i} className="block h-2" />
+        ) : (
         <span key={i} className="block">
           {line.split(/(\*[^*]+\*)/g).map((part, j) =>
             part.startsWith("*") && part.endsWith("*") ? (
@@ -44,7 +47,8 @@ function Rich({ text }: { text: string }) {
             )
           )}
         </span>
-      ))}
+        )
+      )}
     </>
   );
 }
@@ -161,10 +165,11 @@ export function Phone({
   return (
     <div
       className={cn(
-        "relative mx-auto w-full max-w-[320px] rounded-[2.6rem] border-[10px] p-0 shadow-2xl",
-        dark ? "border-[#1b1a22] bg-[#0b141a] shadow-violet-900/30" : "border-[#111] bg-[#efeae2] shadow-black/20",
+        "relative mx-auto w-full max-w-[320px] rounded-[2.6rem] border-solid p-0 shadow-2xl",
+        dark ? "bg-[#0b141a] shadow-violet-900/30" : "bg-[#efeae2] shadow-black/20",
         className
       )}
+      style={{ borderWidth: 10, borderColor: dark ? "#1b1a22" : "#16141c" }}
     >
       <div className="absolute left-1/2 top-2 z-10 h-5 w-24 -translate-x-1/2 rounded-full bg-black" />
       <div className={cn("flex items-center gap-2 rounded-t-[2rem] px-4 pb-2 pt-9", dark ? "bg-[#14121c]" : "bg-[#f0f2f5]")}>
