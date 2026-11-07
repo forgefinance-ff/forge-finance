@@ -20,6 +20,7 @@ import { skipGuide } from "@/app/actions/guide";
 import { setWhatsappDefaultAccount } from "@/app/actions/whatsapp";
 import { Button } from "@/components/ui/button";
 import { WaitForStep } from "@/components/guide/wait-for-step";
+import { InstallAppCard } from "@/components/pwa/install-app-card";
 import { getAccounts } from "@/lib/accounts";
 import { ensureLinkCode, formatBotNumber, getGuideProgress, type GuideProgress } from "@/lib/guide";
 import { createClient } from "@/lib/supabase/server";
@@ -306,6 +307,8 @@ export default async function GuidePage() {
         )}
       </section>
 
+      <InstallAppCard />
+
       <AppTour />
 
       {!progress.complete && (
@@ -420,6 +423,8 @@ function FreeGuide({ progress }: { progress: GuideProgress }) {
           Conhecer o Forge Pro <ArrowRightIcon className="h-4 w-4" />
         </Link>
       </section>
+
+      <InstallAppCard />
 
       <AppTour />
 

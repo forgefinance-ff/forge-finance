@@ -3,6 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ProfileCard } from "./components/profile-card";
 import { ChangePasswordForm } from "./components/change-password-form";
 import { LogoutButton } from "./components/logout-button";
+import { InstallAppCard } from "@/components/pwa/install-app-card";
 
 export default function SettingsPage() {
   return (
@@ -22,6 +23,8 @@ export default function SettingsPage() {
       </div>
 
       <ProfileCard />
+
+      <InstallAppCard />
 
       <Card>
         <CardHeader>

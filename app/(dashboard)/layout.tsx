@@ -11,6 +11,7 @@ import { SiteHeader } from "@/components/site-header";
 import { BusinessOnboarding } from "@/components/business-onboarding";
 import { SectionTabs } from "@/components/section-tabs";
 import { GuideBanner } from "@/components/guide/guide-banner";
+import { InstallAppPrompt } from "@/components/pwa/install-app-prompt";
 import { GUIDE_SKIP_COOKIE, getGuideProgress } from "@/lib/guide";
 
 export default async function DashboardLayout({
@@ -89,6 +90,7 @@ export default async function DashboardLayout({
       </div>
 
       <MobileNav scope={scope} />
+      <InstallAppPrompt />
     </div>
   );
 }
