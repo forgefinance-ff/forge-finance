@@ -50,7 +50,7 @@ export function ScopeSwitcher({
       aria-label="Escopo dos dados"
       aria-busy={isPending}
       className={cn(
-        "flex gap-1 rounded-2xl border border-line bg-tint p-1",
+        "glass flex gap-1 rounded-2xl p-1",
         vertical ? "flex-col" : "flex-row",
         isPending && "opacity-80",
         className
@@ -75,7 +75,7 @@ export function ScopeSwitcher({
               "focus-visible:ring-2 focus-visible:ring-brand-bright/70",
               vertical ? "h-12 w-12 flex-col gap-0.5" : "h-8 gap-1.5 px-2.5",
               active
-                ? "border-brand-bright/40 bg-brand/15 text-brand-soft shadow-[0_0_14px_rgba(168,85,247,0.35)]"
+                ? "glass-active text-brand-soft"
                 : "border-transparent text-faint hover:bg-tint-strong hover:text-text-soft"
             )}
           >

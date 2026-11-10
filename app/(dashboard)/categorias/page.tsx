@@ -3,6 +3,7 @@ import { ArrowDownLeft, ArrowUpRight, Trash2 } from "lucide-react";
 import { createCategory, deleteCategory } from "@/app/actions/categories";
 import { CategoryForm } from "@/components/categories/category-form";
 import { CostClassSelect } from "@/components/categories/cost-class-select";
+import { SpendingGroupSelect } from "@/components/categories/spending-group-select";
 import { SuggestedBusinessCategories } from "@/components/categories/suggested-business-categories";
 import { getCategories } from "@/lib/categories";
 import { KIND_LABEL } from "@/lib/movement-kinds";
@@ -52,12 +53,13 @@ export default async function CategoriasPage() {
         description={
           scope === "business"
             ? "Na Empresa, diga se cada despesa é custo variável, fixo, imposto ou pró-labore: é assim que a DRE e o ponto de equilíbrio são calculados."
-            : undefined
+            : "Marque se cada despesa é essencial ou estilo de vida: é assim que o Raio-X mostra para onde vai cada R$ 100."
         }
         tone="expense"
         categories={expenseCategories}
         deleteAction={deleteCategory}
         showCostClass={scope === "business"}
+        showSpendingGroup={scope === "personal"}
       />
 
       <CategoryGroup
@@ -79,6 +81,7 @@ function CategoryGroup({
   deleteAction,
   showKind = false,
   showCostClass = false,
+  showSpendingGroup = false,
 }: {
   title: string;
   description?: string;
@@ -87,6 +90,7 @@ function CategoryGroup({
   deleteAction: (formData: FormData) => Promise<void>;
   showKind?: boolean;
   showCostClass?: boolean;
+  showSpendingGroup?: boolean;
 }) {
   return (
     <section className="rounded-[22px] border border-line bg-surface p-6">
@@ -120,6 +124,12 @@ function CategoryGroup({
                   </span>
                   {showCostClass && (
                     <CostClassSelect categoryId={category.id} value={category.cost_class ?? null} />
+                  )}
+                  {showSpendingGroup && (
+                    <SpendingGroupSelect
+                      categoryId={category.id}
+                      value={category.spending_group ?? null}
+                    />
                   )}
                   {showKind && (
                     <span

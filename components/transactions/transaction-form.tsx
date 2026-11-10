@@ -279,7 +279,7 @@ export function TransactionForm({
                 type="button"
                 disabled={isCreatingCategory || !newCategoryName.trim()}
                 onClick={handleCreateCategory}
-                className="flex-1 rounded-lg bg-gradient-to-r from-brand to-brand-indigo px-4 py-2 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex-1 rounded-lg glass-primary px-4 py-2 text-sm font-semibold text-white transition disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isCreatingCategory ? "Criando..." : "Criar categoria"}
               </button>

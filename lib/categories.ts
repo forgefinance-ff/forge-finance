@@ -14,6 +14,8 @@ export type Category = {
   kind: MovementKind;
   /** Só despesas da Empresa: classe de custo usada na DRE. */
   cost_class?: "variable" | "fixed" | "tax" | "prolabore" | null;
+  /** Só despesas do Pessoal: essencial x estilo de vida (Raio-X). */
+  spending_group?: "essential" | "lifestyle" | null;
   created_at: string;
   updated_at: string;
 };

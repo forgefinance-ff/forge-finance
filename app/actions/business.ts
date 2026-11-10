@@ -81,6 +81,7 @@ export async function setCategoryCostClass(
     if (error) return fail(error, "Não foi possível salvar a classificação.");
     revalidatePath("/categorias");
     revalidatePath("/gestao");
+    revalidatePath("/raio-x");
     return { ok: true };
   } catch (error) {
     return fail(error, "Não foi possível salvar a classificação.");

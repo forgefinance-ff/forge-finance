@@ -17,7 +17,7 @@ export function SectionTabs({ scope }: { scope: Scope }) {
 
   return (
     <nav aria-label={group.title} className="mb-5 -mx-1 overflow-x-auto px-1">
-      <ul className="inline-flex min-w-max items-center gap-1 rounded-2xl border border-line bg-tint p-1">
+      <ul className="glass inline-flex min-w-max items-center gap-1 rounded-2xl p-1">
         {tabs.map((tab) => {
           const active = isActive(pathname, tab.url);
 
@@ -27,10 +27,10 @@ export function SectionTabs({ scope }: { scope: Scope }) {
                 href={tab.url}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "block rounded-xl px-4 py-2 text-sm font-medium transition-colors",
+                  "block rounded-xl border px-4 py-2 text-sm font-medium transition-all",
                   active
-                    ? "bg-brand/15 text-brand-soft shadow-[inset_0_0_0_1px_rgba(168,85,247,0.35)]"
-                    : "text-muted-foreground hover:bg-tint-strong hover:text-foreground"
+                    ? "glass-active text-brand-soft"
+                    : "border-transparent text-muted-foreground hover:bg-tint-strong hover:text-foreground"
                 )}
               >
                 {tab.title}

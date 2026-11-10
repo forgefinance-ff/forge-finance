@@ -77,6 +77,7 @@ const planning: NavGroup = {
   items: [
     { title: "Metas", url: "/metas" },
     { title: "Relatórios", url: "/relatorios" },
+    { title: "Raio-X", url: "/raio-x" },
   ],
 };
 
@@ -182,7 +183,7 @@ function RailItem({ group, pathname }: { group: NavGroup; pathname: string }) {
           "relative flex h-11 w-11 items-center justify-center rounded-2xl border transition-all duration-300 outline-none",
           "focus-visible:ring-2 focus-visible:ring-brand-bright/70",
           active
-            ? "border-brand-bright/40 bg-brand/15 text-brand-soft shadow-[0_0_22px_rgba(168,85,247,0.45),inset_0_0_12px_rgba(168,85,247,0.2)]"
+            ? "glass-active text-brand-soft"
             : "border-transparent text-faint hover:bg-tint-strong hover:text-text-soft"
         )}
       >
@@ -212,7 +213,7 @@ export function AppSidebar({ scope }: { scope: Scope }) {
   return (
     <aside
       aria-label="Navegação principal"
-      className="fixed inset-y-0 left-0 z-40 hidden w-20 flex-col items-center border-r border-line bg-sidebar py-5 backdrop-blur-xl md:flex"
+      className="glass-bar fixed inset-y-0 left-0 z-40 hidden w-20 flex-col items-center border-r py-5 md:flex"
     >
       <Link
         href="/dashboard"
@@ -232,7 +233,7 @@ export function AppSidebar({ scope }: { scope: Scope }) {
       <ScopeSwitcher scope={scope} orientation="vertical" className="mb-4" />
 
       <nav className="flex w-full flex-1 flex-col items-center overflow-y-auto py-1">
-        <ul className="flex flex-col items-center gap-2 rounded-[28px] border border-line bg-tint p-2">
+        <ul className="glass flex flex-col items-center gap-2 rounded-[28px] p-2">
           {getNavGroups(scope).map((group) => (
             <RailItem key={group.title} group={group} pathname={pathname} />
           ))}
@@ -257,7 +258,7 @@ export function MobileNav({ scope }: { scope: Scope }) {
   return (
     <nav
       aria-label="Navegação principal"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-sidebar pb-[env(safe-area-inset-bottom)] backdrop-blur-xl md:hidden"
+      className="glass-bar fixed inset-x-0 bottom-0 z-40 border-t pb-[env(safe-area-inset-bottom)] md:hidden"
     >
       <ul className="flex items-stretch justify-between gap-1 overflow-x-auto px-2 py-1.5">
         {groups.map((group) => {
@@ -273,9 +274,7 @@ export function MobileNav({ scope }: { scope: Scope }) {
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "flex flex-col items-center gap-0.5 rounded-2xl border px-1 py-1.5 text-[10px] font-medium transition-all duration-300",
-                  active
-                    ? "border-brand-bright/40 bg-brand/15 text-brand-soft"
-                    : "border-transparent text-faint"
+                  active ? "glass-active text-brand-soft" : "border-transparent text-faint"
                 )}
               >
                 <Icon className="h-5 w-5" />

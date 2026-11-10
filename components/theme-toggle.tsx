@@ -56,7 +56,7 @@ export function ThemeToggle({ placement = "bottom", className }: ThemeToggleProp
         aria-label="Alternar tema"
         aria-haspopup="menu"
         aria-expanded={open}
-        className="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-surface text-text-soft transition hover:border-brand-bright/40 hover:text-brand-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-bright/60"
+        className="glass flex h-10 w-10 items-center justify-center rounded-full text-text-soft transition hover:text-brand-soft focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-bright/60"
       >
         {isDark ? (
           <MoonIcon className="h-[18px] w-[18px]" />

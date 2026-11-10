@@ -38,7 +38,7 @@ export function GoalsCard({ goals }: GoalsCardProps) {
 
           <Link
             href="/metas"
-            className="mt-4 rounded-xl bg-gradient-to-r from-brand to-brand-indigo px-4 py-2 text-sm font-semibold text-white transition hover:scale-[1.02]"
+            className="mt-4 rounded-xl glass-primary px-4 py-2 text-sm font-semibold text-white transition hover:scale-[1.02]"
           >
             Criar primeira meta
           </Link>

@@ -52,7 +52,7 @@ export function SiteHeader({ userName, avatarUrl, aiConfigured, scope }: SiteHea
     .join("");
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b border-line bg-background/70 px-4 backdrop-blur-xl lg:px-8">
+    <header className="glass-bar sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b px-4 lg:px-8">
       <div className="flex items-center gap-3">
         <Link href="/dashboard" className="flex items-center gap-2.5">
           <Image
@@ -72,8 +72,8 @@ export function SiteHeader({ userName, avatarUrl, aiConfigured, scope }: SiteHea
           className={cn(
             "ml-2 hidden items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] lg:flex",
             aiConfigured
-              ? "border-brand-bright/30 bg-brand/10 text-brand-soft"
-              : "border-line bg-tint text-muted-foreground"
+              ? "glass-active text-brand-soft"
+              : "glass text-muted-foreground"
           )}
           title={
             aiConfigured
@@ -110,7 +110,7 @@ export function SiteHeader({ userName, avatarUrl, aiConfigured, scope }: SiteHea
             }}
             aria-label="Ir para uma página"
             placeholder="Ir para uma página…"
-            className="h-10 w-56 rounded-full border border-line bg-surface pl-10 pr-4 text-sm text-foreground placeholder:text-faint outline-none transition focus:border-brand-bright/50 focus:ring-2 focus:ring-brand-bright/20 lg:w-72"
+            className="glass h-10 w-56 rounded-full pl-10 pr-4 text-sm text-foreground placeholder:text-faint outline-none transition focus:border-brand-bright/50 focus:ring-2 focus:ring-brand-bright/20 lg:w-72"
           />
 
           {open && query.trim() && (
@@ -141,7 +141,7 @@ export function SiteHeader({ userName, avatarUrl, aiConfigured, scope }: SiteHea
         <Link
           href="/configuracoes"
           aria-label="Configurações"
-          className="flex h-10 w-10 items-center justify-center rounded-full border border-line bg-surface text-text-soft transition hover:border-brand-bright/40 hover:text-brand-soft"
+          className="glass flex h-10 w-10 items-center justify-center rounded-full text-text-soft transition hover:text-brand-soft"
         >
           <Settings className="h-[18px] w-[18px]" />
         </Link>

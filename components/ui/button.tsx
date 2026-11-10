@@ -27,31 +27,19 @@ const buttonVariants = cva(
     variants: {
       variant: {
         default: [
-          "bg-gradient-to-r",
-          "from-brand",
-          "to-[#2563EB]",
+          "glass-primary",
           "text-white",
-          "shadow-lg",
-          "shadow-blue-900/30",
           "hover:scale-[1.02]",
-          "hover:shadow-xl",
-          "hover:shadow-violet-700/30",
         ].join(" "),
 
         secondary: [
-          "bg-surface-elevated",
+          "glass",
           "text-foreground",
-          "border",
-          "border-line",
-          "hover:bg-tint-strong",
         ].join(" "),
 
         outline: [
-          "border",
-          "border-line-strong",
-          "bg-transparent",
+          "glass",
           "text-foreground",
-          "hover:bg-tint-strong",
         ].join(" "),
 
         ghost: [
