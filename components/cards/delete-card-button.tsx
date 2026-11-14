@@ -40,7 +40,7 @@ export function DeleteCardButton({ id, name }: { id: string; name: string }) {
   }
 
   return (
-    <div className="flex items-center gap-2" role="group" aria-label={`Confirmar exclusão do cartão ${name}`}>
+    <div className="flex items-center gap-2 rounded-xl bg-surface-solid p-1 shadow-sm" role="group" aria-label={`Confirmar exclusão do cartão ${name}`}>
       <Button type="button" variant="destructive" className="min-h-11" disabled={pending} onClick={remove}>
         {pending ? "Excluindo..." : "Excluir cartão"}
       </Button>

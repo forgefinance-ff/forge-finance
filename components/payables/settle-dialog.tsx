@@ -83,7 +83,7 @@ export function SettleDialog({ payable, accounts, today, onClose }: Props) {
                 pagamento.
               </p>
             ) : (
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label htmlFor="settle-account" className="mb-2 block text-sm text-text-soft">
                     {isReceivable ? "Recebido em" : "Pago com"}

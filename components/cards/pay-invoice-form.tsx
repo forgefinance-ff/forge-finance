@@ -48,7 +48,7 @@ export function PayInvoiceForm({ cardId, accounts, defaultAmount, today, label }
   }
 
   return (
-    <form action={submit} className="grid gap-2 rounded-2xl border border-line bg-tint p-3 sm:grid-cols-[1fr_130px_150px_auto] sm:items-end">
+    <form action={submit} className="grid grid-cols-1 gap-2 rounded-2xl border border-line bg-tint p-3 sm:grid-cols-[1fr_130px_150px_auto] sm:items-end">
       <input type="hidden" name="card_id" value={cardId} />
       <label className="block">
         <span className="mb-1 block text-xs font-medium text-faint">Pagar com a conta</span>

@@ -93,7 +93,7 @@ export function RevenueLimitCard({ calc }: { calc: LimitCalc }) {
             </p>
           )}
 
-          <dl className="mt-5 grid gap-3 sm:grid-cols-3">
+          <dl className="mt-5 grid grid-cols-1 gap-3 sm:grid-cols-3">
             <Stat
               label={calc.remaining !== null && calc.remaining < 0 ? "Acima do limite" : "Quanto falta"}
               value={formatCurrency(Math.abs(calc.remaining ?? 0))}

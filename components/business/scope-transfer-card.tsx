@@ -94,7 +94,7 @@ export function ScopeTransferCard({ businessAccounts, personalAccounts, today }:
                 role="radio"
                 aria-checked={kind === k}
                 onClick={() => setKind(k)}
-                className={`rounded-lg px-2 py-2 font-medium transition ${
+                className={`min-w-0 rounded-lg px-1.5 py-2 font-medium leading-tight transition ${
                   kind === k ? "bg-brand/15 text-brand-soft" : "text-faint hover:text-text-soft"
                 }`}
               >
@@ -105,7 +105,7 @@ export function ScopeTransferCard({ businessAccounts, personalAccounts, today }:
           <p className="text-xs text-faint">{KINDS[kind].hint}</p>
           <input type="hidden" name="kind" value={kind} />
 
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label className="block">
               <span className="mb-1.5 block text-xs font-medium text-faint">
                 Sai de ({fromBusiness ? "Empresa" : "Pessoal"})
@@ -132,7 +132,7 @@ export function ScopeTransferCard({ businessAccounts, personalAccounts, today }:
             </label>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <label className="block">
               <span className="mb-1.5 block text-xs font-medium text-faint">Valor (R$)</span>
               <MoneyInput name="amount" required placeholder="0,00" className={inputClass} />

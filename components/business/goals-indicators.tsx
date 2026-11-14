@@ -85,7 +85,7 @@ export function GoalsIndicators({ goals, current, previous, lastYear }: Props) {
             event.preventDefault();
             submit(new FormData(event.currentTarget));
           }}
-          className="mt-4 grid gap-3 rounded-2xl border border-line bg-tint p-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
+          className="mt-4 grid grid-cols-1 gap-3 rounded-2xl border border-line bg-tint p-4 sm:grid-cols-[1fr_1fr_auto] sm:items-end"
         >
           <label className="block">
             <span className="mb-1.5 block text-xs font-medium text-faint">Meta de faturamento mensal (R$)</span>
@@ -112,7 +112,7 @@ export function GoalsIndicators({ goals, current, previous, lastYear }: Props) {
         </form>
       )}
 
-      <div className="mt-5 grid gap-4 lg:grid-cols-2">
+      <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="rounded-2xl border border-line bg-tint p-4">
           <p className="text-xs text-faint">Meta de faturamento do mês</p>
           {goals.monthlyRevenue ? (

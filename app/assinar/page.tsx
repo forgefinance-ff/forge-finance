@@ -49,7 +49,7 @@ export default async function SubscribePage({
         </div>
       </header>
 
-      <main className="mx-auto grid max-w-6xl gap-8 px-5 py-8 lg:grid-cols-[1fr_1.1fr] lg:py-12">
+      <main className="mx-auto grid grid-cols-1 max-w-6xl gap-8 px-5 py-8 lg:grid-cols-[1fr_1.1fr] lg:py-12">
         {/* Resumo */}
         <section>
           <Link href="/#planos" className="inline-flex items-center gap-1.5 text-sm text-[#5b5575] hover:text-[#14111f]">

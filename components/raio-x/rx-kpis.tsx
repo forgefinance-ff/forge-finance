@@ -57,7 +57,7 @@ export function RxKpis({ data }: { data: RaioXData }) {
   ];
 
   return (
-    <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
       {cards.map((card) => (
         <div key={card.title} className="rounded-[22px] border border-line bg-surface p-5">
           <p className="text-xs text-muted-foreground">{card.title}</p>

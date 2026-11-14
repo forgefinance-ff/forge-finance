@@ -22,7 +22,53 @@ export default async function ContasPage() {
 
       <AccountForm action={createAccount} />
 
-      <div className="overflow-hidden rounded-[22px] border border-line bg-surface">
+      {/* Celular: um cartão por conta, sem rolar para o lado. */}
+      <ul className="space-y-3 sm:hidden">
+        {accounts.length === 0 && (
+          <li className="rounded-[22px] border border-line bg-surface py-10 text-center text-faint">
+            Nenhuma conta cadastrada.
+          </li>
+        )}
+
+        {accounts.map((account) => (
+          <li
+            key={account.id}
+            className="flex items-center gap-3 rounded-[22px] border border-line bg-surface px-4 py-4"
+          >
+            <span
+              aria-hidden
+              className="h-4 w-4 shrink-0 rounded-full"
+              style={{ backgroundColor: account.color }}
+            />
+
+            <div className="min-w-0 flex-1">
+              <p className="truncate font-medium text-foreground">{account.name}</p>
+              <p className="truncate text-xs text-faint">{account.type}</p>
+            </div>
+
+            <p className="shrink-0 text-right text-sm font-semibold tabular-nums text-foreground">
+              {Number(account.current_balance).toLocaleString("pt-BR", {
+                style: "currency",
+                currency: "BRL",
+              })}
+            </p>
+
+            <form action={deleteAccount}>
+              <input type="hidden" name="id" value={account.id} />
+
+              <button
+                type="submit"
+                aria-label={`Excluir a conta ${account.name}`}
+                className="-mr-1 flex h-10 w-10 items-center justify-center rounded-lg text-faint transition hover:bg-rose-500/10 hover:text-danger"
+              >
+                <Trash2 className="h-5 w-5" />
+              </button>
+            </form>
+          </li>
+        ))}
+      </ul>
+
+      <div className="hidden overflow-hidden rounded-[22px] border border-line bg-surface sm:block">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[560px]">
             <thead className="border-b border-line bg-tint">
@@ -90,6 +136,7 @@ export default async function ContasPage() {
 
                       <button
                         type="submit"
+                        aria-label={`Excluir a conta ${account.name}`}
                         className="rounded-lg p-2 text-faint transition hover:bg-rose-500/10 hover:text-danger"
                       >
                         <Trash2 className="h-5 w-5" />

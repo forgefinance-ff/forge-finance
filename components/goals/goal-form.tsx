@@ -66,7 +66,7 @@ export function GoalForm({
         />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
           <label htmlFor={`${fid}-2`} className="mb-2 block text-sm text-text-soft">
             Valor da meta

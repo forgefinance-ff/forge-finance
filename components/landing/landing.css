@@ -176,7 +176,8 @@ button.uv-tag:active { transform: translateY(1px); }
 .uv-nav__end { display: flex; justify-content: flex-end; align-items: center; gap: var(--uv-space-md); }
 @media (max-width: 60rem) {
   .uv-nav__links { display: none; }
-  .uv-nav__pill { display: flex; justify-content: space-between; padding-left: 16px; }
+  .uv-nav__pill { display: flex; justify-content: space-between; gap: 8px; padding-left: 16px; }
+  .uv-nav__end { gap: 12px; }
 }
 .uv-wordmark { white-space: nowrap; display: inline-flex; align-items: center; gap: var(--uv-space-xs); color: var(--uv-ink); text-decoration: none; font: 500 1.125rem/1 var(--uv-font-display); letter-spacing: -0.02em; }
 
@@ -198,7 +199,8 @@ button.uv-tag:active { transform: translateY(1px); }
     radial-gradient(40% 60% at 60% 10%, var(--uv-stage-3), transparent 70%),
     var(--uv-stage-1);
 }
-.uv-stage__inner { width: 100%; max-width: 600px; margin-inline: auto; display: grid; gap: var(--uv-space-md); }
+.uv-stage__inner { width: 100%; max-width: 600px; margin-inline: auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--uv-space-md); }
+.uv-stage__inner > * { min-width: 0; }
 .uv-stage__note { text-align: center; font-size: 0.8125rem; color: var(--uv-ink-2); }
 .uv-ways { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: var(--uv-space-md); margin-top: var(--uv-space-lg); font-size: var(--uv-text-sm); color: var(--uv-muted); }
 .uv-ways span { display: inline-flex; align-items: center; gap: 0.35rem; color: var(--uv-ink-2); }

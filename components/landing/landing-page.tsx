@@ -106,8 +106,10 @@ export function LandingPage() {
               <Link href="#perguntas" className="uv-link uv-link--muted">Perguntas</Link>
             </div>
             <div className="uv-nav__end">
-              <Link href="/login" className="uv-link hidden sm:inline">Entrar</Link>
-              <Link href={ctaHref} className="uv-btn uv-btn--primary uv-btn--sm">Começar agora</Link>
+              <Link href="/login" className="uv-link hidden min-[350px]:inline">Entrar</Link>
+              <Link href={ctaHref} className="uv-btn uv-btn--primary uv-btn--sm whitespace-nowrap">
+                Começar<span className="hidden sm:inline"> agora</span>
+              </Link>
             </div>
           </nav>
         </div>

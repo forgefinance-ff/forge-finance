@@ -78,17 +78,17 @@ export default async function RaioXPage() {
 
       <RxKpis data={data} />
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)]">
         <SpendCalendar calendar={data.calendar} />
         <WeekdayCard weekday={data.weekday} />
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <HabitsCard habits={data.habits} scope={data.scope} />
         <AllocationCard allocation={data.allocation} scope={data.scope} />
       </div>
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">
         <AgendaCard agenda={data.agenda} today={data.today} hasAccounts={data.hasAccounts} />
         <ChangesCard changes={data.changes} pace={data.pace} />
       </div>

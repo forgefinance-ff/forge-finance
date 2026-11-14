@@ -26,7 +26,7 @@ export function DelinquencyCard({ delinquency }: { delinquency: Delinquency }) {
         </Link>
       </div>
 
-      <dl className="mt-4 grid grid-cols-3 gap-3">
+      <dl className="mt-4 grid grid-cols-1 gap-2 min-[420px]:grid-cols-3 min-[420px]:gap-3">
         <div className="rounded-2xl border border-line bg-tint p-3">
           <dt className="text-xs text-faint">Em atraso</dt>
           <dd className={`font-semibold tabular-nums ${d.overdueTotal ? "text-danger" : "text-foreground"}`}>
@@ -45,7 +45,7 @@ export function DelinquencyCard({ delinquency }: { delinquency: Delinquency }) {
         </div>
       </dl>
 
-      <div className="mt-5 grid gap-5 sm:grid-cols-2">
+      <div className="mt-5 grid grid-cols-1 gap-5 sm:grid-cols-2">
         <div>
           <p className="text-xs font-semibold text-faint">Quem mais deve</p>
           {d.worstPayers.length === 0 ? (

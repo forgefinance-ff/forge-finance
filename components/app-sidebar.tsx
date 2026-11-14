@@ -381,7 +381,7 @@ export function MobileNav({ scope, badges = {} }: { scope: Scope; badges?: NavBa
       aria-label="Navegação principal"
       className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface-solid pb-[env(safe-area-inset-bottom)] md:hidden"
     >
-      <ul className="flex items-stretch justify-between gap-1 overflow-x-auto px-2 py-1.5">
+      <ul className="flex items-stretch justify-between gap-0.5 overflow-x-auto px-1 py-1.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {groups.map((group) => {
           const Icon = group.icon;
           const active = group.items.some((item) => isActive(pathname, item.url));
@@ -396,7 +396,7 @@ export function MobileNav({ scope, badges = {} }: { scope: Scope; badges?: NavBa
             } as Record<string, string>)[group.title] ?? group.title.split(" ")[0];
 
           return (
-            <li key={group.title} className="min-w-[56px] flex-1">
+            <li key={group.title} className="min-w-[48px] flex-1">
               <Link
                 href={group.items[0].url}
                 aria-label={group.title}

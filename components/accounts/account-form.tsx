@@ -43,7 +43,7 @@ export function AccountForm({ action }: Props) {
         <input id="account-name" name="name" required maxLength={60} placeholder="Ex.: Nubank, Carteira" className={inputClass} />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-[1fr_1fr_88px]">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-[1fr_1fr_88px]">
         <div>
           <label htmlFor="account-type" className={labelClass}>
             Tipo
@@ -69,6 +69,9 @@ export function AccountForm({ action }: Props) {
             className={inputClass}
             aria-describedby="account-balance-hint"
           />
+          <p id="account-balance-hint" className="mt-1.5 text-xs text-faint">
+            Quanto tem na conta agora. Negativo (cheque especial)? Toque em ±.
+          </p>
         </div>
 
         <div>
@@ -84,9 +87,6 @@ export function AccountForm({ action }: Props) {
           />
         </div>
       </div>
-      <p id="account-balance-hint" className="-mt-2 text-xs text-faint">
-        Quanto tem na conta agora. Saldo negativo (cheque especial)? Toque em “-”.
-      </p>
 
       {error && (
         <p role="alert" className="rounded-xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">

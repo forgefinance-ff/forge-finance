@@ -7,7 +7,7 @@ export function AlertsList({ alerts }: { alerts: BusinessAlert[] }) {
   if (alerts.length === 0) return null;
 
   return (
-    <div className="grid gap-3 lg:grid-cols-2">
+    <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
       {alerts.map((alert) => {
         const Icon =
           alert.tone === "danger" ? OctagonAlertIcon : alert.tone === "warning" ? AlertTriangleIcon : InfoIcon;

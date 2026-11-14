@@ -41,7 +41,7 @@ export function CardForm() {
 
   return (
     <form id="card-form" action={handleSubmit} className="space-y-6 rounded-[22px] border border-line bg-surface p-6">
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,1fr)_300px]">
         <div className="space-y-5">
           <fieldset>
             <legend className="mb-3 block text-sm text-text-soft">Banco do cartão</legend>
@@ -56,7 +56,7 @@ export function CardForm() {
                     onClick={() => choose(id)}
                     aria-pressed={active}
                     className={cn(
-                      "flex items-center gap-2.5 rounded-xl border px-2.5 py-2 text-left text-sm transition-colors",
+                      "relative flex min-h-12 items-center gap-2 rounded-xl border px-2 py-2 text-left text-sm leading-tight transition-colors sm:gap-2.5 sm:px-2.5",
                       active
                         ? "border-text bg-tint-strong font-medium text-foreground"
                         : "border-line text-text-soft hover:border-line-strong hover:text-foreground"
@@ -71,15 +71,17 @@ export function CardForm() {
                         style={{ background: `linear-gradient(135deg, ${customColor}, color-mix(in oklab, ${customColor} 60%, black))` }}
                       />
                     )}
-                    <span className="min-w-0 flex-1 truncate">{item?.name ?? "Outro banco"}</span>
-                    {active && <CheckIcon className="h-4 w-4 shrink-0" aria-hidden />}
+                    <span className="line-clamp-2 min-w-0 flex-1 break-words">{item?.name ?? "Outro banco"}</span>
+                    {active && (
+                      <CheckIcon className="absolute right-1.5 top-1.5 h-3.5 w-3.5 shrink-0 sm:static sm:h-4 sm:w-4" aria-hidden />
+                    )}
                   </button>
                 );
               })}
             </div>
           </fieldset>
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
               <label htmlFor="card-name" className="mb-2 block text-sm text-text-soft">
                 Nome do cartão
@@ -121,7 +123,7 @@ export function CardForm() {
             </div>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
               <label htmlFor="card-closing" className="mb-2 block text-sm text-text-soft">
                 Dia do fechamento

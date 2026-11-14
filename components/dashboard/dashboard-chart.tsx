@@ -128,7 +128,7 @@ export function DashboardChart({
             <SoftText text={`${result >= 0 ? "+" : "−"}${formatCurrency(Math.abs(result))}`} />
           </p>
         </div>
-        <div className="flex items-center gap-4 pb-1 text-xs text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pb-1 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-full bg-brand-bright" />
             Receitas <SoftText text={formatCurrency(income)} />

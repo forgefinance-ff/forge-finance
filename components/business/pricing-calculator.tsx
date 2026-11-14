@@ -30,7 +30,7 @@ export function PricingCalculator({ variablePct }: { variablePct: number }) {
         Quanto cobrar para cobrir impostos, custos variáveis e ainda ter a margem que você quer.
       </p>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-3">
+      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
         <label className="block">
           <span className="mb-1.5 block text-xs font-medium text-faint">Custo do produto/serviço (R$)</span>
           <MoneyInput value={cost ? parseAmount(cost) : null} onValueChange={(n) => setCost(n === null ? "" : String(n))} className={inputClass} />

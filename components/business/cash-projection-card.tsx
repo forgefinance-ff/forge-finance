@@ -79,7 +79,7 @@ export function CashProjectionCard({
         </div>
       </div>
 
-      <dl className="mt-4 grid gap-3 sm:grid-cols-4">
+      <dl className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-4">
         <Stat label="Saldo hoje" value={brl(projection.startBalance)} />
         <Stat label="Vai entrar" value={brl(inflow)} tone="success" />
         <Stat label="Vai sair" value={brl(outflow)} tone="danger" />

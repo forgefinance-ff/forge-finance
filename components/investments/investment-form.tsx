@@ -40,7 +40,7 @@ export function InvestmentForm() {
         <input id="inv-name" name="name" required maxLength={80} placeholder="Ex.: Tesouro Selic 2029" className={inputClass} />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
           <label htmlFor="inv-type" className={labelClass}>
             Tipo
@@ -61,7 +61,7 @@ export function InvestmentForm() {
         </div>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
           <label htmlFor="inv-invested" className={labelClass}>
             Quanto você aplicou

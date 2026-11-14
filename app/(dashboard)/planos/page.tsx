@@ -83,7 +83,7 @@ export default async function PlansPage({
         </p>
       )}
 
-      <div className="grid gap-4 lg:grid-cols-[1fr_1.35fr]">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1fr_1.35fr]">
         {/* Free */}
         <article className="flex flex-col rounded-2xl border border-line bg-surface p-6">
           <h2 className="text-xl font-semibold text-foreground">{free.name}</h2>
@@ -136,7 +136,7 @@ export default async function PlansPage({
               Você já é Forge Pro. Ver minha assinatura
             </Link>
           ) : (
-            <div className="mt-7 grid gap-3 sm:grid-cols-2">
+            <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-2">
               {/* Anual em destaque */}
               <form action="/assinar" method="get" className="flex flex-col rounded-xl border-2 border-violet-500 bg-violet-500/10 p-4">
                 <input type="hidden" name="plano" value="anual" />
@@ -183,7 +183,7 @@ export default async function PlansPage({
         </article>
       </div>
 
-      <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
         {TRUST.map(({ icon: Icon, text }) => (
           <li key={text} className="flex items-center gap-3 rounded-xl border border-line bg-surface px-4 py-3 text-sm text-text-soft">
             <Icon className="h-4 w-4 shrink-0 text-brand-soft" />

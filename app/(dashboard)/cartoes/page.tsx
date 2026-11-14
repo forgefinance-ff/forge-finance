@@ -54,7 +54,7 @@ export default async function CartoesPage() {
         const futureTotal = future.reduce((s, inv) => s + inv.total, 0);
 
         return (
-          <section key={card.id} className="space-y-5 rounded-[22px] border border-line bg-surface p-6">
+          <section key={card.id} className="relative space-y-5 rounded-[22px] border border-line bg-surface p-4 sm:p-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div className="flex flex-wrap items-center gap-5">
                 <BankCard
@@ -71,7 +71,9 @@ export default async function CartoesPage() {
                 </div>
               </div>
 
-              <DeleteCardButton id={card.id} name={card.name} />
+              <div className="absolute right-2 top-2 sm:static">
+                <DeleteCardButton id={card.id} name={card.name} />
+              </div>
             </div>
 
             <div>
@@ -93,7 +95,7 @@ export default async function CartoesPage() {
               </div>
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="rounded-2xl border border-line bg-tint p-4">
                 <p className="text-xs font-semibold text-faint">Fatura atual</p>
                 {summary.current ? (

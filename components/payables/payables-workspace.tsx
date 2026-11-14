@@ -144,7 +144,7 @@ export function PayablesWorkspace({
       <form
         method="get"
         action="/contas-a-pagar-receber"
-        className="grid gap-3 rounded-[22px] border border-line bg-surface p-4 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_auto]"
+        className="grid grid-cols-1 gap-3 rounded-[22px] border border-line bg-surface p-4 sm:grid-cols-2 lg:grid-cols-[1fr_1fr_1fr_auto]"
       >
         <input type="hidden" name="aba" value={isReceivable ? "receber" : "pagar"} />
 
@@ -191,7 +191,7 @@ export function PayablesWorkspace({
       </form>
 
       {/* Resumo */}
-      <div className="grid gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         <SummaryCard
           label={isReceivable ? "Pendente a receber" : "Pendente a pagar"}
           value={formatCurrency(sum(pending))}

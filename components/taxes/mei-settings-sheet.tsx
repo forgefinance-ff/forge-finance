@@ -94,7 +94,7 @@ export function MeiSettingsSheet({ settings, label = "Configurações do MEI", v
               </select>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label htmlFor="mei-limit" className={labelClass}>
                   Limite anual de faturamento (R$)
@@ -122,7 +122,7 @@ export function MeiSettingsSheet({ settings, label = "Configurações do MEI", v
               </div>
             </div>
 
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div>
                 <label htmlFor="mei-due-day" className={labelClass}>
                   Dia de vencimento do DAS

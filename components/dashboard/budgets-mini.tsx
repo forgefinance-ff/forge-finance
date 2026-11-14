@@ -31,7 +31,7 @@ export function BudgetsMini({ budgets }: { budgets: Budget[] }) {
           <LearnChevron />
         </Link>
       </div>
-      <ul className="mt-4 grid gap-4 md:grid-cols-3">
+      <ul className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
         {budgets.slice(0, 3).map((b) => (
           <li key={b.id}>
             <BudgetBar budget={b} compact />

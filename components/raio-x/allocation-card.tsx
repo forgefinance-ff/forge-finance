@@ -46,7 +46,7 @@ export function AllocationCard({
             ))}
           </div>
 
-          <ul className="mt-4 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
+          <ul className="mt-4 grid grid-cols-1 gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
             {slices.map((s) => (
               <li key={s.key} className="flex items-center gap-2">
                 <span className="h-2.5 w-2.5 shrink-0 rounded-[3px]" style={{ backgroundColor: s.color }} />

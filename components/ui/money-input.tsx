@@ -126,9 +126,8 @@ export function MoneyInput({
     commit(Math.round((allowNegative ? parsed : Math.abs(parsed)) * 100));
   }
 
-  return (
-    <>
-      <input
+  const field = (
+    <input
         {...rest}
         ref={ref}
         type="text"
@@ -142,9 +141,40 @@ export function MoneyInput({
         required={required}
         disabled={disabled}
         className={className}
-        style={{ fontVariantNumeric: "tabular-nums", ...rest.style }}
+        style={{ fontVariantNumeric: "tabular-nums", ...rest.style, ...(allowNegative ? { paddingRight: "3.25rem" } : null) }}
       />
-      {name && <input type="hidden" name={name} value={cents === null ? "" : (cents / 100).toFixed(2)} disabled={disabled} />}
-    </>
+  );
+
+  const hidden = name && (
+    <input type="hidden" name={name} value={cents === null ? "" : (cents / 100).toFixed(2)} disabled={disabled} />
+  );
+
+  if (!allowNegative) {
+    return (
+      <>
+        {field}
+        {hidden}
+      </>
+    );
+  }
+
+  // O teclado numérico do celular (principalmente no iPhone) não tem a tecla "-":
+  // um botão troca o sinal.
+  const negative = (cents ?? 0) < 0;
+  return (
+    <div className="relative">
+      {field}
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => commit(-(cents ?? 0))}
+        aria-pressed={negative}
+        aria-label={negative ? "Valor negativo. Tocar para deixar positivo" : "Tocar para deixar o valor negativo"}
+        className="absolute inset-y-1 right-1 flex w-11 items-center justify-center rounded-lg text-base font-semibold text-muted-foreground transition hover:bg-tint hover:text-foreground aria-pressed:bg-danger/10 aria-pressed:text-danger"
+      >
+        ±
+      </button>
+      {hidden}
+    </div>
   );
 }

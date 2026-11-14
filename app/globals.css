@@ -400,3 +400,13 @@ h1, h2, h3 {
 @media (min-width: 80rem) {
   body:has(aside[data-rail="open"]) .forge-shell { padding-left: 16.5rem; }
 }
+
+/* Celular: campos com menos de 16px fazem o iPhone dar zoom ao tocar. Fica fora
+   de @layer de propósito, para valer mais que utilitários como text-sm. */
+@media (max-width: 767px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}

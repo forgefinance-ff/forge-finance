@@ -108,7 +108,7 @@ export function CategoryBubbles({ data }: { data: CategoryExpense[] }) {
           Nenhuma despesa no período.
         </div>
       ) : (
-        <div className="mt-4 grid gap-6 lg:grid-cols-2 lg:items-center">
+        <div className="mt-4 grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-center">
           {/* Bolhas: área proporcional ao valor */}
           <div className="relative mx-auto aspect-[1.35] w-full max-w-[460px] [container-type:inline-size]" role="list" aria-label="Maiores categorias">
             {top.map((item, i) => {

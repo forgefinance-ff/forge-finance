@@ -72,7 +72,7 @@ export function DashboardOverview({
 
   return (
     <section className="space-y-5">
-      <div className="grid items-start gap-8 pt-2 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-12">
+      <div className="grid grid-cols-1 items-start gap-8 pt-2 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-12">
         <MonthHero
           greeting={greeting()}
           firstName={firstName}
@@ -120,7 +120,7 @@ export function DashboardOverview({
         </Reveal>
       )}
 
-      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-12">
+      <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-12">
         <Reveal className="min-w-0 xl:col-span-4">
           <WalletStack cards={cardsOverview} holder={userName} />
         </Reveal>
@@ -132,7 +132,7 @@ export function DashboardOverview({
         </Reveal>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-12">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-12">
         <Reveal className="min-w-0 lg:col-span-5">
           <RecentList transactions={data.recentTransactions} />
         </Reveal>

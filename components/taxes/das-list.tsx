@@ -189,7 +189,7 @@ export function DasList({ year, today, payments, settings, accounts }: Props) {
 
               <input type="hidden" name="competence" value={dialog.competence} />
 
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label htmlFor="das-amount" className="mb-2 block text-sm text-text-soft">
                     Valor (R$)
@@ -252,7 +252,7 @@ export function DasList({ year, today, payments, settings, accounts }: Props) {
                   Crie uma conta da empresa em Contas para registrar o pagamento.
                 </p>
               ) : (
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
                     <label htmlFor="das-account" className="mb-2 block text-sm text-text-soft">
                       Pago com

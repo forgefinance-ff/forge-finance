@@ -65,7 +65,7 @@ export default async function GestaoPage() {
 
       <CashProjectionCard projection={panel.projection} today={panel.today} />
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         <DreTable dre={panel.dre} />
         <div className="space-y-6">
           <BreakevenCard breakeven={panel.breakeven} current={panel.current} />
@@ -80,7 +80,7 @@ export default async function GestaoPage() {
         lastYear={panel.lastYear}
       />
 
-      <div className="grid gap-6 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <DelinquencyCard delinquency={panel.delinquency} />
         <ScopeTransferCard
           businessAccounts={panel.accounts}

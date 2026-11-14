@@ -252,7 +252,7 @@ export default async function GuidePage() {
                 <MessageCircleIcon className="h-5 w-5" /> Testar agora no WhatsApp
               </a>
             )}
-            <div className="mt-5 grid gap-2 sm:grid-cols-3">
+            <div className="mt-5 grid grid-cols-1 gap-2 sm:grid-cols-3">
               {["recebi 1500 de salário", "paguei 80 de uber ontem", "qual meu saldo?"].map((example) => (
                 <span key={example} className="rounded-xl border border-line bg-tint px-3 py-2 text-xs text-text-soft">
                   “{example}”
@@ -442,7 +442,7 @@ function AppTour() {
       <section className={panel}>
         <h2 className="text-lg font-semibold text-foreground">Conheça o resto do Forge</h2>
         <p className="mt-1 text-sm text-muted-foreground">Toque em qualquer parte para abrir.</p>
-        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
           {GUIDE.map(({ icon: Icon, title, href, text }) => (
             <Link
               key={href}
@@ -462,7 +462,7 @@ function AppTour() {
           <p className="flex items-center gap-2 text-sm font-semibold text-foreground">
             <PhoneIcon className="h-4 w-4 text-brand-soft" /> No WhatsApp você também pode
           </p>
-          <ul className="mt-2 grid gap-1.5 text-sm text-text-soft sm:grid-cols-2">
+          <ul className="mt-2 grid grid-cols-1 gap-1.5 text-sm text-text-soft sm:grid-cols-2">
             <li>“desfazer”: apaga o último registro</li>
             <li>“quanto gastei com mercado esse mês?”</li>
             <li>“o que vence essa semana?”</li>

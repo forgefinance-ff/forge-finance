@@ -37,7 +37,7 @@ export function DreTable({ dre }: { dre: DreMonth[] }) {
   const withdrawals = dre.some((m) => m.ownerWithdrawals || m.ownerContributions || m.loansIn || m.loansOut);
 
   return (
-    <section className="rounded-[22px] border border-line bg-surface p-6">
+    <section className="rounded-[22px] border border-line bg-surface p-4 sm:p-6">
       <h2 className="text-lg font-semibold text-foreground">Resultado mês a mês (DRE)</h2>
       <p className="text-sm text-muted-foreground">
         As despesas entram pela classe de custo da categoria.{" "}
@@ -47,11 +47,13 @@ export function DreTable({ dre }: { dre: DreMonth[] }) {
         .
       </p>
 
-      <div className="mt-4 overflow-x-auto">
+      <p className="mt-3 text-xs text-faint sm:hidden">Deslize a tabela para o lado para ver os outros meses.</p>
+
+      <div className="mt-4 overflow-x-auto overscroll-x-contain">
         <table className="w-full min-w-[640px] text-sm">
           <thead>
             <tr className="border-b border-line text-xs text-faint">
-              <th className="py-2 pr-3 text-left font-semibold"> </th>
+              <th className="sticky left-0 z-10 bg-surface py-2 pr-3 text-left font-semibold"> </th>
               {dre.map((m) => (
                 <th key={m.month} className="px-2 py-2 text-right font-semibold">
                   {m.label}
@@ -65,7 +67,7 @@ export function DreTable({ dre }: { dre: DreMonth[] }) {
                 key={line.label}
                 className={cn("border-b border-line/60", line.sign === "=" && "bg-tint")}
               >
-                <td className="py-2 pr-3">
+                <td className="sticky left-0 z-10 max-w-[9.5rem] bg-surface py-2 pr-3">
                   <span className={cn(line.strong ? "font-semibold text-foreground" : "text-text-soft")}>
                     {line.sign === "-" ? "(−) " : line.sign === "=" ? "(=) " : ""}
                     {line.label}
@@ -99,7 +101,7 @@ export function DreTable({ dre }: { dre: DreMonth[] }) {
       </div>
 
       {withdrawals && (
-        <div className="mt-4 overflow-x-auto">
+        <div className="mt-4 overflow-x-auto overscroll-x-contain">
           <p className="mb-1 text-xs font-semibold text-faint">
             Fora do resultado
           </p>
@@ -112,7 +114,7 @@ export function DreTable({ dre }: { dre: DreMonth[] }) {
                 { label: "Empréstimos pagos", value: (m: DreMonth) => m.loansOut },
               ].map((line) => (
                 <tr key={line.label} className="border-b border-line/60">
-                  <td className="py-1.5 pr-3 text-text-soft">{line.label}</td>
+                  <td className="sticky left-0 z-10 bg-surface py-1.5 pr-3 text-text-soft">{line.label}</td>
                   {dre.map((m) => (
                     <td key={m.month} className="px-2 py-1.5 text-right tabular-nums text-text-soft">
                       {line.value(m) ? brl(line.value(m)) : "—"}

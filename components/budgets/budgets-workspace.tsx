@@ -59,7 +59,7 @@ export function BudgetsWorkspace({ budgets, categories }: { budgets: Budget[]; c
   const totalSpent = budgets.reduce((s, b) => s + b.spent, 0);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+    <div className="grid grid-cols-1 gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
       <form
         key={`${formKey}-${editing?.id ?? "new"}`}
         action={submit}

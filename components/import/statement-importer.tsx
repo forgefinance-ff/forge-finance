@@ -404,7 +404,7 @@ export function StatementImporter({ accounts, categories, cards = [], userName =
   return (
     <div className="space-y-6">
       {/* 1. Conta e arquivo */}
-      <section className="grid gap-4 rounded-[22px] border border-line bg-surface p-6 md:grid-cols-2">
+      <section className="grid grid-cols-1 gap-4 rounded-[22px] border border-line bg-surface p-6 md:grid-cols-2">
         <label className="block">
           <span className="mb-2 block text-sm text-text-soft">Conta ou cartão do extrato</span>
           <select
@@ -507,7 +507,7 @@ export function StatementImporter({ accounts, categories, cards = [], userName =
             </p>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             {(
               [
                 ["date", "Data"],
@@ -638,7 +638,7 @@ export function StatementImporter({ accounts, categories, cards = [], userName =
             </div>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <label className="block">
               <span className="mb-1.5 block text-xs font-medium text-faint">
                 Categoria para todas as entradas selecionadas

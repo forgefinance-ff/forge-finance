@@ -231,7 +231,7 @@ export function InstallGuide({ onInstalled }: { onInstalled?: () => void }) {
             type="button"
             onClick={() => setTab(id)}
             className={cn(
-              "flex items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-xs font-semibold transition sm:text-sm",
+              "flex min-w-0 flex-col items-center justify-center gap-1 rounded-lg px-1.5 py-2 text-xs font-semibold transition min-[400px]:flex-row min-[400px]:gap-1.5 sm:text-sm",
               active === id ? "bg-surface-solid text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
             )}
           >

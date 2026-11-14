@@ -43,15 +43,16 @@ export function AgendaCard({
         ))}
       </div>
 
-      <div className="overflow-x-auto pb-1">
-        <div className="grid min-w-[700px] grid-cols-7 gap-2">
+      <div className="pb-1 sm:overflow-x-auto">
+        {/* Celular: um dia embaixo do outro. A partir do tablet: a semana em 7 colunas. */}
+        <div className="grid grid-cols-1 gap-2 sm:min-w-[700px] sm:grid-cols-7">
           {agenda.days.map((day) => {
             const isToday = day.date === today;
             return (
               <div
                 key={day.date}
                 className={cn(
-                  "flex min-h-52 flex-col rounded-2xl border bg-tint p-2.5",
+                  "flex flex-col rounded-2xl border bg-tint p-2.5 sm:min-h-52",
                   isToday ? "border-brand/60" : "border-line"
                 )}
               >

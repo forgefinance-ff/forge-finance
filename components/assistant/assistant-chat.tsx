@@ -177,7 +177,7 @@ export function AssistantChat({ configured, questions }: Props) {
   }
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
+    <div className="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
       <section className="flex min-h-[520px] flex-col overflow-hidden rounded-[22px] border border-line bg-surface">
         <div className="flex items-center justify-between border-b border-line px-5 py-3">
           <p className="flex items-center gap-2 text-sm font-semibold text-foreground">

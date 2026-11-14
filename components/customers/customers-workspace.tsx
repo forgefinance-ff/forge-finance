@@ -219,7 +219,7 @@ export function CustomersWorkspace({ customers, archived, archivedCount, receiva
           </Button>
         </EmptyState>
       ) : (
-        <ul className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <ul className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
           {filtered.map((customer) => (
             <li
               key={customer.id}
