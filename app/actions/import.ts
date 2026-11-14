@@ -10,6 +10,7 @@ import {
   createTransaction,
   payCardInvoice,
 } from "@/lib/services/transactions";
+import { fetchAllRows } from "@/lib/totals";
 
 export type ImportRowInput = {
   date: string;
@@ -49,19 +50,18 @@ export async function findExistingTransactions(
   try {
     const ctx = await appCtx();
     const dest = parseTarget(target);
-    let query = ctx.db
-      .from("transactions")
-      .select("transaction_date, amount, type, description")
-      .eq("user_id", ctx.userId)
-      .gte("transaction_date", from)
-      .lte("transaction_date", to);
-    query =
-      dest.kind === "card"
+    const build = () => {
+      const query = ctx.db
+        .from("transactions")
+        .select("transaction_date, amount, type, description")
+        .eq("user_id", ctx.userId)
+        .gte("transaction_date", from)
+        .lte("transaction_date", to);
+      return dest.kind === "card"
         ? query.eq("card_id", dest.id).is("account_id", null)
         : query.eq("account_id", dest.id);
-    const { data, error } = await query;
-
-    if (error) return [];
+    };
+    const data = await fetchAllRows((a, b) => build().order("id").range(a, b));
 
     return (data ?? []).map((t) => ({
       date: String(t.transaction_date).slice(0, 10),
@@ -82,16 +82,19 @@ export async function getLearnedCategories(): Promise<LearnedMap> {
   try {
     const ctx = await appCtx();
     const since = new Date(Date.now() - 365 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-    const { data, error } = await ctx.db
-      .from("transactions")
-      .select("description, type, category_id, transaction_date")
-      .eq("user_id", ctx.userId)
-      .not("category_id", "is", null)
-      .gte("transaction_date", since)
-      .order("transaction_date", { ascending: false })
-      .limit(5000);
-
-    if (error || !data) return {};
+    const data = await fetchAllRows(
+      (a, b) =>
+        ctx.db
+          .from("transactions")
+          .select("description, type, category_id, transaction_date")
+          .eq("user_id", ctx.userId)
+          .not("category_id", "is", null)
+          .gte("transaction_date", since)
+          .order("transaction_date", { ascending: false })
+          .order("id")
+          .range(a, b),
+      { max: 5000 }
+    );
 
     const counts = new Map<string, Map<string, number>>();
     for (const t of data) {

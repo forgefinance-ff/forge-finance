@@ -226,7 +226,7 @@ export function CustomersWorkspace({ customers, archived, archivedCount, receiva
               className="flex flex-col rounded-[22px] border border-line bg-surface p-5 transition hover:border-line-strong"
             >
               <div className="flex items-start gap-3">
-                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-brand to-brand-indigo text-sm font-semibold text-white">
+                <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-brand text-sm font-semibold text-white">
                   {customer.name
                     .split(" ")
                     .filter(Boolean)

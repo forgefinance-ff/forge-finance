@@ -1,15 +1,18 @@
 "use client";
 
-import { ArrowRight } from "lucide-react";
+import { ArrowUp, CreditCard, Mic, PieChart, Plus, Receipt, Store, Wallet, type LucideIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
-import { Bubble, Phone, Typing, type ChatMessage } from "./chat";
+import { useSlidingPill } from "@/components/motion";
 
-type Demo = { chip: string; exchange: [ChatMessage, ChatMessage] };
+import { Bubble, Typing, type ChatMessage } from "./chat";
+
+type Demo = { chip: string; icon: LucideIcon; exchange: [ChatMessage, ChatMessage] };
 
 const DEMOS: Demo[] = [
   {
     chip: "Anotar um gasto",
+    icon: Receipt,
     exchange: [
       { from: "user", text: "paguei 38 no almoço" },
       {
@@ -21,6 +24,7 @@ const DEMOS: Demo[] = [
   },
   {
     chip: "Mandar um áudio",
+    icon: Mic,
     exchange: [
       { from: "user", audio: "gastei 45 no mercado" },
       {
@@ -32,6 +36,7 @@ const DEMOS: Demo[] = [
   },
   {
     chip: "Ver quanto sobrou",
+    icon: Wallet,
     exchange: [
       { from: "user", text: "quanto sobrou esse mês?" },
       {
@@ -42,6 +47,7 @@ const DEMOS: Demo[] = [
   },
   {
     chip: "Gastos por categoria",
+    icon: PieChart,
     exchange: [
       { from: "user", text: "onde eu mais gastei em outubro?" },
       {
@@ -57,6 +63,7 @@ const DEMOS: Demo[] = [
   },
   {
     chip: "Compra parcelada",
+    icon: CreditCard,
     exchange: [
       { from: "user", text: "comprei um tênis de 480 em 3x no cartão" },
       {
@@ -68,6 +75,7 @@ const DEMOS: Demo[] = [
   },
   {
     chip: "Conta a receber (MEI)",
+    icon: Store,
     exchange: [
       { from: "user", text: "conta a receber da Maria, 300, dia 15" },
       {
@@ -79,15 +87,12 @@ const DEMOS: Demo[] = [
   },
 ];
 
-const GREETING: ChatMessage = {
-  from: "bot",
-  text: "Oi! 👋 Toque num pedido aqui embaixo e veja como eu resolvo.",
-};
-
+/** A demonstração do topo: um campo de mensagem com pedidos prontos para tocar. */
 export function TryIt() {
-  const [messages, setMessages] = useState<ChatMessage[]>([GREETING]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [typing, setTyping] = useState(false);
-  const [showChips, setShowChips] = useState(true);
+  const [current, setCurrent] = useState<string | null>(null);
+  const { containerRef, pillRef } = useSlidingPill<HTMLDivElement>(current);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => () => {
@@ -95,51 +100,59 @@ export function TryIt() {
   }, []);
 
   function play(demo: Demo) {
-    setShowChips(false);
-    setMessages([GREETING, demo.exchange[0]]);
+    if (timer.current) clearTimeout(timer.current);
+    setCurrent(demo.chip);
+    setMessages([demo.exchange[0]]);
     setTyping(true);
     timer.current = setTimeout(() => {
       setTyping(false);
-      setMessages([GREETING, demo.exchange[0], demo.exchange[1]]);
+      setMessages([demo.exchange[0], demo.exchange[1]]);
     }, 1200);
   }
 
   return (
-    <Phone theme="light">
-      {messages.map((message, i) => (
-        <div key={i} className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-          <Bubble message={message} theme="light" />
+    <div className="uv-stage__inner">
+      {messages.length > 0 && (
+        <div className="uv-reply" aria-live="polite">
+          {messages.map((message, i) => (
+            <div key={`${current}-${i}`} className={i === 1 ? "uv-bubble-in uv-bubble-in--bot" : "uv-bubble-in"}>
+              <Bubble message={message} />
+            </div>
+          ))}
+          {typing && <Typing />}
         </div>
-      ))}
-      {typing && <Typing theme="light" />}
+      )}
 
-      {showChips ? (
-        <div className="grid grid-cols-2 gap-1.5 pt-1">
-          {DEMOS.map((demo) => (
+      <div className="uv-composer" aria-hidden>
+        <Plus />
+        <span className="uv-composer__text">Mande um gasto para o Forge</span>
+        <Mic />
+        <span className="uv-composer__send">
+          <ArrowUp />
+        </span>
+      </div>
+
+      <div ref={containerRef} className="uv-tags relative justify-center" role="group" aria-label="Pedidos de exemplo">
+        <span ref={pillRef} aria-hidden className="t-stretch-pill uv-tags__pill" style={{ opacity: 0 }} />
+        {DEMOS.map((demo) => {
+          const Icon = demo.icon;
+          return (
             <button
               key={demo.chip}
               type="button"
               onClick={() => play(demo)}
-              className="rounded-full border border-black/5 bg-white px-2 py-2 text-[12px] font-medium text-[#111b21] shadow-sm transition hover:border-violet-300 hover:text-violet-700"
+              aria-pressed={current === demo.chip}
+              data-active={current === demo.chip}
+              className="uv-tag t-tab"
             >
+              <Icon aria-hidden />
               {demo.chip}
             </button>
-          ))}
-        </div>
-      ) : (
-        !typing && (
-          <button
-            type="button"
-            onClick={() => {
-              setMessages([GREETING]);
-              setShowChips(true);
-            }}
-            className="mx-auto mt-1 flex items-center gap-1.5 rounded-full bg-white px-4 py-2 text-[12px] font-semibold text-[#111b21] shadow-sm"
-          >
-            O que mais posso pedir? <ArrowRight className="h-3.5 w-3.5" />
-          </button>
-        )
-      )}
-    </Phone>
+          );
+        })}
+      </div>
+
+      <p className="uv-stage__note">Toque num pedido e veja o Forge resolver. Simulação com dados de exemplo.</p>
+    </div>
   );
 }

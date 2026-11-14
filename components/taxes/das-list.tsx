@@ -28,6 +28,7 @@ import {
 } from "@/lib/mei-shared";
 import { amountToInput } from "@/lib/money";
 import { cn } from "@/lib/utils";
+import { MoneyInput } from "@/components/ui/money-input";
 
 type Props = {
   year: number;
@@ -193,10 +194,9 @@ export function DasList({ year, today, payments, settings, accounts }: Props) {
                   <label htmlFor="das-amount" className="mb-2 block text-sm text-text-soft">
                     Valor (R$)
                   </label>
-                  <input
+                  <MoneyInput
                     id="das-amount"
                     name="amount"
-                    inputMode="decimal"
                     required
                     defaultValue={amountToInput(settings?.das_amount)}
                     placeholder="0,00"

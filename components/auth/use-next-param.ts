@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useClientValue } from "@/hooks/use-client-value";
 
 /** Só aceita caminhos internos (evita redirecionar para outro site). */
 export function safeNext(value: string | null | undefined) {
@@ -12,13 +12,7 @@ export function safeNext(value: string | null | undefined) {
 
 /** Lê o ?next= da URL (para voltar ao fluxo certo depois do login/cadastro). */
 export function useNextParam() {
-  const [next, setNext] = useState<string | null>(null);
-
-  useEffect(() => {
-    setNext(safeNext(new URLSearchParams(window.location.search).get("next")));
-  }, []);
-
-  return next;
+  return useClientValue(() => safeNext(new URLSearchParams(window.location.search).get("next")), null);
 }
 
 export function withNext(path: string, next: string | null) {

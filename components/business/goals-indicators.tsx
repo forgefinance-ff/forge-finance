@@ -11,9 +11,10 @@ import { amountToInput } from "@/lib/money";
 import { cn } from "@/lib/utils";
 
 import { brl, pct, variation } from "./format";
+import { MoneyInput } from "@/components/ui/money-input";
 
 const inputClass =
-  "w-full rounded-xl border border-line bg-background-soft px-3 py-2.5 text-sm text-foreground outline-none transition focus:border-violet-500";
+  "w-full rounded-xl border border-line-strong bg-surface-solid px-3 py-2.5 text-sm text-foreground outline-none transition placeholder:text-faint hover:border-faint focus:border-brand focus:ring-2 focus:ring-brand/15";
 
 type Props = {
   goals: { monthlyRevenue: number | null; targetMarginPct: number | null };
@@ -88,9 +89,8 @@ export function GoalsIndicators({ goals, current, previous, lastYear }: Props) {
         >
           <label className="block">
             <span className="mb-1.5 block text-xs font-medium text-faint">Meta de faturamento mensal (R$)</span>
-            <input
+            <MoneyInput
               name="monthly_revenue_goal"
-              inputMode="decimal"
               defaultValue={amountToInput(goals.monthlyRevenue)}
               placeholder="Ex.: 10.000,00"
               className={inputClass}
@@ -123,7 +123,7 @@ export function GoalsIndicators({ goals, current, previous, lastYear }: Props) {
               </p>
               <div className="mt-2 h-2 overflow-hidden rounded-full bg-tint-strong">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-brand to-brand-indigo"
+                  className="h-full rounded-full bg-brand"
                   style={{ width: `${revenueProgress ?? 0}%` }}
                 />
               </div>
@@ -164,7 +164,7 @@ export function GoalsIndicators({ goals, current, previous, lastYear }: Props) {
       <div className="mt-5 overflow-x-auto">
         <table className="w-full min-w-[520px] text-sm">
           <thead>
-            <tr className="border-b border-line text-xs uppercase tracking-wider text-faint">
+            <tr className="border-b border-line text-xs text-faint">
               <th className="py-2 text-left font-semibold">Indicador</th>
               <th className="py-2 text-right font-semibold">{current.label}</th>
               <th className="py-2 text-right font-semibold">vs {previous.label}</th>

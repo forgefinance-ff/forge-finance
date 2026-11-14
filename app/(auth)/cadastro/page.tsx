@@ -10,17 +10,17 @@ const whatsappStart = botNumber
 
 export default function CadastroPage() {
   return (
-    <AuthShell subtitle="Crie sua conta para começar.">
+    <AuthShell title="Crie sua conta." subtitle="Leva menos de um minuto. Depois é só mandar seus gastos por mensagem.">
       <RegisterForm />
 
       {whatsappStart && (
-        <p className="mt-5 text-center text-sm text-zinc-400">
+        <p className="forge-auth-note mt-5 text-center">
           Prefere usar pelo WhatsApp?{" "}
           <a
             href={whatsappStart}
             target="_blank"
             rel="noreferrer"
-            className="font-medium text-emerald-300 transition hover:text-emerald-200"
+            className="forge-auth-link !text-[oklch(50%_0.13_160)]"
           >
             Começar pelo WhatsApp
           </a>

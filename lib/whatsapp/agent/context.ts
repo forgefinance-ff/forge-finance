@@ -44,7 +44,7 @@ export async function loadUserContext(
 ): Promise<UserContext> {
   const [accounts, categories, customers, payables, goals, investments, cards, das] =
     await Promise.all([
-      db.from("accounts").select("id, name, type, scope, current_balance").eq("user_id", userId).order("created_at"),
+      db.from("accounts_today").select("id, name, type, scope, current_balance:balance_today").eq("user_id", userId).order("created_at"),
       db.from("categories").select("id, name, type, scope").eq("user_id", userId).order("name"),
       db.from("customers").select("id, name, phone").eq("user_id", userId).is("archived_at", null).order("name"),
       db

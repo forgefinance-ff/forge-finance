@@ -1,29 +1,35 @@
-import { ActivityHeatmap } from "@/components/dashboard/activity-heatmap";
-import { DashboardCards } from "@/components/dashboard/dashboard-cards";
+import { BudgetsMini } from "@/components/dashboard/budgets-mini";
 import { DashboardChart } from "@/components/dashboard/dashboard-chart";
 import { ExpenseBreakdown } from "@/components/dashboard/expense-breakdown";
-import { ForgeIntelligence } from "@/components/dashboard/forge-intelligence";
-import { GoalsCard } from "@/components/dashboard/goals-card";
+import { ForgeBubble } from "@/components/dashboard/forge-bubble";
+import { GoalsMini } from "@/components/dashboard/goals-mini";
+import { MonthHero } from "@/components/dashboard/month-hero";
+import { NeedsYou } from "@/components/dashboard/needs-you";
 import { NewTransactionTrigger } from "@/components/dashboard/new-transaction-trigger";
-import { QuickActionsCard } from "@/components/dashboard/quick-actions-card";
-import { RecentTransactions } from "@/components/dashboard/recent-transactions";
-import { WealthDistribution } from "@/components/dashboard/wealth-distribution";
+import { RecentList } from "@/components/dashboard/recent-list";
+import { WalletStack } from "@/components/dashboard/wallet-stack";
 import { createTransaction } from "@/app/actions/transactions";
+import { Reveal } from "@/components/motion";
 import type { Account } from "@/lib/accounts";
-import type { Card } from "@/lib/cards";
+import type { Card, CardOverview } from "@/lib/cards";
 import type { Category } from "@/lib/categories";
-import { DashboardData } from "@/lib/dashboard";
+import type { DashboardData } from "@/lib/dashboard";
 import type { Goal } from "@/lib/goals";
+import type { Budget } from "@/lib/budgets";
+import type { DueSummary } from "@/lib/payables";
 
 type DashboardOverviewProps = {
   data: DashboardData;
   accounts: Account[];
   categories: Category[];
   goals: Goal[];
+  budgets: Budget[];
   cards: Card[];
+  cardsOverview: CardOverview[];
+  dueSummary: DueSummary;
+  today: string;
   userName: string | null;
-  aiConfigured: boolean;
-  /** Alertas logo abaixo da saudação (vencimentos, DAS…). */
+  /** Avisos do escopo Empresa (painel, DAS). */
   alerts?: React.ReactNode;
 };
 
@@ -41,120 +47,105 @@ function greeting() {
   return "Boa noite";
 }
 
+/**
+ * Dashboard em três camadas:
+ * 1. Como está o mês (uma frase + ritmo) e a leitura do Forge;
+ * 2. O que precisa de você agora (só aparece se houver algo);
+ * 3. Para entender o mês: categorias, últimas transações, entradas e saídas, metas.
+ * Patrimônio detalhado, distribuição e atividade ficam em Relatórios.
+ */
 export function DashboardOverview({
   data,
   accounts,
   categories,
   goals,
+  budgets,
   cards,
+  cardsOverview,
+  dueSummary,
+  today,
   userName,
-  aiConfigured,
   alerts,
 }: DashboardOverviewProps) {
   const firstName = userName?.split(" ")[0];
-
-  const positiveAccounts = accounts.filter((a) => Number(a.current_balance) > 0);
-  const negativeAccountsTotal = accounts
-    .filter((a) => Number(a.current_balance) < 0)
-    .reduce((acc, a) => acc + Number(a.current_balance), 0);
-
-  const wealthSlices = [
-    ...positiveAccounts.map((a) => ({
-      name: a.name,
-      value: Number(a.current_balance),
-    })),
-    { name: "Investimentos", value: data.investmentsTotal },
-  ];
+  const { analytics } = data;
 
   return (
-    <section className="space-y-4">
-      <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-            {greeting()}
-            {firstName ? `, ${firstName}` : ""} 👋
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Suas finanças em um só lugar, com dados em tempo real.
-          </p>
-        </div>
-
-        <NewTransactionTrigger
-          action={createTransaction}
-          accounts={accounts}
-          categories={categories}
-          cards={cards}
-          label="Registrar transação"
-          className="h-11 rounded-full glass-primary px-5 text-sm font-semibold text-white transition hover:brightness-110"
+    <section className="space-y-5">
+      <div className="grid items-start gap-8 pt-2 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)] lg:gap-12">
+        <MonthHero
+          greeting={greeting()}
+          firstName={firstName}
+          monthKey={analytics.monthKey}
+          today={today}
+          monthIncome={analytics.monthIncome}
+          monthExpense={analytics.monthExpense}
+          previousMonthExpense={analytics.previousMonthExpense}
+          totalBalance={data.totalBalance}
+          hasData={data.hasData}
         />
-      </header>
+
+        <div className="min-w-0 space-y-4 lg:pt-8">
+          <ForgeBubble
+            analytics={analytics}
+            goals={goals}
+            // Só avisa vencimento de cartão com fatura fechada a pagar.
+            cards={cardsOverview
+              .filter((o) => o.summary.toPay.some((invoice) => invoice.pending > 0))
+              .map((o) => o.card)}
+            hasData={data.hasData}
+          />
+          <div className="pl-14">
+            <NewTransactionTrigger
+              action={createTransaction}
+              accounts={accounts}
+              categories={categories}
+              cards={cards}
+              label="Registrar transação"
+              className="t-plus-spin h-11 rounded-full glass-primary px-5 text-sm font-semibold !text-background transition-colors"
+            />
+          </div>
+        </div>
+      </div>
 
       {alerts}
 
-      <div className="grid gap-4 xl:grid-cols-12">
-        <div className="min-w-0 space-y-4 xl:col-span-9">
-          <DashboardCards
-            totalBalance={data.totalBalance}
-            accountsTotal={data.accountsTotal}
-            investmentsTotal={data.investmentsTotal}
-            investedAmount={data.investedAmount}
-            monthIncome={data.analytics.monthIncome}
-            monthExpense={data.analytics.monthExpense}
-            previousMonthExpense={data.analytics.previousMonthExpense}
-            totalIncome={data.totalIncome}
-            totalExpense={data.totalExpense}
-          />
+      <Reveal>
+        <NeedsYou due={dueSummary} cards={cardsOverview} goals={goals} today={today} />
+      </Reveal>
 
+      {data.hasData && (
+        <Reveal>
+          <BudgetsMini budgets={budgets} />
+        </Reveal>
+      )}
+
+      <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-12">
+        <Reveal className="min-w-0 xl:col-span-4">
+          <WalletStack cards={cardsOverview} holder={userName} />
+        </Reveal>
+        <Reveal className="min-w-0 xl:col-span-4" delay={80}>
+          <ExpenseBreakdown slices={analytics.expenseByCategory} total={analytics.monthExpense} />
+        </Reveal>
+        <Reveal className="min-w-0 md:col-span-2 xl:col-span-4" delay={160}>
+          <GoalsMini goals={goals} />
+        </Reveal>
+      </div>
+
+      <div className="grid gap-5 lg:grid-cols-12">
+        <Reveal className="min-w-0 lg:col-span-5">
+          <RecentList transactions={data.recentTransactions} />
+        </Reveal>
+        <Reveal className="min-w-0 lg:col-span-7" delay={80}>
           <DashboardChart
             chart7d={data.chart7d}
             chart30d={data.chart30d}
             chart12m={data.chart12m}
             totalBalance={data.totalBalance}
+            title="Entradas e saídas"
+            showBalance={false}
           />
-        </div>
-
-        <div className="min-w-0 space-y-4 xl:col-span-3">
-          <ForgeIntelligence
-            analytics={data.analytics}
-            goals={goals}
-            cards={cards}
-            hasData={data.hasData}
-            aiConfigured={aiConfigured}
-          />
-          <ActivityHeatmap
-            cells={data.analytics.heatmap}
-            weeks={data.analytics.heatmapWeeks}
-          />
-        </div>
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-12">
-        <div className="min-w-0 xl:col-span-4">
-          <ExpenseBreakdown
-            slices={data.analytics.expenseByCategory}
-            total={data.analytics.monthExpense}
-          />
-        </div>
-
-        <div className="min-w-0 xl:col-span-5">
-          <WealthDistribution
-            slices={wealthSlices}
-            negativeAccountsTotal={negativeAccountsTotal}
-          />
-        </div>
-
-        <div className="min-w-0 lg:col-span-2 xl:col-span-3">
-          <GoalsCard goals={goals} />
-        </div>
-      </div>
-
-      <div className="grid gap-4 xl:grid-cols-12">
-        <div className="min-w-0 xl:col-span-9">
-          <RecentTransactions transactions={data.recentTransactions} />
-        </div>
-        <div className="min-w-0 xl:col-span-3">
-          <QuickActionsCard accounts={accounts} categories={categories} />
-        </div>
+        </Reveal>
       </div>
     </section>
   );

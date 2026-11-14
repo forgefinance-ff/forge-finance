@@ -22,7 +22,7 @@ const PRESETS: { key: PeriodKey; label: string }[] = [
 ];
 
 const dateInputClass =
-  "rounded-lg border border-line bg-background-soft px-3 py-2 text-sm text-foreground outline-none transition focus:border-violet-500";
+  "rounded-lg border border-line-strong bg-surface-solid px-3 py-2 text-sm text-foreground outline-none transition placeholder:text-faint hover:border-faint focus:border-brand focus:ring-2 focus:ring-brand/15";
 
 export function PeriodFilter({ period, from, to }: Props) {
   const router = useRouter();

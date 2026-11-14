@@ -6,6 +6,8 @@ type Props = {
   expenses: number;
   balance: number;
   netWorth: number;
+  /** Despesas com data depois de hoje (parcelas do cartão, agendadas). */
+  upcomingExpenses?: number;
 };
 
 export function KpiCards({
@@ -13,6 +15,7 @@ export function KpiCards({
   expenses,
   balance,
   netWorth,
+  upcomingExpenses = 0,
 }: Props) {
   const cards = [
     {
@@ -23,17 +26,20 @@ export function KpiCards({
     {
       title: "Despesas",
       value: formatCurrency(expenses),
-      description: "Total de despesas do período.",
+      description:
+        upcomingExpenses > 0
+          ? `Até hoje. Mais ${formatCurrency(upcomingExpenses)} a vencer.`
+          : "Total de despesas do período, até hoje.",
     },
     {
-      title: "Saldo",
+      title: "Resultado",
       value: formatCurrency(balance),
-      description: "Resultado financeiro.",
+      description: "Receitas menos despesas.",
     },
     {
       title: "Patrimônio",
       value: formatCurrency(netWorth),
-      description: "Contas + Investimentos.",
+      description: "Contas (até hoje) + investimentos.",
     },
   ];
 

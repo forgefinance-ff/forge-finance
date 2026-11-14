@@ -51,5 +51,6 @@ export const CARD_PAYMENT_KIND = "card_payment";
 export function transactionKindLabel(kind: string | null | undefined) {
   if (!kind || kind === "regular") return null;
   if (kind === CARD_PAYMENT_KIND) return "Pagamento de fatura";
+  if (kind === "transfer") return "Transferência";
   return isMovementKind(kind) ? KIND_LABEL[kind] : null;
 }

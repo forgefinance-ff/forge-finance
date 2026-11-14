@@ -9,7 +9,7 @@ import type { Customer } from "@/lib/customers";
 import { formatBrPhone } from "@/lib/phone";
 
 export const inputClass =
-  "w-full rounded-xl border border-line bg-background-soft px-4 py-3 text-foreground outline-none transition placeholder:text-faint focus:border-brand-bright/60 focus:ring-2 focus:ring-brand-bright/20";
+  "w-full rounded-xl border border-line-strong bg-surface-solid px-4 py-3 text-foreground outline-none transition placeholder:text-faint focus:border-brand-bright/60 focus:ring-2 focus:ring-brand-bright/20";
 
 type Props = {
   customer?: Customer;

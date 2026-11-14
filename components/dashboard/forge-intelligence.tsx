@@ -21,7 +21,7 @@ type ForgeIntelligenceProps = {
   aiConfigured: boolean;
 };
 
-type Insight = {
+export type Insight = {
   id: string;
   icon: React.ComponentType<{ className?: string }>;
   tone: "neutral" | "warn" | "good";
@@ -44,7 +44,7 @@ function monthsBetween(now: Date, deadline: Date) {
   );
 }
 
-function buildInsights(
+export function buildInsights(
   analytics: DashboardAnalytics,
   goals: Goal[],
   cards: Card[],
@@ -99,7 +99,13 @@ function buildInsights(
   }
 
   const openGoals = goals
-    .filter((g) => g.deadline && Number(g.target_amount) > Number(g.current_amount))
+    // Metas com prazo vencido já aparecem em "Precisa de você".
+    .filter(
+      (g) =>
+        g.deadline &&
+        new Date(`${g.deadline}T23:59:59`) >= now &&
+        Number(g.target_amount) > Number(g.current_amount)
+    )
     .sort((a, b) => a.deadline.localeCompare(b.deadline));
 
   if (openGoals[0]) {
@@ -151,10 +157,9 @@ export function ForgeIntelligence({
 
   return (
     <section className="forge-panel relative overflow-hidden p-5">
-      <div className="pointer-events-none absolute -right-16 -top-16 h-44 w-44 rounded-full bg-brand/20 blur-3xl" />
 
       <div className="relative flex items-center justify-between">
-        <span className="flex items-center gap-2 rounded-full border border-brand-bright/25 bg-brand/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-brand-soft">
+        <span className="flex items-center gap-2 rounded-full border border-brand-bright/25 bg-brand/10 px-3 py-1 text-xs font-semibold tracking-[0.14em] text-brand-soft">
           <SparklesIcon className="h-3 w-3" />
           Forge Intelligence
         </span>

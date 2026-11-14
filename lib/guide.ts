@@ -1,5 +1,6 @@
 // Guia de primeiros passos: o que a pessoa já fez e o que falta.
 import crypto from "node:crypto";
+import { cache } from "react";
 
 import { hasWhatsAppAccess } from "@/lib/billing/access";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -22,7 +23,7 @@ export type GuideProgress = {
   complete: boolean;
 };
 
-export async function getGuideProgress(userId: string): Promise<GuideProgress> {
+export const getGuideProgress = cache(async function getGuideProgress(userId: string): Promise<GuideProgress> {
   const supabase = await createClient();
 
   const [{ data: link }, { count: entries }, { count: accounts }, whatsappAllowed] = await Promise.all([
@@ -73,7 +74,7 @@ export async function getGuideProgress(userId: string): Promise<GuideProgress> {
     total: 2,
     complete: done === 2,
   };
-}
+});
 
 /** Código VINCULAR válido por pelo menos mais 3 minutos (cria um se precisar). */
 export async function ensureLinkCode(userId: string): Promise<string | null> {

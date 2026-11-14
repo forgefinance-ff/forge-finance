@@ -8,7 +8,7 @@ const buttonVariants = cva(
     "inline-flex items-center justify-center",
     "whitespace-nowrap",
     "font-semibold",
-    "transition-all duration-300",
+    "transition duration-300",
     "outline-none",
     "cursor-pointer",
     "select-none",
@@ -28,7 +28,7 @@ const buttonVariants = cva(
       variant: {
         default: [
           "glass-primary",
-          "text-white",
+          "text-background",
           "hover:scale-[1.02]",
         ].join(" "),
 

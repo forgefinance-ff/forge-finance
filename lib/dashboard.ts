@@ -1,8 +1,10 @@
-import { createClient } from "@/lib/supabase/server";
+import { todayInBrazil } from "@/lib/dates";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { getActiveScope } from "@/lib/scope-server";
 import { buildAnalytics, type DashboardAnalytics } from "@/lib/dashboard-analytics";
 import { firstRelation } from "@/lib/relations";
 import { countsAsResult } from "@/lib/movement-kinds";
+import { fetchAllRows } from "@/lib/totals";
 
 export type RecentTransaction = {
   id: string;
@@ -163,9 +165,7 @@ function buildChartByMonth(
 export async function getDashboardData(): Promise<DashboardData> {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   if (!user) {
     return {
@@ -187,6 +187,9 @@ export async function getDashboardData(): Promise<DashboardData> {
   }
 
   const scope = await getActiveScope();
+  const today = todayInBrazil();
+  const [ty, tm] = today.split("-").map(Number);
+  const windowStart = new Date(Date.UTC(ty, tm - 1 - 12, 1)).toISOString().slice(0, 10);
 
   const [
     { data: accounts, error: accountsError },
@@ -194,27 +197,25 @@ export async function getDashboardData(): Promise<DashboardData> {
     { data: investments, error: investmentsError },
   ] = await Promise.all([
     supabase
-      .from("accounts")
-      .select("current_balance")
+      .from("accounts_today")
+      .select("current_balance:balance_today")
       .eq("user_id", user.id)
       .eq("scope", scope),
 
-    supabase
-      .from("transactions")
-      .select(
-        `
-        id,
-        amount,
-        type,
-        kind,
-        description,
-        transaction_date,
-        categories(name,color,icon)
-      `
-      )
-      .eq("user_id", user.id)
-      .eq("scope", scope)
-      .order("transaction_date", { ascending: false }),
+    // Só os últimos 13 meses, até hoje (gráficos e análises), de 1.000 em
+    // 1.000. Lançamentos com data futura ficam "a vencer", fora daqui.
+    fetchAllRows((a, b) =>
+      supabase
+        .from("transactions")
+        .select("id, amount, type, kind, description, transaction_date, categories(name,color,icon)")
+        .eq("user_id", user.id)
+        .eq("scope", scope)
+        .gte("transaction_date", windowStart)
+        .lte("transaction_date", today)
+        .order("transaction_date", { ascending: false })
+        .order("created_at", { ascending: false })
+        .range(a, b)
+    ).then((data) => ({ data, error: null })),
 
     supabase
       .from("investments")
@@ -293,8 +294,11 @@ export async function getDashboardData(): Promise<DashboardData> {
       despesas: values.despesas,
     }));
 
+  // Só o que já aconteceu: parcelas futuras do cartão ficam de fora.
   const recentTransactions =
-    transactions?.slice(0, 5).map((transaction) => ({
+    transactions
+      ?.slice(0, 6)
+      .map((transaction) => ({
       id: transaction.id,
       title: transaction.description ?? "Sem descrição",
       amount: Number(transaction.amount),

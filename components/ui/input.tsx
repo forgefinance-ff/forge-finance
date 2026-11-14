@@ -24,7 +24,7 @@ function Input({
           "text-sm",
           "text-foreground",
           "placeholder:text-faint",
-          "transition-all",
+          "transition",
           "duration-300",
           "outline-none",
 

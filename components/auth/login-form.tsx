@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { AlertCircleIcon, ArrowRightIcon, EyeIcon, EyeOffIcon, Loader2Icon } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
+import { authErrorMessage } from "./auth-errors";
 import { useNextParam, withNext } from "./use-next-param";
 
 export function LoginForm() {
@@ -14,23 +16,20 @@ export function LoginForm() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-
+    setError(null);
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    setLoading(false);
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
-      alert(error.message);
+      setLoading(false);
+      setError(authErrorMessage(error.message));
       return;
     }
 
@@ -39,20 +38,25 @@ export function LoginForm() {
   }
 
   return (
-    <form
-      onSubmit={handleLogin}
-      className="forge-auth-card space-y-5 rounded-2xl p-6 sm:p-8"
-    >
+    <form onSubmit={handleLogin} className="space-y-5">
+      {error && (
+        <p role="alert" className="forge-auth-alert forge-auth-alert--error">
+          <AlertCircleIcon className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+          {error}
+        </p>
+      )}
+
       <div>
-        <label htmlFor="login-email" className="mb-2 block text-sm text-zinc-300">
+        <label htmlFor="login-email" className="forge-auth-label">
           E-mail
         </label>
-
         <input
           id="login-email"
           type="email"
           autoComplete="email"
+          inputMode="email"
           required
+          placeholder="voce@email.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className="forge-auth-input"
@@ -60,35 +64,55 @@ export function LoginForm() {
       </div>
 
       <div>
-        <label htmlFor="login-password" className="mb-2 block text-sm text-zinc-300">
-          Senha
-        </label>
-
-        <input
-          id="login-password"
-          type="password"
-          autoComplete="current-password"
-          required
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="forge-auth-input"
-        />
+        <div className="flex items-baseline justify-between gap-3">
+          <label htmlFor="login-password" className="forge-auth-label">
+            Senha
+          </label>
+          <Link href="/esqueci-senha" className="forge-auth-link text-sm">
+            Esqueci minha senha
+          </Link>
+        </div>
+        <div className="forge-auth-field">
+          <input
+            id="login-password"
+            type={showPassword ? "text" : "password"}
+            autoComplete="current-password"
+            required
+            placeholder="Sua senha"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            className="forge-auth-input forge-auth-input--pad-right"
+          />
+          <button
+            type="button"
+            className="forge-auth-eye"
+            onClick={() => setShowPassword((v) => !v)}
+            aria-label={showPassword ? "Esconder senha" : "Mostrar senha"}
+            aria-pressed={showPassword}
+          >
+            {showPassword ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+          </button>
+        </div>
       </div>
 
-      <button
-        disabled={loading}
-        className="forge-auth-button"
-      >
-        {loading ? "Entrando..." : "Entrar"}
+      <button type="submit" disabled={loading} className="forge-auth-button">
+        {loading ? (
+          <>
+            <Loader2Icon className="h-4 w-4 animate-spin" aria-hidden />
+            Entrando…
+          </>
+        ) : (
+          <>
+            Entrar
+            <ArrowRightIcon className="h-4 w-4" aria-hidden />
+          </>
+        )}
       </button>
 
-      <p className="text-center text-sm text-zinc-400">
-        Ainda não possui uma conta?{" "}
-        <Link
-          href={withNext("/cadastro", next)}
-          className="font-medium text-violet-300 transition hover:text-violet-200"
-        >
-          Criar conta
+      <p className="forge-auth-note text-center">
+        Ainda não tem conta?{" "}
+        <Link href={withNext("/cadastro", next)} className="forge-auth-link">
+          Criar conta grátis
         </Link>
       </p>
     </form>

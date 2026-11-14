@@ -35,7 +35,7 @@ export function BreakevenCard({ breakeven, current }: { breakeven: Breakeven; cu
             <div
               className={cn(
                 "h-full rounded-full",
-                progress >= 100 ? "bg-success" : "bg-gradient-to-r from-brand to-brand-indigo"
+                progress >= 100 ? "bg-success" : "bg-brand"
               )}
               style={{ width: `${progress}%` }}
             />

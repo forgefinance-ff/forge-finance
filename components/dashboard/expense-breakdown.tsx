@@ -10,10 +10,10 @@ export function ExpenseBreakdown({ slices, total }: ExpenseBreakdownProps) {
   const visible = slices.slice(0, 5);
 
   return (
-    <section className="forge-panel p-5">
-      <div className="flex items-center justify-between">
-        <p className="forge-panel-title">Despesas por categoria</p>
-        <span className="text-[11px] text-faint">Mês atual</span>
+    <section className="forge-panel h-full p-5 sm:p-6">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="forge-panel-title">Para onde foi o dinheiro</h2>
+        <span className="text-xs text-muted-foreground">Este mês</span>
       </div>
 
       {visible.length === 0 ? (
@@ -22,11 +22,11 @@ export function ExpenseBreakdown({ slices, total }: ExpenseBreakdownProps) {
         </div>
       ) : (
         <ul className="mt-5 space-y-4">
-          {visible.map((slice) => {
+          {visible.map((slice, index) => {
             const pct = total > 0 ? (slice.value / total) * 100 : 0;
 
             return (
-              <li key={slice.name}>
+              <li key={slice.name} className="t-reveal-item" style={{ "--i": index } as React.CSSProperties}>
                 <div className="flex items-baseline justify-between gap-3 text-sm">
                   <span className="truncate font-medium text-foreground">{slice.name}</span>
                   <span className="shrink-0 tabular-nums text-text-soft">
@@ -34,14 +34,15 @@ export function ExpenseBreakdown({ slices, total }: ExpenseBreakdownProps) {
                   </span>
                 </div>
                 <div className="mt-1.5 flex items-center gap-3">
-                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-tint">
+                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-tint-strong">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-brand to-brand-soft"
+                      className="t-bar-grow h-full rounded-full bg-brand"
+                      
                       style={{ width: `${Math.max(pct, 2)}%` }}
                     />
                   </div>
                   <span className="w-10 shrink-0 text-right text-[11px] text-faint">
-                    {pct.toFixed(0)}%
+                    {pct > 0 && pct < 1 ? "<1%" : `${pct.toFixed(0)}%`}
                   </span>
                 </div>
               </li>

@@ -9,12 +9,9 @@ export default async function ContasPage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-[22px] border border-line bg-surface p-8">
-        <span className="text-sm font-medium uppercase tracking-[0.25em] text-brand-soft">
-          Financeiro
-        </span>
+      <div className="pt-2 pb-2">
 
-        <h1 className="mt-2 text-4xl font-bold tracking-tight text-foreground">
+        <h1 className="text-4xl font-normal tracking-[-0.035em] text-foreground sm:text-5xl">
           Contas
         </h1>
 
@@ -30,19 +27,19 @@ export default async function ContasPage() {
           <table className="w-full min-w-[560px]">
             <thead className="border-b border-line bg-tint">
               <tr>
-                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-faint">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-faint">
                   Conta
                 </th>
 
-                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-faint">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-faint">
                   Tipo
                 </th>
 
-                <th className="px-6 py-4 text-left text-xs font-semibold uppercase tracking-wider text-faint">
+                <th className="px-6 py-4 text-left text-xs font-semibold text-faint">
                   Saldo
                 </th>
 
-                <th className="px-6 py-4 text-right text-xs font-semibold uppercase tracking-wider text-faint">
+                <th className="px-6 py-4 text-right text-xs font-semibold text-faint">
                   Ações
                 </th>
               </tr>

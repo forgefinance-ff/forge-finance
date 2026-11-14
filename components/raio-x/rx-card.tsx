@@ -36,7 +36,7 @@ export function RxCard({
 export function RxInsight({ children }: { children: React.ReactNode }) {
   return (
     <div className="mt-4 flex gap-2.5 rounded-2xl border border-brand/25 bg-brand/[0.07] px-3.5 py-2.5 text-sm text-text-soft">
-      <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-brand-bright shadow-[0_0_10px_var(--brand-bright)]" />
+      <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-brand-bright" />
       <p>{children}</p>
     </div>
   );

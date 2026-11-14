@@ -6,15 +6,12 @@ type PageHeaderProps = {
 };
 
 /** Cabeçalho no mesmo padrão das telas atuais (Contas, Metas…). */
-export function PageHeader({ eyebrow, title, description, children }: PageHeaderProps) {
+export function PageHeader({ title, description, children }: PageHeaderProps) {
   return (
-    <div className="flex flex-col gap-5 rounded-[22px] border border-line bg-surface p-6 sm:p-8 md:flex-row md:items-end md:justify-between">
+    <div className="flex flex-col gap-5 pt-2 pb-2 md:flex-row md:items-end md:justify-between">
       <div className="min-w-0">
-        <span className="text-sm font-medium uppercase tracking-[0.25em] text-brand-soft">
-          {eyebrow}
-        </span>
 
-        <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+        <h1 className="text-4xl font-normal tracking-[-0.035em] text-foreground sm:text-5xl">
           {title}
         </h1>
 

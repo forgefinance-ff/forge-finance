@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 
 export type Customer = {
   id: string;
@@ -15,9 +15,7 @@ export type Customer = {
 export async function getCustomers(options: { archived?: boolean } = {}) {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   if (!user) return [];
 
@@ -41,9 +39,7 @@ export async function getCustomers(options: { archived?: boolean } = {}) {
 export async function countArchivedCustomers(): Promise<number> {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   if (!user) return 0;
 

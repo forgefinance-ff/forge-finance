@@ -4,7 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+import { AlertCircleIcon, ArrowRightIcon, Loader2Icon, MailCheckIcon } from "lucide-react";
+
 import { createClient } from "@/lib/supabase/client";
+import { authErrorMessage } from "./auth-errors";
 import { useNextParam, withNext } from "./use-next-param";
 
 export function RegisterForm() {
@@ -16,10 +19,12 @@ export function RegisterForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [sentTo, setSentTo] = useState<string | null>(null);
 
   async function handleRegister(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-
+    setError(null);
     setLoading(true);
 
     const { data, error } = await supabase.auth.signUp({
@@ -35,7 +40,7 @@ export function RegisterForm() {
     setLoading(false);
 
     if (error) {
-      alert(error.message);
+      setError(authErrorMessage(error.message));
       return;
     }
 
@@ -46,23 +51,42 @@ export function RegisterForm() {
       return;
     }
 
-    alert("Conta criada! Confirme pelo e-mail que enviamos e depois entre.");
+    setSentTo(email);
+  }
 
-    router.push(withNext("/login", next));
-    router.refresh();
+  if (sentTo) {
+    return (
+      <div className="space-y-5">
+        <p role="status" className="forge-auth-alert forge-auth-alert--info">
+          <MailCheckIcon className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+          <span>
+            Conta criada! Enviamos um link de confirmação para <strong>{sentTo}</strong>. Confirme e
+            depois entre.
+          </span>
+        </p>
+        <Link href={withNext("/login", next)} className="forge-auth-button">
+          Ir para o login
+          <ArrowRightIcon className="h-4 w-4" aria-hidden />
+        </Link>
+      </div>
+    );
   }
 
   return (
-    <form
-      onSubmit={handleRegister}
-      className="forge-auth-card space-y-5 rounded-2xl p-6 sm:p-8"
-    >
+    <form onSubmit={handleRegister} className="space-y-5">
+      {error && (
+        <p role="alert" className="forge-auth-alert forge-auth-alert--error">
+          <AlertCircleIcon className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+          {error}
+        </p>
+      )}
       <div>
-        <label htmlFor="register-name" className="mb-2 block text-sm text-zinc-300">Nome</label>
+        <label htmlFor="register-name" className="forge-auth-label">Nome</label>
         <input
           id="register-name"
           autoComplete="name"
           required
+          placeholder="Como quer ser chamado"
           value={name}
           onChange={(e) => setName(e.target.value)}
           className="forge-auth-input"
@@ -70,12 +94,13 @@ export function RegisterForm() {
       </div>
 
       <div>
-        <label htmlFor="register-email" className="mb-2 block text-sm text-zinc-300">E-mail</label>
+        <label htmlFor="register-email" className="forge-auth-label">E-mail</label>
         <input
           id="register-email"
           autoComplete="email"
           type="email"
           required
+          placeholder="voce@email.com"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           className="forge-auth-input"
@@ -83,29 +108,37 @@ export function RegisterForm() {
       </div>
 
       <div>
-        <label htmlFor="register-password" className="mb-2 block text-sm text-zinc-300">Senha</label>
+        <label htmlFor="register-password" className="forge-auth-label">Senha</label>
         <input
           id="register-password"
           autoComplete="new-password"
           type="password"
           required
           minLength={6}
+          placeholder="Mínimo de 6 caracteres"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           className="forge-auth-input"
         />
       </div>
 
-      <button
-        disabled={loading}
-        className="forge-auth-button"
-      >
-        {loading ? "Criando conta..." : "Criar conta"}
+      <button type="submit" disabled={loading} className="forge-auth-button">
+        {loading ? (
+          <>
+            <Loader2Icon className="h-4 w-4 animate-spin" aria-hidden />
+            Criando conta…
+          </>
+        ) : (
+          <>
+            Criar conta
+            <ArrowRightIcon className="h-4 w-4" aria-hidden />
+          </>
+        )}
       </button>
 
-      <p className="text-center text-sm text-zinc-400">
-        Já possui uma conta?{" "}
-        <Link href={withNext("/login", next)} className="font-medium text-violet-300 transition hover:text-violet-200">
+      <p className="forge-auth-note text-center">
+        Já tem conta?{" "}
+        <Link href={withNext("/login", next)} className="forge-auth-link">
           Entrar
         </Link>
       </p>

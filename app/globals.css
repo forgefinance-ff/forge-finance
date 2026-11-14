@@ -1,3 +1,6 @@
+/* Hallmark · v2.0.0 · redesign: full · scope: app shell + /dashboard · light by default after the owner's reference (calm grey paper, white cards, a floating icon rail, one big figure), dark kept as the Dusk slate · the app's own functions only · brand: Forge violet kept as the signal · dusk: none/violet-apricot/glass · genre modern-minimal */
+/* Hallmark · critique: slate paper, smoked-glass panels with a lit edge, one violet signal and one apricot; the glow, the grid and the violet-to-blue gradient are gone */
+/* Hallmark · waive 1 (48): legacy alias tokens below still map shadcn names; no literal colour is used past the token blocks except the auth screen, which is pinned light */
 @import "tailwindcss";
 @import "tw-animate-css";
 
@@ -11,105 +14,113 @@
    border-line...) troca sozinha quando o tema muda.
    ===================================================================== */
 :root {
-  /* Superfícies */
-  --background: #f6f3fc;
-  --background-soft: #efeaf9;
-  --surface: rgba(255, 255, 255, 0.86);
-  --surface-solid: #ffffff;
-  --surface-elevated: #f7f2ff;
-  --surface-glass: rgba(255, 255, 255, 0.78);
+  /* Superfícies — dia: poços cor de osso */
+  --background: oklch(95.8% 0.005 300);
+  --background-soft: oklch(94% 0.007 300);
+  --surface: oklch(100% 0 0);
+  --surface-solid: oklch(100% 0 0);
+  --surface-elevated: oklch(97.5% 0.005 300);
+  --surface-glass: oklch(100% 0 0 / 0.9);
 
   /* Texto */
-  --text: #1c1530;
-  --text-soft: #3b3452;
-  --text-muted: #625b78;
-  --text-faint: #857e9a;
+  --text: oklch(17% 0.02 300);
+  --text-soft: oklch(30% 0.02 300);
+  --text-muted: oklch(50% 0.03 300);
+  --text-faint: oklch(55% 0.025 300);
 
-  /* Linhas e tintas (substituem border-white/x e bg-white/x) */
-  --line: rgba(76, 29, 149, 0.12);
-  --line-strong: rgba(76, 29, 149, 0.22);
-  --tint: rgba(76, 29, 149, 0.04);
-  --tint-strong: rgba(76, 29, 149, 0.08);
+  /* Linhas e tintas */
+  --line: oklch(88.5% 0.012 300);
+  --line-strong: oklch(80% 0.018 300);
+  --tint: oklch(17% 0.02 300 / 0.03);
+  --tint-strong: oklch(17% 0.02 300 / 0.06);
 
-  /* Marca */
-  --brand: #7c3aed;
-  --brand-bright: #9333ea;
-  --brand-soft: #7e22ce;
-  --brand-indigo: #4f46e5;
+  /* Marca: o roxo do Forge, um só sinal */
+  --brand: oklch(50% 0.25 290);
+  --brand-bright: oklch(55% 0.24 290);
+  --brand-soft: oklch(45% 0.22 290);
+  --brand-indigo: oklch(50% 0.25 290);
 
-  /* Semânticas */
-  --success: #059669;
-  --danger: #e11d48;
-  --warning: #d97706;
+  /* Semânticas: violeta = feito, damasco = em aberto */
+  --success: oklch(55% 0.13 160);
+  --danger: oklch(56% 0.18 25);
+  --warning: oklch(64% 0.14 62);
 
-  --muted: #f1ecfa;
-  --accent: #ede4ff;
-  --accent-foreground: #5b21b6;
-  --input: #ddd3f0;
+  --muted: oklch(95% 0.007 300);
+  --accent: oklch(94% 0.035 295);
+  --accent-foreground: oklch(42% 0.2 290);
+  --input: oklch(80% 0.018 300);
 
-  --sidebar: rgba(255, 255, 255, 0.82);
-  --sidebar-foreground: #625b78;
+  --sidebar: oklch(100% 0 0);
+  --sidebar-foreground: oklch(45% 0.025 300);
 
-  /* Fundo com profundidade */
-  --grid-line: rgba(76, 29, 149, 0.055);
-  --glow-1: rgba(139, 92, 246, 0.18);
-  --glow-2: rgba(79, 70, 229, 0.1);
+  --grid-line: transparent;
+  --glow-1: transparent;
+  --glow-2: transparent;
 
-  --chart-grid: rgba(76, 29, 149, 0.12);
-  --chart-axis: #7a7391;
+  --chart-grid: oklch(91% 0.01 300);
+  --chart-axis: oklch(55% 0.025 300);
 
-  --scrollbar: #d6cbea;
-  --scrollbar-hover: #b9a6dc;
+  --scrollbar: oklch(82% 0.01 75);
+  --scrollbar-hover: oklch(72% 0.012 75);
 
-  --shadow-panel: 0 18px 40px -28px rgba(76, 29, 149, 0.35);
+  --shadow-panel: 0 1px 2px oklch(17% 0.02 300 / 0.04), 0 16px 32px -24px oklch(17% 0.02 300 / 0.18);
+  --glass-hi: inset 0 1px 0 oklch(100% 0 0 / 0.7);
+  --focus: oklch(50% 0.25 290);
+  --primary-ink: oklch(99% 0.005 300);
+  --font-display: var(--font-app-display), ui-sans-serif, system-ui, sans-serif;
+  --font-body: var(--font-app-text), ui-sans-serif, system-ui, sans-serif;
 }
 
 .dark {
-  --background: #06060c;
-  --background-soft: #0d0d16;
-  --surface: rgba(21, 20, 30, 0.78);
-  --surface-solid: #15141c;
-  --surface-elevated: #20182c;
-  --surface-glass: rgba(21, 20, 30, 0.62);
+  /* Ardósia ao anoitecer */
+  --background: oklch(17.5% 0.014 268);
+  --background-soft: oklch(19.5% 0.015 268);
+  --surface: oklch(22% 0.018 268 / 0.62);
+  --surface-solid: oklch(21.5% 0.016 268);
+  --surface-elevated: oklch(25% 0.017 268);
+  --surface-glass: oklch(22% 0.018 268 / 0.58);
 
-  --text: #f4f4f5;
-  --text-soft: #d4d4d8;
-  --text-muted: #a1a1aa;
-  --text-faint: #71717a;
+  --text: oklch(96% 0.006 75);
+  --text-soft: oklch(85% 0.01 262);
+  --text-muted: oklch(70% 0.016 262);
+  --text-faint: oklch(58% 0.016 262);
 
-  --line: rgba(255, 255, 255, 0.08);
-  --line-strong: rgba(255, 255, 255, 0.16);
-  --tint: rgba(255, 255, 255, 0.03);
-  --tint-strong: rgba(255, 255, 255, 0.08);
+  --line: oklch(30% 0.016 266);
+  --line-strong: oklch(36% 0.018 266);
+  --tint: oklch(100% 0 0 / 0.04);
+  --tint-strong: oklch(100% 0 0 / 0.07);
 
-  --brand: #7c3aed;
-  --brand-bright: #a855f7;
-  --brand-soft: #c084fc;
-  --brand-indigo: #4f46e5;
+  --brand: oklch(72% 0.14 293);
+  --brand-bright: oklch(80% 0.11 293);
+  --brand-soft: oklch(84% 0.08 293);
+  --brand-indigo: oklch(72% 0.14 293);
 
-  --success: #34d399;
-  --danger: #fb7185;
-  --warning: #fbbf24;
+  --success: oklch(78% 0.1 160);
+  --danger: oklch(72% 0.13 25);
+  --warning: oklch(83% 0.095 62);
 
-  --muted: #1c1c24;
-  --accent: #2a1f3d;
-  --accent-foreground: #e9d5ff;
-  --input: #2a2a33;
+  --muted: oklch(25% 0.017 268);
+  --accent: oklch(30% 0.05 293);
+  --accent-foreground: oklch(88% 0.06 293);
+  --input: oklch(32% 0.017 266);
 
-  --sidebar: rgba(10, 10, 18, 0.82);
-  --sidebar-foreground: #a1a1aa;
+  --sidebar: oklch(15.5% 0.014 268);
+  --sidebar-foreground: oklch(72% 0.016 262);
 
-  --grid-line: rgba(255, 255, 255, 0.045);
-  --glow-1: rgba(124, 58, 237, 0.28);
-  --glow-2: rgba(79, 70, 229, 0.14);
+  --grid-line: transparent;
+  --glow-1: transparent;
+  --glow-2: transparent;
 
-  --chart-grid: rgba(255, 255, 255, 0.07);
-  --chart-axis: #71717a;
+  --chart-grid: oklch(30% 0.016 266);
+  --chart-axis: oklch(62% 0.016 262);
 
-  --scrollbar: #2f2a3d;
-  --scrollbar-hover: #4a3d66;
+  --scrollbar: oklch(32% 0.017 266);
+  --scrollbar-hover: oklch(42% 0.02 266);
 
-  --shadow-panel: 0 18px 40px -24px rgba(0, 0, 0, 0.9);
+  --shadow-panel: inset 0 1px 0 oklch(100% 0 0 / 0.08), inset 0 0 0 1px oklch(100% 0 0 / 0.04), 0 40px 80px -32px oklch(8% 0.02 268 / 0.7);
+  --glass-hi: inset 0 1px 0 oklch(100% 0 0 / 0.1);
+  --focus: oklch(80% 0.11 293);
+  --primary-ink: oklch(19% 0.035 293);
 }
 
 @theme inline {
@@ -155,7 +166,7 @@
   --color-popover: var(--surface-solid);
   --color-surface-solid: var(--surface-solid);
   --color-popover-foreground: var(--text);
-  --color-primary-foreground: #ffffff;
+  --color-primary-foreground: var(--primary-ink);
   --color-secondary: var(--surface-elevated);
   --color-secondary-foreground: var(--text);
   --color-muted: var(--muted);
@@ -173,10 +184,11 @@
   --color-sidebar-border: var(--line);
   --color-sidebar-ring: var(--brand-bright);
 
-  --radius-lg: 14px;
+  --radius-lg: 10px;
   --radius-xl: 18px;
+  --font-sans: var(--font-body);
 
-  --shadow-glow: 0 0 24px rgba(168, 85, 247, 0.35);
+  --shadow-glow: var(--shadow-panel);
   --shadow-panel: var(--shadow-panel);
 }
 
@@ -191,7 +203,20 @@ html,
 body {
   background-color: var(--background);
   color: var(--text);
-  font-family: Inter, system-ui, sans-serif;
+  font-family: var(--font-body);
+  font-size: 16px;
+  font-variant-numeric: tabular-nums;
+}
+
+html,
+body {
+  overflow-x: clip;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  letter-spacing: -0.022em;
 }
 
 /* Em @layer base para classes como border-transparent conseguirem sobrescrever. */
@@ -202,7 +227,7 @@ body {
 }
 
 ::selection {
-  background: rgba(168, 85, 247, 0.35);
+  background: color-mix(in oklab, var(--brand) 35%, transparent);
 }
 
 ::-webkit-scrollbar {
@@ -218,212 +243,80 @@ body {
 }
 
 /* =====================================================================
-   Fundo com profundidade: base escura azulada + grade fina com máscara
-   radial + brilho roxo no topo. Fica fixo atrás de todo o conteúdo.
+   Fundo: ardósia lisa, sem grade nem brilho.
    ===================================================================== */
 .forge-backdrop {
   position: fixed;
   inset: 0;
   z-index: -1;
   pointer-events: none;
-  overflow: hidden;
   background-color: var(--background);
 }
 
-.forge-backdrop::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
-  background-size: 44px 44px;
-  mask-image: radial-gradient(ellipse 75% 65% at 50% 20%, #000 30%, transparent 100%);
-  -webkit-mask-image: radial-gradient(ellipse 75% 65% at 50% 20%, #000 30%, transparent 100%);
+:where(a, button, [role="button"], input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
 }
 
-.forge-backdrop::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(60% 45% at 50% -8%, var(--glow-1), transparent 70%),
-    radial-gradient(40% 35% at 100% 0%, var(--glow-2), transparent 70%);
-}
-
-/* =====================================================================
-   Tela de login — sempre escura, com foco de luz roxo animado.
-   ===================================================================== */
-.forge-auth {
-  position: relative;
-  isolation: isolate;
-  overflow: hidden;
-  background-color: #05050b;
-  color: #f4f4f5;
-  color-scheme: dark;
-}
-
-.forge-auth-grid {
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  background-image:
-    linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: radial-gradient(ellipse 70% 60% at 50% 45%, #000 25%, transparent 100%);
-  -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 45%, #000 25%, transparent 100%);
-}
-
-.forge-auth-orb {
-  position: absolute;
-  z-index: -2;
-  width: 46rem;
-  height: 46rem;
-  max-width: 140vw;
-  max-height: 140vw;
-  border-radius: 9999px;
-  filter: blur(110px);
-  opacity: 0.55;
-  will-change: transform;
-}
-
-.forge-auth-orb--violet {
-  top: -18rem;
-  left: 50%;
-  margin-left: -23rem;
-  background: radial-gradient(circle, #7c3aed 0%, #6d28d9 35%, transparent 70%);
-  animation: forge-orb-a 26s ease-in-out infinite;
-}
-
-.forge-auth-orb--indigo {
-  bottom: -22rem;
-  right: -12rem;
-  width: 34rem;
-  height: 34rem;
-  opacity: 0.4;
-  background: radial-gradient(circle, #4f46e5 0%, #2563eb 40%, transparent 70%);
-  animation: forge-orb-b 30s ease-in-out infinite;
-}
-
-@keyframes forge-orb-a {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0) scale(1);
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
-  25% {
-    transform: translate3d(18vw, 14vh, 0) scale(1.1);
-  }
-  50% {
-    transform: translate3d(-4vw, 30vh, 0) scale(0.95);
-  }
-  75% {
-    transform: translate3d(-20vw, 10vh, 0) scale(1.08);
-  }
-}
-
-@keyframes forge-orb-b {
-  0%,
-  100% {
-    transform: translate3d(0, 0, 0) scale(1);
-  }
-  33% {
-    transform: translate3d(-30vw, -20vh, 0) scale(1.15);
-  }
-  66% {
-    transform: translate3d(-8vw, -36vh, 0) scale(0.9);
-  }
-}
-
-.forge-auth-card {
-  background: rgba(17, 16, 26, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
-  box-shadow:
-    0 30px 60px -30px rgba(0, 0, 0, 0.9),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
-}
-
-.forge-auth-input {
-  width: 100%;
-  border-radius: 0.75rem;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  background: rgba(5, 5, 11, 0.6);
-  padding: 0.75rem 1rem;
-  color: #f4f4f5;
-  outline: none;
-  transition:
-    border-color 150ms,
-    box-shadow 150ms;
-}
-.forge-auth-input::placeholder {
-  color: #71717a;
-}
-.forge-auth-input:focus {
-  border-color: rgba(168, 85, 247, 0.7);
-  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.2);
-}
-
-.forge-auth-button {
-  position: relative;
-  width: 100%;
-  border-radius: 0.75rem;
-  padding: 0.8rem 1rem;
-  font-weight: 600;
-  color: #fff;
-  background: linear-gradient(90deg, #7c3aed 0%, #6366f1 50%, #2563eb 100%);
-  box-shadow: 0 10px 30px -12px rgba(124, 58, 237, 0.8);
-  transition:
-    box-shadow 200ms,
-    filter 200ms,
-    transform 200ms;
-}
-.forge-auth-button:hover:not(:disabled) {
-  filter: brightness(1.12);
-  box-shadow:
-    0 0 28px rgba(139, 92, 246, 0.65),
-    0 10px 30px -12px rgba(37, 99, 235, 0.9);
-  transform: translateY(-1px);
-}
-.forge-auth-button:disabled {
-  opacity: 0.6;
 }
 
 /* Cards bg-surface: leve transparência com blur sobre o fundo com grade */
 @layer utilities {
   .bg-surface,
   .bg-card {
-    backdrop-filter: blur(14px);
-    -webkit-backdrop-filter: blur(14px);
+    backdrop-filter: blur(22px) saturate(1.35);
+    -webkit-backdrop-filter: blur(22px) saturate(1.35);
   }
 }
 
 /* Painel padrão do produto: translúcido com blur */
 .forge-panel {
-  background: var(--surface-glass);
+  background: var(--surface-solid);
   border: 1px solid var(--line);
-  border-radius: 22px;
+  border-radius: 24px;
   box-shadow: var(--shadow-panel);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
 }
 
 .forge-panel-title {
-  font-size: 0.68rem;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--text-muted);
+  font-family: var(--font-display);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+
+/* Número grande do painel: cifra pequena, centavos menores. */
+.forge-figure {
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.045em;
+  line-height: 0.9;
+  color: var(--text);
+}
+
+/* Etiqueta pequena com ícone, como os cabeçalhos dos cartões do painel. */
+.forge-icon-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  background: var(--accent);
+  color: var(--accent-foreground);
 }
 
 @media (prefers-reduced-motion: reduce) {
   * {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
-  }
-  .forge-auth-orb {
-    animation: none !important;
   }
 }
 
@@ -458,70 +351,38 @@ body {
 
 @layer components {
   .glass {
-    background:
-      radial-gradient(120% 70% at 50% 0%, var(--glass-sheen), transparent 60%),
-      linear-gradient(160deg, var(--glass-fill), var(--glass-fill-2));
-    border: 1px solid var(--glass-edge-soft);
-    border-top-color: var(--glass-edge);
-    box-shadow:
-      inset 0 1px 0 var(--glass-sheen),
-      inset 0 -1px 0 rgba(255, 255, 255, 0.03),
-      var(--glass-shadow);
-    backdrop-filter: blur(20px) saturate(170%);
-    -webkit-backdrop-filter: blur(20px) saturate(170%);
+    background: var(--surface-solid);
+    border: 1px solid var(--line);
+    box-shadow: var(--shadow-panel);
   }
 
   .glass-active {
-    background:
-      radial-gradient(120% 80% at 50% 0%, rgba(255, 255, 255, 0.22), transparent 60%),
-      linear-gradient(160deg, rgba(168, 85, 247, 0.32), rgba(79, 70, 229, 0.14));
-    border: 1px solid rgba(192, 132, 252, 0.35);
-    border-top-color: rgba(233, 213, 255, 0.6);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.28),
-      inset 0 0 14px rgba(168, 85, 247, 0.22),
-      0 0 22px -4px rgba(168, 85, 247, 0.55);
-    backdrop-filter: blur(20px) saturate(180%);
-    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    background: var(--accent);
+    border: 1px solid transparent;
+    color: var(--accent-foreground);
+    box-shadow: none;
   }
 
   .glass-bar {
-    background:
-      linear-gradient(180deg, rgba(255, 255, 255, 0.05), transparent 40%),
-      var(--glass-bar-fill);
-    border-color: var(--glass-edge-soft);
-    box-shadow: inset 0 1px 0 var(--glass-sheen);
-    backdrop-filter: blur(24px) saturate(180%);
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
+    background: color-mix(in oklab, var(--background) 88%, transparent);
+    border-color: transparent;
+    box-shadow: none;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
   }
 
   .glass-primary {
-    color: #fff;
-    background:
-      radial-gradient(120% 80% at 50% 0%, rgba(255, 255, 255, 0.35), transparent 55%),
-      linear-gradient(90deg, rgba(124, 58, 237, 0.92), rgba(79, 70, 229, 0.9) 55%, rgba(37, 99, 235, 0.9));
-    border: 1px solid rgba(255, 255, 255, 0.18);
-    border-top-color: rgba(255, 255, 255, 0.45);
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.4),
-      inset 0 -2px 6px rgba(30, 27, 75, 0.35),
-      0 10px 28px -12px rgba(124, 58, 237, 0.85);
-    backdrop-filter: blur(16px) saturate(180%);
-    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    color: var(--background);
+    background: var(--text);
+    border: 1px solid transparent;
+    box-shadow: none;
   }
   .glass-primary:hover {
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, 0.5),
-      inset 0 -2px 6px rgba(30, 27, 75, 0.35),
-      0 0 28px -4px rgba(139, 92, 246, 0.7);
+    background: var(--text-soft);
   }
 
-  /* Vidro "acende" um pouco ao passar o mouse. */
   .glass:hover {
-    border-top-color: var(--glass-edge);
-    background:
-      radial-gradient(120% 70% at 50% 0%, var(--glass-sheen), transparent 65%),
-      linear-gradient(160deg, var(--glass-fill), var(--glass-fill));
+    border-color: var(--line-strong);
   }
 }
 
@@ -532,4 +393,10 @@ body {
   .glass-bar {
     background-color: var(--surface-solid);
   }
+}
+
+/* Espaço da barra lateral: acompanha quando ela abre com os nomes (xl). */
+.forge-shell { transition: padding-left 250ms cubic-bezier(0.22, 1, 0.36, 1); }
+@media (min-width: 80rem) {
+  body:has(aside[data-rail="open"]) .forge-shell { padding-left: 16.5rem; }
 }

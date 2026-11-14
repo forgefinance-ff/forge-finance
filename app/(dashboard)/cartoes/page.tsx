@@ -1,7 +1,6 @@
-import { Trash2 } from "lucide-react";
-
-import { deleteCardAction } from "@/app/actions/cards";
+import { BankCard } from "@/components/cards/bank-card";
 import { CardForm } from "@/components/cards/card-form";
+import { DeleteCardButton } from "@/components/cards/delete-card-button";
 import { PayInvoiceForm } from "@/components/cards/pay-invoice-form";
 import { getAccounts } from "@/lib/accounts";
 import type { Invoice, InvoiceStatus } from "@/lib/card-invoice";
@@ -36,12 +35,9 @@ export default async function CartoesPage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-[22px] border border-line bg-surface p-8">
-        <span className="text-sm font-medium uppercase tracking-[0.25em] text-brand-soft">
-          Financeiro
-        </span>
+      <div className="pt-2 pb-2">
 
-        <h1 className="mt-2 text-4xl font-bold tracking-tight text-foreground">Cartões</h1>
+        <h1 className="text-4xl font-normal tracking-[-0.035em] text-foreground sm:text-5xl">Cartões</h1>
 
         <p className="mt-2 max-w-2xl text-muted-foreground">
           Compras no crédito contam como despesa na data da compra e vão para a fatura, sem mexer
@@ -52,31 +48,30 @@ export default async function CartoesPage() {
 
       {overview.map(({ card, invoices, summary }) => {
         const toPayTotal = summary.toPay.reduce((s, inv) => s + inv.pending, 0);
-        const recent = [...invoices].reverse().slice(0, 8);
+        const ordered = [...invoices].reverse();
+        const future = ordered.filter((inv) => inv.status === "futura").reverse();
+        const recent = ordered.filter((inv) => inv.status !== "futura").slice(0, 6);
+        const futureTotal = future.reduce((s, inv) => s + inv.total, 0);
 
         return (
           <section key={card.id} className="space-y-5 rounded-[22px] border border-line bg-surface p-6">
             <div className="flex flex-wrap items-start justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <span className="h-4 w-4 rounded-full" style={{ background: card.color }} />
+              <div className="flex flex-wrap items-center gap-5">
+                <BankCard
+                  name={card.name}
+                  color={card.color}
+                  detail={`vence dia ${card.due_day}`}
+                  className="w-[220px] sm:w-[240px]"
+                />
                 <div>
-                  <h2 className="text-xl font-semibold text-foreground">💳 {card.name}</h2>
+                  <h2 className="text-xl font-semibold text-foreground">{card.name}</h2>
                   <p className="text-sm text-muted-foreground">
                     Fecha dia {card.closing_day} · vence dia {card.due_day}
                   </p>
                 </div>
               </div>
 
-              <form action={deleteCardAction}>
-                <input type="hidden" name="id" value={card.id} />
-                <button
-                  type="submit"
-                  aria-label={`Excluir o cartão ${card.name}`}
-                  className="rounded-lg p-2 text-faint transition hover:bg-rose-500/10 hover:text-danger"
-                >
-                  <Trash2 className="h-5 w-5" />
-                </button>
-              </form>
+              <DeleteCardButton id={card.id} name={card.name} />
             </div>
 
             <div>
@@ -100,7 +95,7 @@ export default async function CartoesPage() {
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="rounded-2xl border border-line bg-tint p-4">
-                <p className="text-xs font-semibold uppercase tracking-wider text-faint">Fatura atual</p>
+                <p className="text-xs font-semibold text-faint">Fatura atual</p>
                 {summary.current ? (
                   <>
                     <p className="mt-1 text-2xl font-bold text-foreground">{brl(summary.current.total)}</p>
@@ -120,7 +115,7 @@ export default async function CartoesPage() {
                   summary.overdue.length > 0 ? "border-danger/30 bg-danger/5" : "border-line bg-tint"
                 )}
               >
-                <p className="text-xs font-semibold uppercase tracking-wider text-faint">A pagar</p>
+                <p className="text-xs font-semibold text-faint">A pagar</p>
                 {summary.toPay.length > 0 ? (
                   <>
                     <p className="mt-1 text-2xl font-bold text-foreground">{brl(toPayTotal)}</p>
@@ -165,8 +160,40 @@ export default async function CartoesPage() {
                 </p>
               )}
               {recent.map((inv) => (
-                <details key={inv.key} className="group rounded-2xl border border-line">
-                  <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-2 px-4 py-3">
+                <InvoiceRow key={inv.key} inv={inv} />
+              ))}
+              {future.length > 0 && (
+                <details className="group rounded-2xl border border-dashed border-line">
+                  <summary className="flex min-h-12 cursor-pointer list-none flex-wrap items-center justify-between gap-2 px-4 py-3 text-sm">
+                    <span className="font-medium text-foreground">
+                      Próximas faturas · {future.length} {future.length === 1 ? "mês" : "meses"} com parcelas
+                    </span>
+                    <span className="tabular-nums text-text-soft">{brl(futureTotal)}</span>
+                  </summary>
+                  <div className="space-y-2 border-t border-line p-2">
+                    {future.map((inv) => (
+                      <InvoiceRow key={inv.key} inv={inv} />
+                    ))}
+                  </div>
+                </details>
+              )}
+            </div>
+          </section>
+        );
+      })}
+
+      <div>
+        <h2 className="mb-3 text-lg font-semibold text-foreground">Novo cartão</h2>
+        <CardForm />
+      </div>
+    </div>
+  );
+}
+
+function InvoiceRow({ inv }: { inv: Invoice }) {
+  return (
+                <details className="group rounded-2xl border border-line">
+                  <summary className="flex min-h-12 cursor-pointer list-none flex-wrap items-center justify-between gap-2 px-4 py-3">
                     <span className="flex items-center gap-2">
                       <span className="font-medium text-foreground">{invoiceName(inv)}</span>
                       <span
@@ -207,16 +234,5 @@ export default async function CartoesPage() {
                     ))}
                   </ul>
                 </details>
-              ))}
-            </div>
-          </section>
-        );
-      })}
-
-      <div>
-        <h2 className="mb-3 text-lg font-semibold text-foreground">Novo cartão</h2>
-        <CardForm />
-      </div>
-    </div>
   );
 }

@@ -1,6 +1,9 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+
+import { transferBetweenAccounts, type ActionResult } from "@/app/actions/transactions";
 
 import { TransactionForm } from "@/components/transactions/transaction-form";
 import {
@@ -16,7 +19,7 @@ import type { Card } from "@/lib/cards";
 import type { Category } from "@/lib/categories";
 
 type Props = {
-  action: (formData: FormData) => Promise<void>;
+  action: (formData: FormData) => Promise<ActionResult | void>;
   accounts: Account[];
   categories: Category[];
   cards?: Card[];
@@ -33,6 +36,7 @@ export function NewTransactionTrigger({
   className,
 }: Props) {
   const [open, setOpen] = useState(false);
+  const router = useRouter();
 
   return (
     <>
@@ -41,7 +45,7 @@ export function NewTransactionTrigger({
         className={className ?? "rounded-xl"}
         onClick={() => setOpen(true)}
       >
-        <Plus className="mr-2 h-4 w-4" />
+        <Plus className="mr-2 h-4 w-4" aria-hidden />
         {label}
       </Button>
 
@@ -51,16 +55,21 @@ export function NewTransactionTrigger({
           className="w-full overflow-y-auto sm:max-w-xl"
         >
           <SheetHeader>
-            <SheetTitle>Nova Transação</SheetTitle>
+            <SheetTitle>Nova transação</SheetTitle>
           </SheetHeader>
 
           <div className="p-4">
             <TransactionForm
+              bare
               action={action}
+              transferAction={transferBetweenAccounts}
               accounts={accounts}
               categories={categories}
               cards={cards}
-              onSuccess={() => setOpen(false)}
+              onSuccess={() => {
+                setOpen(false);
+                router.refresh();
+              }}
             />
           </div>
         </SheetContent>

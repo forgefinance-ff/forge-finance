@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Cópias de segurança de telas antigas (não fazem parte do app).
+    ".hallmark/**",
   ]),
 ]);
 

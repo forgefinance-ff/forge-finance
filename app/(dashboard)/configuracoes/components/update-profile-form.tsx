@@ -31,17 +31,21 @@ export function UpdateProfileForm({ initialName }: Props) {
 
   return (
     <div className="space-y-4">
-      <Input
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="Seu nome"
-      />
+      <div>
+        <label htmlFor="profile-name" className="mb-1.5 block text-sm font-medium text-text-soft">
+          Como quer ser chamado
+        </label>
+        <Input
+          id="profile-name"
+          autoComplete="name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Seu nome"
+        />
+      </div>
 
-      <Button
-        onClick={handleSave}
-        disabled={loading}
-      >
-        {loading ? "Salvando..." : "Salvar Nome"}
+      <Button className="min-h-11" onClick={handleSave} disabled={loading}>
+        {loading ? "Salvando..." : "Salvar nome"}
       </Button>
     </div>
   );

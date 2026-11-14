@@ -1,85 +1,49 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { getActiveScope } from "@/lib/scope-server";
+import { todayInBrazil } from "@/lib/dates";
+import { getTotals } from "@/lib/totals";
 import { shiftDate, type ReportPeriod } from "./period";
 
-export async function getSummaryData(period: ReportPeriod) {
+export type SummaryData = {
+  income: number;
+  expenses: number;
+  balance: number;
+  netWorth: number;
+  /** Lançamentos com data depois de hoje (parcelas do cartão, agendados). */
+  upcomingExpenses: number;
+  upcomingIncome: number;
+};
+
+export async function getSummaryData(period: ReportPeriod): Promise<SummaryData> {
+  const empty = { income: 0, expenses: 0, balance: 0, netWorth: 0, upcomingExpenses: 0, upcomingIncome: 0 };
+  const user = await getAuthUser();
+  if (!user) return empty;
+
   const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    return { income: 0, expenses: 0, balance: 0, netWorth: 0 };
-  }
-
   const scope = await getActiveScope();
+  const today = todayInBrazil();
 
-  let transactionsQuery = supabase
-    .from("transactions")
-    .select("type, amount")
-    .eq("user_id", user.id)
-    .eq("scope", scope)
-    .eq("kind", "regular"); // aportes, empréstimos e reembolsos ficam fora do resultado
-
-  if (period.from) {
-    transactionsQuery = transactionsQuery.gte("transaction_date", period.from);
-  }
-  if (period.to) {
-    transactionsQuery = transactionsQuery.lt(
-      "transaction_date",
-      shiftDate(period.to, 1)
-    );
-  }
-
-  const [
-    { data: transactions, error: transactionsError },
-    { data: accounts, error: accountsError },
-    { data: investments, error: investmentsError },
-  ] = await Promise.all([
-    transactionsQuery,
-    supabase
-      .from("accounts")
-      .select("current_balance")
-      .eq("user_id", user.id)
-      .eq("scope", scope),
-    supabase
-      .from("investments")
-      .select("current_value")
-      .eq("user_id", user.id)
-      .eq("scope", scope),
+  const [totals, upcoming, accountsRes, investmentsRes] = await Promise.all([
+    getTotals(supabase, scope, period.from, period.to),
+    getTotals(supabase, scope, shiftDate(today, 1), null),
+    supabase.from("accounts_today").select("balance_today").eq("user_id", user.id).eq("scope", scope),
+    supabase.from("investments").select("current_value").eq("user_id", user.id).eq("scope", scope),
   ]);
 
-  if (transactionsError) throw transactionsError;
-  if (accountsError) throw accountsError;
-  if (investmentsError) throw investmentsError;
+  if (accountsRes.error) throw accountsRes.error;
+  if (investmentsRes.error) throw investmentsRes.error;
 
-  let income = 0;
-  let expenses = 0;
-
-  for (const transaction of transactions ?? []) {
-    const value = Number(transaction.amount);
-
-    if (transaction.type === "income") income += value;
-    else expenses += value;
-  }
-
-  // Patrimônio é sempre o valor atual (contas + investimentos),
-  // não depende do período selecionado.
+  // Patrimônio é sempre o valor de hoje (contas + investimentos).
   const netWorth =
-    (accounts ?? []).reduce(
-      (sum, account) => sum + Number(account.current_balance),
-      0
-    ) +
-    (investments ?? []).reduce(
-      (sum, investment) => sum + Number(investment.current_value ?? 0),
-      0
-    );
+    (accountsRes.data ?? []).reduce((sum, a) => sum + Number(a.balance_today), 0) +
+    (investmentsRes.data ?? []).reduce((sum, i) => sum + Number(i.current_value ?? 0), 0);
 
   return {
-    income,
-    expenses,
-    balance: income - expenses,
-    netWorth,
+    income: totals.income,
+    expenses: totals.expense,
+    balance: totals.result,
+    netWorth: Math.round(netWorth * 100) / 100,
+    upcomingExpenses: upcoming.expense,
+    upcomingIncome: upcoming.income,
   };
 }

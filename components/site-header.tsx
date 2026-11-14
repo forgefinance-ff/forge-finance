@@ -4,13 +4,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { SearchIcon, Settings } from "lucide-react";
+import { MessageCircle, SearchIcon, Settings } from "lucide-react";
 
 import { getAllPages } from "@/components/app-sidebar";
 import { ScopeSwitcher } from "@/components/scope-switcher";
 import { ThemeToggle } from "@/components/theme-toggle";
 import type { Scope } from "@/lib/scope";
-import { cn } from "@/lib/utils";
 
 
 function normalize(value: string) {
@@ -27,7 +26,7 @@ type SiteHeaderProps = {
   scope: Scope;
 };
 
-export function SiteHeader({ userName, avatarUrl, aiConfigured, scope }: SiteHeaderProps) {
+export function SiteHeader({ userName, avatarUrl, scope }: SiteHeaderProps) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -52,96 +51,86 @@ export function SiteHeader({ userName, avatarUrl, aiConfigured, scope }: SiteHea
     .join("");
 
   return (
-    <header className="glass-bar sticky top-0 z-30 flex h-16 items-center justify-between gap-3 border-b px-4 lg:px-8">
-      <div className="flex items-center gap-3">
-        <Link href="/dashboard" className="flex items-center gap-2.5">
-          <Image
-            src="/icon-f.png"
-            alt=""
-            width={36}
-            height={36}
-            priority
-            className="h-9 w-9 object-contain drop-shadow-[0_0_10px_rgba(139,92,246,0.45)] md:hidden"
-          />
-          <span className="hidden text-lg font-semibold tracking-tight text-foreground min-[420px]:inline">
-            Forge <span className="text-brand-soft">Finance</span>
-          </span>
-        </Link>
+    <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 bg-background/95 px-4 backdrop-blur-md sm:h-20 lg:px-8">
+      <Link href="/dashboard" className="flex items-center gap-2.5">
+        <Image
+          src="/icon-f.png"
+          alt=""
+          width={32}
+          height={32}
+          priority
+          className="h-8 w-8 object-contain"
+        />
+        <span className="hidden font-[family-name:var(--font-app-display)] text-xl font-medium tracking-tight text-foreground min-[420px]:inline">
+          Forge Finance
+        </span>
+      </Link>
 
-        <div
-          className={cn(
-            "ml-2 hidden items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] lg:flex",
-            aiConfigured
-              ? "glass-active text-brand-soft"
-              : "glass text-muted-foreground"
-          )}
-          title={
-            aiConfigured
-              ? "Chave do provedor de IA configurada no servidor."
-              : "Defina ANTHROPIC_API_KEY no servidor para ativar a IA."
-          }
-        >
-          <span
-            className={cn(
-              "h-2 w-2 rounded-full",
-              aiConfigured ? "bg-brand-bright shadow-[0_0_8px_#a855f7]" : "bg-faint"
+      <div className="relative hidden sm:block">
+        <SearchIcon className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-faint" />
+        <input
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setOpen(true);
+          }}
+          onFocus={() => setOpen(true)}
+          onBlur={() => setTimeout(() => setOpen(false), 120)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && results[0]) go(results[0].url);
+            if (e.key === "Escape") setOpen(false);
+          }}
+          aria-label="Ir para uma página"
+          placeholder="Ir para uma página…"
+          className="glass h-11 w-64 rounded-full pl-11 pr-4 text-sm text-foreground placeholder:text-faint outline-none transition-[border-color,box-shadow] focus-visible:border-brand focus-visible:ring-2 focus-visible:ring-brand/20 lg:w-96"
+        />
+
+        {open && query.trim() && (
+          <ul className="absolute left-0 top-13 mt-2 w-full overflow-hidden rounded-2xl border border-line bg-surface-solid p-1 shadow-[var(--shadow-panel)]">
+            {results.length === 0 ? (
+              <li className="px-3 py-2 text-sm text-faint">Nenhuma página encontrada</li>
+            ) : (
+              results.map((page) => (
+                <li key={page.url}>
+                  <button
+                    type="button"
+                    onMouseDown={() => go(page.url)}
+                    className="w-full rounded-xl px-3 py-2 text-left text-sm text-text-soft transition-colors hover:bg-accent"
+                  >
+                    {page.title}
+                  </button>
+                </li>
+              ))
             )}
-          />
-          {aiConfigured ? "IA: chave configurada" : "IA: não configurada"}
-        </div>
+          </ul>
+        )}
       </div>
 
       <div className="flex items-center gap-2 sm:gap-3">
         <ScopeSwitcher scope={scope} className="md:hidden" />
 
-        <div className="relative hidden sm:block">
-          <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-faint" />
-          <input
-            value={query}
-            onChange={(e) => {
-              setQuery(e.target.value);
-              setOpen(true);
-            }}
-            onFocus={() => setOpen(true)}
-            onBlur={() => setTimeout(() => setOpen(false), 120)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter" && results[0]) go(results[0].url);
-              if (e.key === "Escape") setOpen(false);
-            }}
-            aria-label="Ir para uma página"
-            placeholder="Ir para uma página…"
-            className="glass h-10 w-56 rounded-full pl-10 pr-4 text-sm text-foreground placeholder:text-faint outline-none transition focus:border-brand-bright/50 focus:ring-2 focus:ring-brand-bright/20 lg:w-72"
-          />
-
-          {open && query.trim() && (
-            <ul className="absolute right-0 top-12 w-full overflow-hidden rounded-2xl border border-line bg-surface-solid p-1 shadow-2xl">
-              {results.length === 0 ? (
-                <li className="px-3 py-2 text-sm text-faint">
-                  Nenhuma página encontrada
-                </li>
-              ) : (
-                results.map((page) => (
-                  <li key={page.url}>
-                    <button
-                      type="button"
-                      onMouseDown={() => go(page.url)}
-                      className="w-full rounded-xl px-3 py-2 text-left text-sm text-text-soft transition hover:bg-accent"
-                    >
-                      {page.title}
-                    </button>
-                  </li>
-                ))
-              )}
-            </ul>
-          )}
-        </div>
-
         <ThemeToggle />
+
+        <Link
+          href="/whatsapp"
+          className="hidden h-11 items-center gap-2 rounded-full bg-success px-5 text-sm font-semibold text-white dark:text-background transition-[filter] hover:brightness-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-success sm:flex"
+        >
+          <MessageCircle className="h-4 w-4" aria-hidden />
+          No WhatsApp
+        </Link>
+
+        <Link
+          href="/whatsapp"
+          aria-label="No WhatsApp"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-success text-white dark:text-background sm:hidden"
+        >
+          <MessageCircle className="h-[18px] w-[18px]" aria-hidden />
+        </Link>
 
         <Link
           href="/configuracoes"
           aria-label="Configurações"
-          className="glass flex h-10 w-10 items-center justify-center rounded-full text-text-soft transition hover:text-brand-soft"
+          className="glass hidden h-10 w-10 items-center justify-center rounded-full text-text-soft transition-colors hover:text-foreground sm:flex"
         >
           <Settings className="h-[18px] w-[18px]" />
         </Link>
@@ -149,7 +138,7 @@ export function SiteHeader({ userName, avatarUrl, aiConfigured, scope }: SiteHea
         <Link
           href="/configuracoes"
           aria-label={`Perfil de ${userName}`}
-          className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-brand to-brand-indigo text-sm font-semibold text-white ring-2 ring-brand/30"
+          className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-accent text-sm font-semibold text-accent-foreground"
         >
           {avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element

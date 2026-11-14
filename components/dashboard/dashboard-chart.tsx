@@ -23,6 +23,7 @@ import {
 
 import type { ChartPoint } from "@/lib/dashboard";
 import { formatCurrency } from "@/lib/formatters";
+import { SoftText, TabsPill, useSlidingPill } from "@/components/motion";
 import { cn } from "@/lib/utils";
 
 type DashboardChartProps = {
@@ -30,6 +31,9 @@ type DashboardChartProps = {
   chart30d: ChartPoint[];
   chart12m: ChartPoint[];
   totalBalance: number;
+  title?: string;
+  /** Mostra o patrimônio atual acima do gráfico. */
+  showBalance?: boolean;
 };
 
 type Period = "7D" | "30D" | "12M";
@@ -52,8 +56,11 @@ export function DashboardChart({
   chart30d,
   chart12m,
   totalBalance,
+  title = "Patrimônio e fluxo de caixa",
+  showBalance = true,
 }: DashboardChartProps) {
   const [period, setPeriod] = useState<Period>("12M");
+  const { containerRef, pillRef } = useSlidingPill<HTMLDivElement>(period);
 
   const data = useMemo(() => {
     if (period === "7D") return chart7d;
@@ -70,29 +77,36 @@ export function DashboardChart({
     <section className="forge-panel flex flex-col p-5">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div>
-          <p className="forge-panel-title">Patrimônio e fluxo de caixa</p>
-          <p className="mt-3 text-xs text-muted-foreground">Patrimônio atual</p>
-          <p className="text-3xl font-semibold tracking-tight text-foreground">
-            {formatCurrency(totalBalance)}
-          </p>
+          <p className="forge-panel-title">{title}</p>
+          {showBalance && (
+            <>
+              <p className="mt-3 text-xs text-muted-foreground">Patrimônio atual</p>
+              <p className="text-3xl font-semibold tracking-tight text-foreground">
+                {formatCurrency(totalBalance)}
+              </p>
+            </>
+          )}
         </div>
 
         <div
           role="tablist"
           aria-label="Período do gráfico"
-          className="flex self-start rounded-xl border border-line bg-black/30 p-1"
+          ref={containerRef}
+          className="relative flex self-start rounded-full border border-line bg-surface-solid p-1"
         >
+          <TabsPill pillRef={pillRef} />
           {periods.map((item) => (
             <button
               key={item.id}
               type="button"
               role="tab"
               aria-selected={period === item.id}
+              data-active={period === item.id}
               onClick={() => setPeriod(item.id)}
               className={cn(
-                "rounded-lg px-3 py-1.5 text-xs font-medium transition",
+                "t-tab rounded-full px-3 py-1.5 text-xs font-medium",
                 period === item.id
-                  ? "bg-brand text-white shadow-[0_0_16px_rgba(124,58,237,0.5)]"
+                  ? "text-background"
                   : "text-muted-foreground hover:text-foreground"
               )}
             >
@@ -111,18 +125,17 @@ export function DashboardChart({
               result >= 0 ? "text-success" : "text-danger"
             )}
           >
-            {result >= 0 ? "+" : "−"}
-            {formatCurrency(Math.abs(result))}
+            <SoftText text={`${result >= 0 ? "+" : "−"}${formatCurrency(Math.abs(result))}`} />
           </p>
         </div>
         <div className="flex items-center gap-4 pb-1 text-xs text-muted-foreground">
           <span className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-full bg-brand-bright" />
-            Receitas {formatCurrency(income)}
+            Receitas <SoftText text={formatCurrency(income)} />
           </span>
           <span className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-full bg-rose-400" />
-            Despesas {formatCurrency(expense)}
+            Despesas <SoftText text={formatCurrency(expense)} />
           </span>
         </div>
       </div>

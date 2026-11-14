@@ -4,14 +4,13 @@ import {
   type DasPayment,
   type MeiSettings,
 } from "@/lib/mei-shared";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
+import { getTotals } from "@/lib/totals";
 
 async function getUserClient() {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   return { supabase, user };
 }
@@ -61,19 +60,9 @@ export async function getBusinessRevenue(year: number): Promise<number> {
   const { supabase, user } = await getUserClient();
   if (!user) return 0;
 
-  const { data, error } = await supabase
-    .from("transactions")
-    .select("amount")
-    .eq("user_id", user.id)
-    .eq("scope", "business")
-    .eq("type", "income")
-    .eq("kind", "regular") // aporte, empréstimo e reembolso não são faturamento
-    .gte("transaction_date", `${year}-01-01`)
-    .lte("transaction_date", `${year}-12-31`);
-
-  if (error) throw error;
-
-  return (data ?? []).reduce((sum, t) => sum + Number(t.amount), 0);
+  // Somado no banco (aporte, empréstimo e reembolso não são faturamento).
+  const totals = await getTotals(supabase, "business", `${year}-01-01`, `${year}-12-31`);
+  return totals.income;
 }
 
 export type DasReminder =

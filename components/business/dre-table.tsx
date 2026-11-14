@@ -50,7 +50,7 @@ export function DreTable({ dre }: { dre: DreMonth[] }) {
       <div className="mt-4 overflow-x-auto">
         <table className="w-full min-w-[640px] text-sm">
           <thead>
-            <tr className="border-b border-line text-xs uppercase tracking-wider text-faint">
+            <tr className="border-b border-line text-xs text-faint">
               <th className="py-2 pr-3 text-left font-semibold"> </th>
               {dre.map((m) => (
                 <th key={m.month} className="px-2 py-2 text-right font-semibold">
@@ -100,7 +100,7 @@ export function DreTable({ dre }: { dre: DreMonth[] }) {
 
       {withdrawals && (
         <div className="mt-4 overflow-x-auto">
-          <p className="mb-1 text-xs font-semibold uppercase tracking-wider text-faint">
+          <p className="mb-1 text-xs font-semibold text-faint">
             Fora do resultado
           </p>
           <table className="w-full min-w-[640px] text-sm">

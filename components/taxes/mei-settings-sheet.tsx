@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/sheet";
 import { ACTIVITY_LABEL, type MeiSettings } from "@/lib/mei-shared";
 import { amountToInput } from "@/lib/money";
+import { MoneyInput } from "@/components/ui/money-input";
 
 const labelClass = "mb-2 block text-sm text-text-soft";
 const hintClass = "mt-1.5 text-xs text-faint";
@@ -98,10 +99,9 @@ export function MeiSettingsSheet({ settings, label = "Configurações do MEI", v
                 <label htmlFor="mei-limit" className={labelClass}>
                   Limite anual de faturamento (R$)
                 </label>
-                <input
+                <MoneyInput
                   id="mei-limit"
                   name="annual_limit"
-                  inputMode="decimal"
                   defaultValue={amountToInput(settings?.annual_limit)}
                   placeholder="Conferir no gov.br"
                   className={inputClass}
@@ -112,10 +112,9 @@ export function MeiSettingsSheet({ settings, label = "Configurações do MEI", v
                 <label htmlFor="mei-das" className={labelClass}>
                   Valor mensal do DAS (R$)
                 </label>
-                <input
+                <MoneyInput
                   id="mei-das"
                   name="das_amount"
-                  inputMode="decimal"
                   defaultValue={amountToInput(settings?.das_amount)}
                   placeholder="Conferir no gov.br"
                   className={inputClass}

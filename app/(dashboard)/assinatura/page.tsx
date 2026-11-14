@@ -6,7 +6,7 @@ import { getAiStatus } from "@/lib/ai/config";
 import { billingEnabled } from "@/lib/billing/config";
 import { getUserEntitlement, isProActive } from "@/lib/billing/get-user-plan";
 import { PLAN_CATALOG, PRO_PRICING, formatBRL } from "@/lib/billing/plans";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 
 const STATUS_LABEL: Record<string, string> = {
   beta: "Acesso beta gratuito",
@@ -28,9 +28,7 @@ export default async function SubscriptionPage({
 }) {
   const { checkout, portal } = await searchParams;
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
   if (!user) redirect("/login");
 
   const entitlement = await getUserEntitlement(user.id);
@@ -58,9 +56,8 @@ export default async function SubscriptionPage({
 
   return (
     <div className="mx-auto max-w-4xl space-y-7">
-      <header className="rounded-[22px] border border-line bg-surface p-7 sm:p-9">
-        <span className="text-sm font-medium uppercase tracking-[0.2em] text-brand-soft">Sua conta</span>
-        <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">Plano e assinatura</h1>
+      <header className="pt-2 pb-2">
+        <h1 className="text-4xl font-normal tracking-[-0.035em] text-foreground sm:text-5xl">Plano e assinatura</h1>
         <p className="mt-3 text-sm leading-6 text-muted-foreground">
           {enabled ? "Acompanhe seu plano, a renovação e o uso da IA." : "O Forge Finance está em beta: tudo liberado e sem cobranças."}
         </p>
@@ -81,7 +78,7 @@ export default async function SubscriptionPage({
         </p>
       )}
 
-      <section className="rounded-2xl border border-violet-400/25 bg-gradient-to-br from-violet-500/[0.12] to-surface p-6 sm:p-8">
+      <section className="rounded-2xl border border-line bg-accent p-6 sm:p-8">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <p className="text-sm text-muted-foreground">Seu plano atual</p>
@@ -166,7 +163,7 @@ export default async function SubscriptionPage({
             </div>
             <div className="mt-3 h-2 overflow-hidden rounded-full bg-tint">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-400"
+                className="h-full rounded-full bg-brand"
                 style={{ width: `${limit > 0 ? Math.min(100, (used / limit) * 100) : 0}%` }}
               />
             </div>

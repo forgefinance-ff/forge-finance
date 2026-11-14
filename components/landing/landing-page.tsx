@@ -1,34 +1,31 @@
+import { LearnChevron, PopNumber, Reveal, StaggerReveal } from "@/components/motion";
+import { FaqList } from "./faq";
 import Image from "next/image";
 import Link from "next/link";
 import {
-  ArrowRight,
-  Building2,
+  BarChart3,
+  CalendarRange,
   Lock,
   MessageCircle,
+  MessageSquare,
+  Mic,
+  PiggyBank,
   RotateCcw,
   ShieldCheck,
-  Sparkles,
   Tags,
-  TrendingUpIcon,
-  Undo2,
+  Target,
 } from "lucide-react";
 
 import { billingEnabled } from "@/lib/billing/config";
 import { PLAN_CATALOG, PRO_PRICING } from "@/lib/billing/plans";
 
-import { AutoChat, Bubble, type ChatMessage } from "./chat";
 import { DayTimeline } from "./day-timeline";
+import FoldText from "./fold-text";
 import { Pricing } from "./pricing";
 import { TryIt } from "./try-it";
 
-const HERO_SCRIPT: ChatMessage[] = [
-  { from: "user", text: "gastei 62 na farmácia", time: "09:12" },
-  { from: "bot", text: "Registrado! ✍️\n🔴 Farmácia — *R$ 62,00* • Saúde\nEsse mês em Saúde: *R$ 214,00*", buttons: ["↩️ Desfazer"], time: "09:12" },
-  { from: "user", text: "uber 23,90", time: "12:47" },
-  { from: "bot", text: "Registrado! ✍️\n🔴 Uber — *R$ 23,90* • Transporte", buttons: ["↩️ Desfazer"], time: "12:47" },
-  { from: "user", text: "quanto sobrou esse mês?", time: "20:05" },
-  { from: "bot", text: "Sobraram *R$ 1.330* até agora, e faltam 12 dias para o mês acabar. 💜", time: "20:05" },
-];
+import "./landing.css";
+
 
 const TRUST = [
   { icon: MessageCircle, title: "API oficial do WhatsApp", text: "Meta Business Platform" },
@@ -37,55 +34,19 @@ const TRUST = [
   { icon: RotateCcw, title: "Sem fidelidade", text: "Cancele quando quiser" },
 ];
 
-const FEATURES: {
-  icon: typeof Tags;
-  title: string;
-  text: string;
-  chat: [ChatMessage, ChatMessage];
-}[] = [
-  {
-    icon: Tags,
-    title: "Cada gasto já entra na categoria certa.",
-    text: "Você escreve do seu jeito. O Forge entende valor, categoria, conta e data, e lança no app na hora.",
-    chat: [
-      { from: "user", text: "pizza 74 sexta no Nubank" },
-      { from: "bot", text: "Registrado! ✍️\n🔴 Pizza — *R$ 74,00*\nDelivery • Nubank • sexta", buttons: ["↩️ Desfazer"] },
-    ],
-  },
-  {
-    icon: TrendingUpIcon,
-    title: "Pergunte qualquer coisa sobre o seu dinheiro.",
-    text: "Saldo, gastos por categoria, o que vence na semana. A resposta vem com os seus números de verdade.",
-    chat: [
-      { from: "user", text: "quanto gastei com delivery esse mês?" },
-      {
-        from: "bot",
-        text: "*R$ 612,00* em Delivery, 34% dos seus gastos.",
-        bars: [
-          { label: "Delivery", value: 100, display: "R$ 612" },
-          { label: "Mês passado", value: 74, display: "R$ 455" },
-        ],
-      },
-    ],
-  },
-  {
-    icon: Undo2,
-    title: "Errou? Desfaz com um toque.",
-    text: "Lançamentos claros são gravados direto. Se algo saiu errado, um toque em Desfazer resolve. Exclusões e mudanças sempre pedem confirmação.",
-    chat: [
-      { from: "user", text: "gasolina 200" },
-      { from: "bot", text: "Registrado! ✍️\n🔴 Gasolina — *R$ 200,00* • Transporte", buttons: ["↩️ Desfazer"] },
-    ],
-  },
-  {
-    icon: Building2,
-    title: "Pessoal e Empresa (MEI) no mesmo lugar.",
-    text: "Contas a pagar e receber, clientes e impostos do MEI separados das suas finanças pessoais, sem misturar nada.",
-    chat: [
-      { from: "user", text: "como está meu faturamento do MEI?" },
-      { from: "bot", text: "🏢 Faturamento em 2026: *R$ 38.400*\nVocê está em 47% do limite que configurou." },
-    ],
-  },
+const PANEL_TAGS = [
+  { icon: PiggyBank, label: "Saldo" },
+  { icon: Tags, label: "Gastos por categoria" },
+  { icon: Target, label: "Metas" },
+  { icon: CalendarRange, label: "Orçamento do mês" },
+  { icon: BarChart3, label: "Relatórios por período" },
+];
+
+const CATEGORIES: [string, number, string][] = [
+  ["Delivery", 100, "R$ 612"],
+  ["Mercado", 88, "R$ 540"],
+  ["Transporte", 51, "R$ 310"],
+  ["Assinaturas", 31, "R$ 189"],
 ];
 
 const FAQ = [
@@ -129,273 +90,228 @@ export function LandingPage() {
   const ctaHref = "#planos";
 
   return (
-    <div className="min-h-screen bg-[#09080f] text-white antialiased">
-      {/* Cabeçalho */}
-      <header className="sticky top-0 z-50 px-3 pt-3">
-        <nav className="mx-auto flex max-w-6xl items-center justify-between rounded-full border border-white/10 bg-[#09080f]/80 py-2 pl-4 pr-2 backdrop-blur-xl">
-          <Link href="/" className="flex items-center gap-2">
-            <Image src="/icon-f.png" alt="" width={28} height={28} className="h-7 w-7" priority />
-            <span className="text-[15px] font-semibold tracking-tight">Forge Finance</span>
-          </Link>
-          <div className="flex items-center gap-1">
-            <Link href="/login" className="hidden rounded-full px-4 py-2 text-sm text-white/70 hover:text-white sm:block">
-              Entrar
+    <div className="uv min-h-screen">
+      {/* Barra flutuante */}
+      <header className="uv-nav">
+        <div className="uv-wrap">
+          <nav className="uv-nav__pill" aria-label="Principal">
+            <Link href="/" className="uv-wordmark">
+              <Image src="/icon-f.png" alt="" width={28} height={28} className="h-7 w-7" priority />
+              Forge Finance
             </Link>
-            <Link
-              href={ctaHref}
-              className="flex items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.06] px-4 py-2 text-sm font-medium hover:bg-white/10"
-            >
-              Começar agora <ArrowRight className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-        </nav>
+            <div className="uv-nav__links">
+              <Link href="#como-funciona" className="uv-link uv-link--muted">Como funciona</Link>
+              <Link href="#um-dia" className="uv-link uv-link--muted">Um dia</Link>
+              <Link href="#planos" className="uv-link uv-link--muted">Planos</Link>
+              <Link href="#perguntas" className="uv-link uv-link--muted">Perguntas</Link>
+            </div>
+            <div className="uv-nav__end">
+              <Link href="/login" className="uv-link hidden sm:inline">Entrar</Link>
+              <Link href={ctaHref} className="uv-btn uv-btn--primary uv-btn--sm">Começar agora</Link>
+            </div>
+          </nav>
+        </div>
       </header>
 
-      {/* Herói */}
-      <section className="relative overflow-hidden px-5 pb-16 pt-14 sm:pt-20">
-        <div className="pointer-events-none absolute left-1/2 top-0 h-[520px] w-[720px] -translate-x-1/2 rounded-full bg-violet-600/25 blur-[120px]" />
-        <div className="relative mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2">
-          <div className="text-center lg:text-left">
-            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.04] px-3 py-1 text-xs text-white/80">
-              <Sparkles className="h-3.5 w-3.5 text-violet-300" /> Controle financeiro pelo WhatsApp
-            </span>
-            <h1 className="mt-5 text-4xl font-semibold leading-[1.08] tracking-tight sm:text-6xl">
-              Sua vida financeira organizada numa conversa.
-            </h1>
-            <p className="mx-auto mt-5 max-w-xl text-base leading-7 text-white/60 lg:mx-0">
-              Mande um áudio ou uma mensagem com o gasto. O Forge registra, categoriza e responde quanto sobrou, sem planilha e sem
-              abrir app nenhum.
-            </p>
-            <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start">
-              <Link
-                href={ctaHref}
-                className="flex h-12 items-center gap-2 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-500 px-7 text-[15px] font-semibold shadow-lg shadow-violet-600/30 hover:brightness-110"
-              >
-                Quero organizar meu dinheiro <ArrowRight className="h-4 w-4" />
-              </Link>
-              <Link href="#como-funciona" className="text-sm text-white/60 underline-offset-4 hover:text-white hover:underline">
-                Ver como funciona
-              </Link>
+      <main>
+        {/* Herói centrado */}
+        <section className="uv-hero uv-center">
+          <StaggerReveal className="uv-wrap">
+            <h1 className="t-stagger-line">Sua vida financeira organizada numa conversa.</h1>
+            <p className="uv-lead t-stagger-line t-stagger-line--2">Mande o gasto por mensagem ou áudio. O Forge registra e responde.</p>
+            <div className="uv-hero__actions t-stagger-line t-stagger-line--3">
+              <Link href={ctaHref} className="uv-btn uv-btn--primary t-learn">Quero organizar meu dinheiro <LearnChevron /></Link>
+              <Link href="#como-funciona" className="uv-btn uv-btn--ghost t-learn">Ver como funciona <LearnChevron /></Link>
             </div>
-          </div>
-          <AutoChat script={HERO_SCRIPT} />
-        </div>
-      </section>
+          </StaggerReveal>
+        </section>
 
-      {/* Selos */}
-      <section className="border-y border-white/[0.06] bg-white/[0.02] px-5 py-6">
-        <ul className="mx-auto grid max-w-6xl grid-cols-2 gap-5 lg:grid-cols-4">
-          {TRUST.map(({ icon: Icon, title, text }) => (
-            <li key={title} className="flex items-center gap-3">
-              <Icon className="h-5 w-5 shrink-0 text-violet-300" />
-              <div className="leading-tight">
-                <p className="text-sm font-medium">{title}</p>
-                <p className="text-xs text-white/50">{text}</p>
-              </div>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      {/* Teste agora (claro) */}
-      <section id="como-funciona" className="scroll-mt-24 bg-[#f6f5fa] px-5 py-20 text-[#14111f]">
-        <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2">
-          <div className="text-center lg:text-left">
-            <p className="text-sm font-semibold uppercase tracking-[0.18em] text-violet-700">Teste agora</p>
-            <h2 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">Toque num pedido e veja o Forge resolver.</h2>
-            <p className="mx-auto mt-4 max-w-lg leading-7 text-[#5b5575] lg:mx-0">
-              É exatamente assim no seu WhatsApp. Sem menus, sem formulários: você fala do seu jeito e o Forge entende.
-            </p>
-            <p className="mt-3 text-xs text-[#8a84a3]">Simulação com dados de exemplo.</p>
-          </div>
-          <TryIt />
-        </div>
-      </section>
-
-      {/* Benefícios (escuro) */}
-      <section className="px-5 py-20">
-        <div className="mx-auto max-w-6xl">
-          <h2 className="mx-auto max-w-2xl text-center text-3xl font-semibold tracking-tight sm:text-4xl">
-            Tudo o que um app de finanças faz, só que por mensagem.
-          </h2>
-          <div className="mt-12 grid gap-5 md:grid-cols-2">
-            {FEATURES.map(({ icon: Icon, title, text, chat }) => (
-              <article key={title} className="flex flex-col rounded-3xl border border-white/[0.07] bg-white/[0.03] p-6">
-                <Icon className="h-6 w-6 text-violet-300" />
-                <h3 className="mt-4 text-xl font-semibold">{title}</h3>
-                <p className="mt-2 text-sm leading-6 text-white/60">{text}</p>
-                <div className="mt-6 space-y-2 rounded-2xl bg-[#0b0a12] p-3">
-                  <Bubble message={chat[0]} />
-                  <Bubble message={chat[1]} />
-                </div>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Painel (claro) */}
-      <section className="bg-[#f6f5fa] px-5 py-20 text-[#14111f]">
-        <div className="mx-auto grid max-w-6xl items-center gap-12 lg:grid-cols-2">
-          <div className="text-center lg:text-left">
-            <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-              Tudo o que você manda pelo WhatsApp fica organizado no painel.
-            </h2>
-            <p className="mx-auto mt-4 max-w-lg leading-7 text-[#5b5575] lg:mx-0">
-              Saldo, gastos por categoria, metas, orçamento do mês e relatórios por período, no celular ou no computador.
+        {/* Palco: a demonstração em forma de mensagem */}
+        <section id="como-funciona" className="scroll-mt-24" aria-label="Teste o Forge">
+          <div className="uv-wrap">
+            <Reveal className="uv-stage">
+              <TryIt />
+            </Reveal>
+            <p className="uv-ways">
+              Mande do seu jeito:
+              <span><MessageSquare aria-hidden /> Texto</span>
+              <span><Mic aria-hidden /> Áudio</span>
+              <span className="text-[var(--uv-muted)]">Sem planilha e sem abrir app nenhum.</span>
             </p>
           </div>
-          <div className="rounded-[28px] border border-black/[0.06] bg-white p-5 shadow-[0_30px_80px_-30px_rgba(76,29,149,0.35)]">
-            <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#8a84a3]">Saldo do mês · exemplo</p>
-            <p className="mt-2 text-4xl font-semibold tracking-tight">
-              R$ 1.330<span className="text-xl text-[#8a84a3]">,00</span>
-            </p>
-            <p className="mt-1 text-xs font-medium text-emerald-600">+18% em relação ao mês passado</p>
-            <div className="mt-5 grid grid-cols-2 gap-3 text-sm">
-              <div className="rounded-2xl bg-[#f6f5fa] p-3">
-                <p className="text-xs text-[#8a84a3]">Entradas</p>
-                <p className="font-semibold">R$ 5.200,00</p>
-              </div>
-              <div className="rounded-2xl bg-[#f6f5fa] p-3">
-                <p className="text-xs text-[#8a84a3]">Saídas</p>
-                <p className="font-semibold">R$ 3.870,00</p>
-              </div>
-            </div>
-            <p className="mt-5 text-sm font-semibold">Gastos por categoria</p>
-            <div className="mt-3 space-y-3">
-              {[
-                ["Delivery", 100, "R$ 612"],
-                ["Mercado", 88, "R$ 540"],
-                ["Transporte", 51, "R$ 310"],
-                ["Assinaturas", 31, "R$ 189"],
-              ].map(([label, value, display]) => (
-                <div key={label as string}>
-                  <div className="flex justify-between text-xs text-[#5b5575]">
-                    <span>{label}</span>
-                    <span className="font-medium text-[#14111f]">{display}</span>
-                  </div>
-                  <div className="mt-1 h-2 rounded-full bg-[#efedf6]">
-                    <div className="h-full rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-400" style={{ width: `${value}%` }} />
-                  </div>
-                </div>
+
+          {/* Selos em carrossel */}
+          <div className="uv-marquee" aria-label="Garantias">
+            <div className="uv-marquee__track">
+              {[0, 1].map((copy) => (
+                <ul key={copy} className="uv-marquee__list" aria-hidden={copy === 1 ? true : undefined}>
+                  {TRUST.map(({ icon: Icon, title, text }) => (
+                    <li key={title}>
+                      <Icon className="h-5 w-5" aria-hidden />
+                      <div className="leading-tight">
+                        <p className="text-[15px] font-medium">{title}</p>
+                        <p className="uv-note mt-1">{text}</p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
               ))}
             </div>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Um dia com o Forge (escuro) */}
-      <section className="px-5 py-20">
-        <div className="mx-auto max-w-6xl">
-          <h2 className="mx-auto max-w-2xl text-center text-3xl font-semibold tracking-tight sm:text-4xl">
-            Um dia normal. Só que com o dinheiro sob controle.
-          </h2>
-          <p className="mx-auto mt-4 max-w-xl text-center leading-7 text-white/60">
-            Cinco momentos de um dia comum e o que o Forge resolve em cada um, direto no WhatsApp.
-          </p>
-          <div className="mt-12">
-            <DayTimeline />
+        {/* Um dia com o Forge */}
+        <section id="um-dia" className="uv-section scroll-mt-24">
+          <div className="uv-wrap">
+            <StaggerReveal onView>
+              <h2 className="t-stagger-line max-w-[16ch]">Um dia normal. Só que com o dinheiro sob controle.</h2>
+              <p className="uv-lead t-stagger-line t-stagger-line--2 mt-5 max-w-[46ch]">
+                Cinco momentos de um dia comum e o que o Forge resolve em cada um, direto no WhatsApp.
+              </p>
+            </StaggerReveal>
+            <Reveal>
+              <DayTimeline />
+            </Reveal>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Planos (claro) */}
-      <section id="planos" className="scroll-mt-24 bg-[#f6f5fa] px-5 py-20 text-[#14111f]">
-        <div className="mx-auto max-w-6xl">
-          <h2 className="mx-auto max-w-2xl text-center text-3xl font-semibold tracking-tight sm:text-4xl">
-            Organize seu dinheiro por menos de um café por semana.
-          </h2>
-          <p className="mx-auto mt-4 max-w-xl text-center leading-7 text-[#5b5575]">
-            Sem fidelidade, sem multa e sem limite para o uso do dia a dia.
-          </p>
-          <div className="mt-10">
-            <Pricing
-              billingOn={billingOn}
-              monthlyCents={PRO_PRICING.month.cents}
-              yearlyCents={PRO_PRICING.year.cents}
-              features={pro.features}
-            />
+        {/* O painel: painel grande de um lado, texto e etiquetas do outro */}
+        <section className="uv-section pt-0">
+          <div className="uv-wrap uv-row">
+            <Reveal className="uv-panel">
+              <div className="uv-sheet uv-ledger">
+                <div>
+                  <p className="uv-label">Saldo do mês, exemplo</p>
+                  <p className="uv-figure mt-3 text-[clamp(2.5rem,4.2vw,3.75rem)]">
+                    <PopNumber value="R$ 1.330" startDelay={200} />
+                    <span className="text-[0.5em] text-[var(--uv-muted)]">,00</span>
+                  </p>
+                  <p className="uv-note mt-3">+18% em relação ao mês passado</p>
+                </div>
+                <div className="uv-ledger__pair">
+                  <div>
+                    <p className="uv-label">Entradas</p>
+                    <p className="uv-figure mt-2 text-[clamp(1.25rem,1.9vw,1.625rem)]"><PopNumber value="R$ 5.200,00" startDelay={420} /></p>
+                  </div>
+                  <div>
+                    <p className="uv-label">Saídas</p>
+                    <p className="uv-figure mt-2 text-[clamp(1.25rem,1.9vw,1.625rem)]"><PopNumber value="R$ 3.870,00" startDelay={560} /></p>
+                  </div>
+                </div>
+                <div>
+                  <p className="uv-label mb-1">Gastos por categoria</p>
+                  {CATEGORIES.map(([label, value, display], index) => (
+                    <div key={label} className="uv-ledger__row t-reveal-item" style={{ "--i": index + 3 } as React.CSSProperties}>
+                      <span>{label}</span>
+                      <span className="uv-ledger__bar"><i className="t-bar-grow" style={{ width: `${value}%` }} /></span>
+                      <span className="uv-num text-right">{display}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </Reveal>
+            <StaggerReveal onView className="uv-copy">
+              <h2 className="t-stagger-line">Tudo o que você manda pelo WhatsApp fica organizado no painel.</h2>
+              <p className="uv-lead t-stagger-line t-stagger-line--2 max-w-[42ch]">
+                Saldo, gastos por categoria, metas, orçamento do mês e relatórios por período, no celular ou no computador.
+              </p>
+              <Link href={ctaHref} className="uv-link t-stagger-line t-stagger-line--3">Quero organizar meu dinheiro</Link>
+              <div className="uv-tags t-stagger-line t-stagger-line--4">
+                {PANEL_TAGS.map(({ icon: Icon, label }) => (
+                  <span key={label} className="uv-tag"><Icon aria-hidden />{label}</span>
+                ))}
+              </div>
+              <p className="uv-safe uv-note t-stagger-line t-stagger-line--4">
+                <Lock aria-hidden />
+                Você registra pelo WhatsApp e, se quiser, importa o extrato no app. Nenhuma senha de banco é pedida.
+              </p>
+            </StaggerReveal>
           </div>
-          <p className="mt-6 text-center text-sm text-[#5b5575]">
-            Prefere começar pelo básico?{" "}
-            <Link href="/cadastro" className="font-medium text-violet-700 underline-offset-4 hover:underline">
-              Crie sua conta grátis
-            </Link>
-          </p>
-        </div>
-      </section>
+        </section>
 
-      {/* Perguntas (claro) */}
-      <section className="bg-[#f6f5fa] px-5 pb-20 text-[#14111f]">
-        <div className="mx-auto max-w-2xl">
-          <h2 className="text-center text-3xl font-semibold tracking-tight">Perguntas frequentes.</h2>
-          <div className="mt-8 space-y-3">
-            {FAQ.map((item) => (
-              <details key={item.q} className="group rounded-2xl border border-black/[0.06] bg-white px-5 py-4 open:shadow-sm">
-                <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-medium [&::-webkit-details-marker]:hidden">
-                  {item.q}
-                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#f6f5fa] text-[#5b5575] transition group-open:rotate-45">
-                    +
-                  </span>
-                </summary>
-                <p className="mt-3 text-[15px] leading-7 text-[#5b5575]">{item.a}</p>
-              </details>
-            ))}
+        {/* Planos: texto de um lado, o plano sobre o palco do outro */}
+        <section id="planos" className="uv-section pt-0 scroll-mt-24">
+          <div className="uv-wrap uv-row uv-row--flip">
+            <Reveal className="uv-panel uv-panel--stage">
+              <Pricing
+                billingOn={billingOn}
+                monthlyCents={PRO_PRICING.month.cents}
+                yearlyCents={PRO_PRICING.year.cents}
+                features={pro.features}
+              />
+            </Reveal>
+            <StaggerReveal onView className="uv-copy">
+              <h2 className="t-stagger-line">Organize seu dinheiro por menos de um café por semana.</h2>
+              <p className="uv-lead t-stagger-line t-stagger-line--2 max-w-[40ch]">Sem fidelidade, sem multa e sem limite para o uso do dia a dia.</p>
+              <p className="uv-body t-stagger-line t-stagger-line--3">
+                Prefere começar pelo básico?{" "}
+                <Link href="/cadastro" className="uv-link--prose">Crie sua conta grátis</Link>
+              </p>
+            </StaggerReveal>
           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Chamada final */}
-      <section className="relative overflow-hidden px-5 py-20 text-center">
-        <div className="pointer-events-none absolute left-1/2 top-1/2 h-[380px] w-[620px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-violet-600/20 blur-[110px]" />
-        <div className="relative mx-auto max-w-2xl">
-          <h2 className="text-3xl font-semibold tracking-tight sm:text-5xl">Seu próximo gasto já pode ser só uma mensagem.</h2>
-          <Link
-            href={ctaHref}
-            className="mt-8 inline-flex h-12 items-center gap-2 rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-500 px-7 font-semibold shadow-lg shadow-violet-600/30 hover:brightness-110"
-          >
-            Começar agora <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
-      </section>
+        {/* Perguntas */}
+        <section id="perguntas" className="uv-section pt-0 scroll-mt-24">
+          <div className="uv-wrap uv-faq">
+            <StaggerReveal onView>
+              <h2 className="t-stagger-line">Perguntas frequentes.</h2>
+            </StaggerReveal>
+            <Reveal>
+              <FaqList items={FAQ} />
+            </Reveal>
+          </div>
+        </section>
 
-      {/* Rodapé */}
-      <footer className="border-t border-white/[0.06] px-5 py-12">
-        <div className="mx-auto flex max-w-6xl flex-col gap-8 sm:flex-row sm:items-start sm:justify-between">
-          <div className="max-w-sm">
-            <div className="flex items-center gap-2">
-              <Image src="/icon-f.png" alt="" width={24} height={24} className="h-6 w-6" />
-              <span className="font-semibold">Forge Finance</span>
+        {/* Chamada final */}
+        <section className="uv-section pt-0 uv-center">
+          <StaggerReveal onView className="uv-wrap">
+            <h2 className="t-stagger-line mx-auto max-w-[16ch]">Seu próximo gasto já pode ser só uma mensagem.</h2>
+            <div className="uv-hero__actions t-stagger-line t-stagger-line--2">
+              <Link href={ctaHref} className="uv-btn uv-btn--primary t-learn">Começar agora <LearnChevron /></Link>
             </div>
-            <p className="mt-3 text-sm leading-6 text-white/50">
+          </StaggerReveal>
+        </section>
+      </main>
+
+      {/* Rodapé mast */}
+      <footer className="uv-mast">
+        <div className="uv-wrap">
+          <span className="uv-mast__word" aria-hidden>
+            <FoldText
+              text="forge finance"
+              foldStyle="paper"
+              splitBy="char"
+              hinge="top"
+              trigger="scroll"
+              foldAngle={92}
+              duration={0.65}
+              stagger={0.045}
+              staggerFrom="start"
+              ease="power3.out"
+              hoverRefold
+              refoldRadius={140}
+              refoldAngle={45}
+              perspective={700}
+              creaseShading={0.55}
+              fontSize="1em"
+              fontWeight={400}
+            />
+          </span>
+          <div className="uv-mast__row">
+            <p className="uv-body max-w-sm text-[15px]">
               Controle financeiro pessoal e para MEI, direto no WhatsApp. Controle. Planeje. Conquiste.
             </p>
+            <nav className="uv-mast__links" aria-label="Rodapé">
+              <Link href="#como-funciona" className="uv-link uv-link--muted">Como funciona</Link>
+              <Link href="#planos" className="uv-link uv-link--muted">Planos</Link>
+              <Link href="/login" className="uv-link uv-link--muted">Entrar</Link>
+              <Link href="/cadastro" className="uv-link uv-link--muted">Criar conta</Link>
+              <Link href="/privacidade" className="uv-link uv-link--muted">Privacidade</Link>
+            </nav>
           </div>
-          <div className="grid grid-cols-2 gap-10 text-sm">
-            <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/40">Produto</p>
-              <Link href="#como-funciona" className="block text-white/70 hover:text-white">
-                Como funciona
-              </Link>
-              <Link href="#planos" className="block text-white/70 hover:text-white">
-                Planos
-              </Link>
-            </div>
-            <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.16em] text-white/40">Conta</p>
-              <Link href="/login" className="block text-white/70 hover:text-white">
-                Entrar
-              </Link>
-              <Link href="/cadastro" className="block text-white/70 hover:text-white">
-                Criar conta
-              </Link>
-              <Link href="/privacidade" className="block text-white/70 hover:text-white">
-                Privacidade
-              </Link>
-            </div>
-          </div>
+          <p className="uv-note mt-8">© {new Date().getFullYear()} Forge Finance. Todos os direitos reservados.</p>
         </div>
-        <p className="mx-auto mt-10 max-w-6xl text-xs text-white/40">© {new Date().getFullYear()} Forge Finance. Todos os direitos reservados.</p>
       </footer>
     </div>
   );

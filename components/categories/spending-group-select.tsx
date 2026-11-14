@@ -38,7 +38,7 @@ export function SpendingGroupSelect({
           }
         });
       }}
-      className={`mt-1 w-full rounded-lg border bg-background-soft px-2 py-1 text-xs outline-none transition focus:border-violet-500 ${
+      className={`mt-1 w-full rounded-lg border border-line-strong bg-surface-solid px-2 py-1 text-xs outline-none transition placeholder:text-faint hover:border-faint focus:border-brand focus:ring-2 focus:ring-brand/15 ${
         current ? "border-line text-text-soft" : "border-line text-faint"
       }`}
     >

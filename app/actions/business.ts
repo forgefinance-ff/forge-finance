@@ -5,13 +5,11 @@ import { revalidatePath } from "next/cache";
 import { fail, type ActionResult } from "@/lib/action-result";
 import { isRealDate } from "@/lib/dates";
 import { parseAmount } from "@/lib/money";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 
 async function userClient() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
   return { supabase, user };
 }
 

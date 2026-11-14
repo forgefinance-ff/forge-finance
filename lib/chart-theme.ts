@@ -20,4 +20,4 @@ export const chartTooltipLabelStyle: CSSProperties = { color: "var(--text-muted)
 
 export const chartTooltipItemStyle: CSSProperties = { color: "var(--text)" };
 
-export const chartCursorFill = "rgba(168,85,247,0.08)";
+export const chartCursorFill = "var(--tint-strong)";

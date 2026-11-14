@@ -12,15 +12,14 @@ import {
 } from "@/lib/business-calc";
 import { todayInBrazil } from "@/lib/dates";
 import { firstRelation } from "@/lib/relations";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
+import { fetchAllRows } from "@/lib/totals";
 
 export type BusinessAlert = { tone: "danger" | "warning" | "info"; title: string; text: string };
 
 export async function getBusinessPanel() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
   if (!user) return null;
 
   const today = todayInBrazil();
@@ -32,22 +31,26 @@ export async function getBusinessPanel() {
   const [accountsRes, personalAccountsRes, txRes, pendingRes, receivablesRes, settingsRes] =
     await Promise.all([
       supabase
-        .from("accounts")
-        .select("id, name, current_balance")
+        .from("accounts_today")
+        .select("id, name, current_balance:balance_today")
         .eq("user_id", user.id)
         .eq("scope", "business"),
       supabase
-        .from("accounts")
-        .select("id, name, current_balance")
+        .from("accounts_today")
+        .select("id, name, current_balance:balance_today")
         .eq("user_id", user.id)
         .eq("scope", "personal"),
-      supabase
-        .from("transactions")
-        .select("amount, type, kind, transaction_date, categories(name, cost_class)")
-        .eq("user_id", user.id)
-        .eq("scope", "business")
-        .gte("transaction_date", from)
-        .lte("transaction_date", today),
+      fetchAllRows((a, b) =>
+        supabase
+          .from("transactions")
+          .select("amount, type, kind, transaction_date, categories(name, cost_class)")
+          .eq("user_id", user.id)
+          .eq("scope", "business")
+          .gte("transaction_date", from)
+          .lte("transaction_date", today)
+          .order("id")
+          .range(a, b)
+      ).then((data) => ({ data, error: null })),
       supabase
         .from("payables")
         .select("id, kind, description, amount, due_date, recurrence, customer_id, customers(name)")

@@ -77,8 +77,8 @@ export function parseMoney(raw: unknown): number | null {
   } else if (lastDot > lastComma && lastComma !== -1) {
     // Formato americano: 1,234.56
     text = text.replace(/,/g, "");
-  } else if (lastComma === -1 && (text.match(/\./g)?.length ?? 0) > 1) {
-    // 1.234.567 (milhar sem decimais)
+  } else if (lastComma === -1 && /^[1-9]\d{0,2}(\.\d{3})+$/.test(text)) {
+    // 1.500 ou 1.234.567 (milhar sem decimais)
     text = text.replace(/\./g, "");
   }
 
@@ -168,7 +168,9 @@ export function parseOfx(text: string): StatementRow[] {
 
   for (const block of blocks) {
     const date = parseDate(tag(block, "DTPOSTED").slice(0, 8));
-    let amount = parseMoney(tag(block, "TRNAMT").replace(",", "."));
+    // No OFX o ponto é sempre decimal ("-1500.000" = mil e quinhentos).
+    const rawAmount = tag(block, "TRNAMT").replace(",", ".").trim();
+    let amount: number | null = /^[-+]?\d+(\.\d+)?$/.test(rawAmount) ? Number(rawAmount) : parseMoney(rawAmount);
     const description = tag(block, "MEMO") || tag(block, "NAME") || "Sem descrição";
     if (!date || amount === null || amount === 0) continue;
     // Alguns bancos mandam o valor sem sinal e dizem o tipo em TRNTYPE.

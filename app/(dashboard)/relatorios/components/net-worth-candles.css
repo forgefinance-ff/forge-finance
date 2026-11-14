@@ -1,0 +1,139 @@
+/* Crypto Candle Chart — transitions.dev Community (id cZuiBEY7Ogh), adaptado
+   para a Evolução Patrimonial do Forge. Movimento mantido do original:
+   durações, curvas e fallback de reduced motion. Variáveis no escopo .cc.
+   --stage-* → tokens do Forge; o cartão continua escuro, como no original. */
+.cc {
+  --stage-bg: var(--background);
+  --stage-fg: var(--text);
+  --stage-muted: var(--text-muted);
+  --stage-border: var(--line);
+  --stage-surface: var(--surface-solid);
+  --stage-accent: var(--brand);
+  --stage-on-accent: var(--background);
+
+  --chart-morph-dur: 400ms;
+  --chart-morph-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --tabs-dur: 250ms;
+  --tabs-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --tabs-text-muted: var(--text-muted);
+  --tabs-text-active: var(--background);
+  --tabs-bar-bg: var(--tint-strong);
+  --tabs-pill-bg: var(--text);
+  --text-soft-dur: 200ms;
+  --text-soft-blur: 2px;
+  --text-soft-ease: ease-in-out;
+  --text-soft-resize-dur: 240ms;
+  --text-soft-resize-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --press-scale: 0.99;
+  --press-dur: 150ms;
+  --ease-smooth-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-quick: 150ms;
+
+  /* Fundo branco como os outros painéis (escuro no tema escuro). */
+  --cc-bg: var(--surface-solid);
+  --cc-fg: var(--text);
+  --cc-muted: var(--text-muted);
+  --cc-up: var(--success);
+  --cc-down: var(--danger);
+  --cc-divider: var(--line);
+  --cc-chart-h: 220px;
+
+  box-sizing: border-box;
+  padding: 24px;
+  border-radius: 24px;
+  background: var(--cc-bg);
+  color: var(--cc-fg);
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-panel);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  -webkit-font-smoothing: antialiased;
+}
+:where(.cc) button { font: inherit; padding: 0; border: 0; background: none; color: inherit; }
+:where(.cc) h2 { margin: 0; }
+
+.cc .cc-head { display: flex; align-items: flex-start; gap: 12px; }
+.cc .cc-id { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.cc .cc-name { font-family: var(--font-display); font-size: 16px; line-height: 22px; font-weight: 500; }
+.cc .cc-pair { font-size: 12px; line-height: 16px; color: var(--cc-muted); }
+
+.cc .cc-badge {
+  --fill: color-mix(in oklab, var(--success) 12%, var(--surface-solid)); --ink: var(--success);
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 50px;
+  font-size: 11px;
+  line-height: 16px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  background: var(--fill);
+  color: var(--ink);
+  box-shadow: 0 1px 3px rgba(0,0,0,.04), inset 0 0 0 1px color-mix(in srgb, var(--ink) 14%, transparent), inset 0 -1px 0 0 color-mix(in srgb, var(--ink) 10%, transparent);
+  transition: background-color var(--text-soft-dur) var(--text-soft-ease), color var(--text-soft-dur) var(--text-soft-ease), box-shadow var(--text-soft-dur) var(--text-soft-ease);
+  margin-top: 2px;
+}
+.cc .cc-badge[data-tone="down"] { --fill: color-mix(in oklab, var(--danger) 12%, var(--surface-solid)); --ink: var(--danger); }
+
+.cc .cc-price-block { display: flex; flex-direction: column; }
+.cc .cc-price { font-family: var(--font-display); font-size: 28px; line-height: 34px; font-weight: 500; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.cc .cc-caption { font-size: 12px; line-height: 16px; color: var(--cc-muted); font-variant-numeric: tabular-nums; }
+
+.cc .cc-chart { position: relative; height: var(--cc-chart-h); touch-action: pan-y; cursor: crosshair; }
+.cc .cc-grid { position: absolute; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--cc-divider) 20%, var(--cc-divider) 80%, transparent); pointer-events: none; }
+.cc .cc-cross { position: absolute; top: -4px; bottom: -4px; left: 0; width: 1px; background: color-mix(in oklab, var(--text) 30%, transparent); opacity: 0; pointer-events: none; transition: opacity var(--duration-quick) var(--ease-smooth-out); }
+.cc .cc-chart.is-hover .cc-cross { opacity: 1; }
+
+.cc .cc-candle { position: absolute; top: 0; bottom: 0; width: var(--cc-candle-w, 6px); pointer-events: none; transition: opacity var(--duration-quick) var(--ease-smooth-out); }
+.cc .cc-chart.is-hover .cc-candle:not(.is-active) { opacity: 0.4; }
+.cc .cc-wick, .cc .cc-body {
+  position: absolute;
+  transition: top var(--chart-morph-dur) var(--chart-morph-ease), height var(--chart-morph-dur) var(--chart-morph-ease), background-color var(--chart-morph-dur) var(--chart-morph-ease);
+}
+.cc .cc-wick { left: calc(50% - 0.5px); width: 1px; }
+.cc .cc-body { left: 0; width: 100%; border-radius: 2px; }
+.cc .cc-candle.is-up .cc-wick, .cc .cc-candle.is-up .cc-body { background: var(--cc-up); }
+.cc .cc-candle.is-down .cc-wick, .cc .cc-candle.is-down .cc-body { background: var(--cc-down); }
+.cc .cc-candle.is-flat .cc-wick, .cc .cc-candle.is-flat .cc-body { background: color-mix(in oklab, var(--text) 32%, transparent); }
+.cc .cc-chart.is-static .cc-wick, .cc .cc-chart.is-static .cc-body { transition: none; }
+
+/* Tabs sliding */
+.cc .cc-tabs { position: relative; display: flex; align-items: center; gap: 3px; padding: 3px; border-radius: 48px; background: var(--tabs-bar-bg); }
+.cc .cc-tab {
+  --press-scale: 0.97;
+  position: relative; appearance: none; border: 0; background: transparent;
+  flex: 1; height: 30px; padding: 4px 12px;
+  font-size: 13px; line-height: 20px; font-weight: 500;
+  color: var(--tabs-text-muted); cursor: pointer; border-radius: 48px; z-index: 1;
+  transition: color var(--tabs-dur) var(--tabs-ease), transform var(--press-dur) var(--ease-smooth-out);
+  -webkit-tap-highlight-color: transparent; touch-action: manipulation; user-select: none;
+}
+.cc .cc-tab:is(:active,.is-pressed) { transform: scale(var(--press-scale)); }
+.cc .cc-tab[aria-selected="true"] { color: var(--tabs-text-active); }
+@media (hover: hover) and (pointer: fine) { .cc .cc-tab:not([aria-selected="true"]):hover { color: var(--tabs-text-active); } }
+.cc .cc-tabs-pill {
+  position: absolute; top: 3px; left: 0; height: 30px; width: 0;
+  background: var(--tabs-pill-bg); border-radius: 48px;
+  box-shadow: 0 1px 2px rgba(0,0,0,.08);
+  transform: translateX(0);
+  transition: transform var(--tabs-dur) var(--tabs-ease), width var(--tabs-dur) var(--tabs-ease);
+  will-change: transform, width; z-index: 0; pointer-events: none;
+}
+.cc :focus-visible { outline: none; box-shadow: 0 0 0 2px var(--cc-bg), 0 0 0 4px var(--cc-fg); }
+
+/* Text swap soft */
+.cc .cc-soft { display: inline-grid; justify-items: var(--text-soft-align, start); transition: width var(--text-soft-resize-dur) var(--text-soft-resize-ease); }
+.cc .cc-soft > span { grid-area: 1 / 1; white-space: pre; transition: filter var(--text-soft-dur) var(--text-soft-ease), opacity var(--text-soft-dur) var(--text-soft-ease); }
+.cc .cc-soft-new { opacity: 0; filter: blur(var(--text-soft-blur)); }
+.cc .cc-soft.is-swapping .cc-soft-old { opacity: 0; filter: blur(var(--text-soft-blur)); }
+.cc .cc-soft.is-swapping .cc-soft-new { opacity: 1; filter: blur(0); }
+
+@media (prefers-reduced-motion: reduce) {
+  .cc .cc-soft, .cc .cc-soft > span { transition: none !important; }
+  .cc .cc-tabs-pill, .cc .cc-tab { transition: none !important; }
+  .cc .cc-tab:is(:active,.is-pressed) { transform: none; }
+  .cc .cc-wick, .cc .cc-body { transition: background-color var(--chart-morph-dur) linear !important; }
+}

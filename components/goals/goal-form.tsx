@@ -1,13 +1,14 @@
 "use client";
 
-import { useTransition } from "react";
+import { useTransition, useId } from "react";
 
 import { createGoalAction } from "@/app/actions/goals";
 import { Button } from "@/components/ui/button";
 import type { Goal } from "@/lib/goals";
+import { MoneyInput } from "@/components/ui/money-input";
 
 const inputClass =
-  "w-full rounded-xl border border-line bg-background-soft px-4 py-3 text-foreground outline-none transition focus:border-violet-500";
+  "w-full rounded-xl border border-line-strong bg-surface-solid px-4 py-3 text-foreground outline-none transition placeholder:text-faint hover:border-faint focus:border-brand focus:ring-2 focus:ring-brand/15";
 
 type Props = {
   action?: (formData: FormData) => Promise<void>;
@@ -24,6 +25,7 @@ export function GoalForm({
   submitLabel,
   title,
 }: Props) {
+  const fid = useId();
   const [isPending, startTransition] = useTransition();
 
   function handleSubmit(formData: FormData) {
@@ -51,11 +53,11 @@ export function GoalForm({
       {goal && <input type="hidden" name="id" value={goal.id} />}
 
       <div>
-        <label className="mb-2 block text-sm text-text-soft">
+        <label htmlFor={`${fid}-1`} className="mb-2 block text-sm text-text-soft">
           Nome da meta
         </label>
 
-        <input
+        <input id={`${fid}-1`}
           name="title"
           required
           defaultValue={goal?.title}
@@ -66,13 +68,11 @@ export function GoalForm({
 
       <div className="grid gap-4 md:grid-cols-2">
         <div>
-          <label className="mb-2 block text-sm text-text-soft">
+          <label htmlFor={`${fid}-2`} className="mb-2 block text-sm text-text-soft">
             Valor da meta
           </label>
 
-          <input
-            type="number"
-            step="0.01"
+          <MoneyInput id={`${fid}-2`}
             name="target_amount"
             required
             defaultValue={goal?.target_amount}
@@ -81,13 +81,11 @@ export function GoalForm({
         </div>
 
         <div>
-          <label className="mb-2 block text-sm text-text-soft">
+          <label htmlFor={`${fid}-3`} className="mb-2 block text-sm text-text-soft">
             Valor atual
           </label>
 
-          <input
-            type="number"
-            step="0.01"
+          <MoneyInput id={`${fid}-3`}
             name="current_amount"
             defaultValue={goal?.current_amount ?? 0}
             required
@@ -97,11 +95,11 @@ export function GoalForm({
       </div>
 
       <div>
-        <label className="mb-2 block text-sm text-text-soft">
+        <label htmlFor={`${fid}-4`} className="mb-2 block text-sm text-text-soft">
           Data limite
         </label>
 
-        <input
+        <input id={`${fid}-4`}
           type="date"
           name="deadline"
           required

@@ -3,8 +3,9 @@ import { z } from "zod";
 
 import { getAiStatus } from "@/lib/ai/config";
 import { buildDeepContext, buildQuickContext } from "@/lib/ai/context";
-import { createClient } from "@/lib/supabase/server";
-import { consumeAiQuota } from "@/lib/billing/usage";
+import { getAuthUser } from "@/lib/supabase/server";
+import { consumeAiQuota, refundAiQuota } from "@/lib/billing/usage";
+import { allowRequest } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -26,23 +27,9 @@ const bodySchema = z.object({
     .default([]),
 });
 
-// Limite simples por usuário (em memória, por instância). Em produção com
-// várias instâncias, troque por um limitador compartilhado (ex.: Redis/Upstash).
-const WINDOW_MS = 60_000;
+// Limite por usuário, guardado no banco (vale para todas as instâncias).
+const WINDOW_SECONDS = 60;
 const MAX_REQUESTS = 6;
-const hits = new Map<string, number[]>();
-
-function rateLimited(userId: string) {
-  const now = Date.now();
-  const recent = (hits.get(userId) ?? []).filter((t) => now - t < WINDOW_MS);
-  if (recent.length >= MAX_REQUESTS) {
-    hits.set(userId, recent);
-    return true;
-  }
-  recent.push(now);
-  hits.set(userId, recent);
-  return false;
-}
 
 const SYSTEM_PROMPT = `Você é o assistente do Forge Finance. Responda em português do Brasil, de forma curta e objetiva.
 Use SOMENTE os dados do contexto JSON fornecido. Se o contexto não tiver a informação pedida, diga isso claramente em vez de supor.
@@ -69,10 +56,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   if (!user) {
     return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
@@ -83,7 +67,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Pergunta inválida." }, { status: 400 });
   }
 
-  if (rateLimited(user.id)) {
+  if (!(await allowRequest("ai_assistant", MAX_REQUESTS, WINDOW_SECONDS))) {
     return NextResponse.json(
       { error: "Muitas perguntas seguidas. Aguarde um minuto." },
       { status: 429 }
@@ -144,6 +128,7 @@ export async function POST(request: Request) {
 
     if (!response.ok) {
       console.error("AI provider error", response.status);
+      await refundAiQuota();
       return NextResponse.json(
         { error: "O provedor de IA retornou um erro. Tente novamente." },
         { status: 502 }
@@ -161,6 +146,7 @@ export async function POST(request: Request) {
       .trim();
 
     if (!answer) {
+      await refundAiQuota();
       return NextResponse.json(
         { error: "Resposta vazia do provedor." },
         { status: 502 }
@@ -170,6 +156,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ answer, quota: { used: quota.used, limit: quota.monthlyLimit, remaining: quota.remaining } });
   } catch (error) {
     console.error("AI request failed", error);
+    await refundAiQuota();
     return NextResponse.json(
       { error: "Não foi possível consultar a IA agora." },
       { status: 502 }

@@ -5,6 +5,7 @@ import { toast } from "sonner";
 
 import { payCardInvoiceAction } from "@/app/actions/cards";
 import { Button } from "@/components/ui/button";
+import { MoneyInput } from "@/components/ui/money-input";
 
 type Props = {
   cardId: string;
@@ -15,7 +16,7 @@ type Props = {
 };
 
 const inputClass =
-  "w-full rounded-xl border border-line bg-background-soft px-3 py-2.5 text-sm text-foreground outline-none transition focus:border-violet-500";
+  "w-full rounded-xl border border-line-strong bg-surface-solid px-3 py-2.5 text-sm text-foreground outline-none transition placeholder:text-faint hover:border-faint focus:border-brand focus:ring-2 focus:ring-brand/15";
 
 /** Paga a fatura (total ou parcial) a partir de uma conta. */
 export function PayInvoiceForm({ cardId, accounts, defaultAmount, today, label }: Props) {
@@ -61,13 +62,10 @@ export function PayInvoiceForm({ cardId, accounts, defaultAmount, today, label }
       </label>
       <label className="block">
         <span className="mb-1 block text-xs font-medium text-faint">Valor</span>
-        <input
+        <MoneyInput
           name="amount"
-          type="number"
-          step="0.01"
-          min="0.01"
           required
-          defaultValue={defaultAmount > 0 ? defaultAmount.toFixed(2) : ""}
+          defaultValue={defaultAmount > 0 ? defaultAmount : null}
           className={inputClass}
         />
       </label>

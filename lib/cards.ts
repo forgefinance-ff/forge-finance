@@ -1,8 +1,10 @@
+import { cache } from "react";
 import { buildInvoices, cardSummary, type CardMovement, type Invoice } from "@/lib/card-invoice";
 import { todayInBrazil } from "@/lib/dates";
 import { firstRelation } from "@/lib/relations";
 import { getActiveScope } from "@/lib/scope-server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
+import { fetchAllRows } from "@/lib/totals";
 
 export type Card = {
   id: string;
@@ -16,12 +18,10 @@ export type Card = {
   updated_at: string;
 };
 
-export async function getCards() {
+export const getCards = cache(async function getCards() {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   if (!user) return [];
 
@@ -37,7 +37,7 @@ export async function getCards() {
   }
 
   return (data ?? []) as Card[];
-}
+});
 
 export type CardOverview = {
   card: Card;
@@ -53,17 +53,18 @@ export async function getCardsOverview(): Promise<CardOverview[]> {
   const supabase = await createClient();
   const today = todayInBrazil();
 
-  const { data, error } = await supabase
-    .from("transactions")
-    .select("id, card_id, account_id, type, amount, transaction_date, description, title, categories(name)")
-    .in(
-      "card_id",
-      cards.map((card) => card.id)
-    )
-    .order("transaction_date", { ascending: true })
-    .limit(5000);
-
-  if (error) throw error;
+  const data = await fetchAllRows((a, b) =>
+    supabase
+      .from("transactions")
+      .select("id, card_id, account_id, type, amount, transaction_date, description, title, categories(name)")
+      .in(
+        "card_id",
+        cards.map((card) => card.id)
+      )
+      .order("transaction_date", { ascending: true })
+      .order("id")
+      .range(a, b)
+  );
 
   return cards.map((card) => {
     const movements: CardMovement[] = (data ?? [])

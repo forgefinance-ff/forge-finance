@@ -26,8 +26,8 @@ export function WeekdayCard({ weekday }: { weekday: RaioXData["weekday"] }) {
               <div
                 title={`${WEEKDAYS[i]}: ${brl(value)} em média`}
                 className={cn(
-                  "w-full rounded-t-lg transition-all",
-                  isTop ? "bg-brand-soft shadow-[0_0_18px_-4px_var(--brand-bright)]" : "bg-brand/40"
+                  "w-full rounded-t-lg transition",
+                  isTop ? "bg-brand-soft" : "bg-brand/40"
                 )}
                 style={{ height: `${Math.max(3, (value / max) * 100)}%` }}
               />

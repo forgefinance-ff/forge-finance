@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { Building2Icon } from "lucide-react";
 import { toast } from "sonner";
@@ -10,12 +11,18 @@ import { Button } from "@/components/ui/button";
 
 /** Mostrado nas telas que só existem no escopo Empresa (Clientes, Impostos). */
 export function BusinessOnly({ feature }: { feature: string }) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   function switchToBusiness() {
     startTransition(async () => {
       try {
-        await setActiveScope("business");
+        const result = await setActiveScope("business");
+        if (!result.ok) {
+          toast("Pessoal + Empresa é do Forge Pro.", {
+            action: { label: "Ver planos", onClick: () => router.push("/assinar") },
+          });
+        }
       } catch {
         toast.error("Não foi possível trocar para Empresa. Tente de novo.");
       }

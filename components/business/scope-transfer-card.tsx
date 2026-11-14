@@ -8,6 +8,7 @@ import { createScopeTransfer } from "@/app/actions/business";
 import { Button } from "@/components/ui/button";
 
 import { brl } from "./format";
+import { MoneyInput } from "@/components/ui/money-input";
 
 type Option = { id: string; name: string; balance: number };
 
@@ -18,7 +19,7 @@ type Props = {
 };
 
 const inputClass =
-  "w-full rounded-xl border border-line bg-background-soft px-3 py-2.5 text-sm text-foreground outline-none transition focus:border-violet-500";
+  "w-full rounded-xl border border-line-strong bg-surface-solid px-3 py-2.5 text-sm text-foreground outline-none transition placeholder:text-faint hover:border-faint focus:border-brand focus:ring-2 focus:ring-brand/15";
 
 const KINDS = {
   prolabore: {
@@ -134,7 +135,7 @@ export function ScopeTransferCard({ businessAccounts, personalAccounts, today }:
           <div className="grid gap-3 sm:grid-cols-3">
             <label className="block">
               <span className="mb-1.5 block text-xs font-medium text-faint">Valor (R$)</span>
-              <input name="amount" required inputMode="decimal" placeholder="0,00" className={inputClass} />
+              <MoneyInput name="amount" required placeholder="0,00" className={inputClass} />
             </label>
             <label className="block">
               <span className="mb-1.5 block text-xs font-medium text-faint">Data</span>

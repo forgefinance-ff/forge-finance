@@ -42,3 +42,10 @@ next-env.d.ts
 
 .vercel
 .env*
+
+# backups do redesign (Hallmark)
+.hallmark/
+
+/test-results/
+/playwright-report/
+/playwright/.cache/

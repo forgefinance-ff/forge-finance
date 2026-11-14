@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   CheckIcon,
   CompassIcon,
@@ -15,6 +15,7 @@ import {
 
 import { cn } from "@/lib/utils";
 import { INSTALLED_KEY, promptInstall, useInstallState, type Platform } from "./install-store";
+import { useClientValue } from "@/hooks/use-client-value";
 
 const TABS: { id: Platform; label: string; icon: typeof SmartphoneIcon }[] = [
   { id: "ios", label: "iPhone", icon: SmartphoneIcon },
@@ -264,13 +265,13 @@ export function InstallGuide({ onInstalled }: { onInstalled?: () => void }) {
 /** true se o aparelho já tem o app (ou a pessoa disse que instalou). */
 export function useProbablyInstalled() {
   const install = useInstallState();
-  const [marked, setMarked] = useState(false);
-
-  useEffect(() => {
+  const marked = useClientValue(() => {
     try {
-      setMarked(localStorage.getItem(INSTALLED_KEY) === "1");
-    } catch {}
-  }, []);
+      return localStorage.getItem(INSTALLED_KEY) === "1";
+    } catch {
+      return false;
+    }
+  }, false);
 
   return { ready: install.ready, installed: install.installed || marked };
 }

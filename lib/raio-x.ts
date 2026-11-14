@@ -18,7 +18,8 @@ import {
 } from "@/lib/raio-x-calc";
 import { firstRelation } from "@/lib/relations";
 import { getActiveScope } from "@/lib/scope-server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
+import { fetchAllRows } from "@/lib/totals";
 
 type CategoryRel = {
   name: string;
@@ -48,16 +49,25 @@ type DasRow = { competence: string; amount: number | string; due_date: string; s
 
 /** Transações do período. Se a migração do grupo de gasto ainda não rodou, busca sem ele. */
 async function loadTransactions(supabase: Client, userId: string, scope: RxScope, from: string, to: string) {
-  const query = (columns: string) =>
-    supabase
-      .from("transactions")
-      .select(`amount, type, kind, transaction_date, title, description, categories(${columns})`)
-      .eq("user_id", userId)
-      .eq("scope", scope)
-      .gte("transaction_date", from)
-      .lte("transaction_date", to)
-      .order("transaction_date", { ascending: true })
-      .limit(10000);
+  const query = async (columns: string) => {
+    try {
+      const data = await fetchAllRows((a, b) =>
+        supabase
+          .from("transactions")
+          .select(`amount, type, kind, transaction_date, title, description, categories(${columns})`)
+          .eq("user_id", userId)
+          .eq("scope", scope)
+          .gte("transaction_date", from)
+          .lte("transaction_date", to)
+          .order("transaction_date", { ascending: true })
+          .order("id")
+          .range(a, b)
+      );
+      return { data, error: null };
+    } catch (error) {
+      return { data: null, error: error as { message?: string } };
+    }
+  };
 
   const result = await query("name, cost_class, spending_group");
   if (result.error && /spending_group/.test(result.error.message ?? "")) {
@@ -68,9 +78,7 @@ async function loadTransactions(supabase: Client, userId: string, scope: RxScope
 
 export async function getRaioX() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
   if (!user) return null;
 
   const scope: RxScope = await getActiveScope();
@@ -81,7 +89,7 @@ export async function getRaioX() {
 
   const [txRes, accountsRes, payablesRes, dueRes, dasRes, profileRes, cards] = await Promise.all([
     loadTransactions(supabase, user.id, scope, from, today),
-    supabase.from("accounts").select("current_balance").eq("user_id", user.id).eq("scope", scope),
+    supabase.from("accounts_today").select("current_balance:balance_today").eq("user_id", user.id).eq("scope", scope),
     // Pendentes até o fim da semana (atrasadas entram como "hoje").
     supabase
       .from("payables")

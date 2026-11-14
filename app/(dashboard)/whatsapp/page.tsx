@@ -8,7 +8,7 @@ import { CopyLink } from "@/components/whatsapp/copy-link";
 import { getAccounts } from "@/lib/accounts";
 import { SCOPE_EMOJI, SCOPE_LABEL } from "@/lib/scope";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { firstAccessWhatsappLink } from "@/lib/whatsapp/onboarding";
 
 export const dynamic = "force-dynamic";
@@ -26,9 +26,7 @@ export default async function WhatsappPage({
 }) {
   const { conectado } = await searchParams;
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   if (!user) return null;
 
@@ -55,12 +53,9 @@ export default async function WhatsappPage({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-[22px] border border-line bg-surface p-8">
-        <span className="text-sm font-medium uppercase tracking-[0.25em] text-brand-soft">
-          Integrações
-        </span>
+      <div className="pt-2 pb-2">
 
-        <h1 className="mt-2 text-4xl font-bold tracking-tight text-foreground">
+        <h1 className="text-4xl font-normal tracking-[-0.035em] text-foreground sm:text-5xl">
           WhatsApp
         </h1>
 
@@ -110,7 +105,7 @@ export default async function WhatsappPage({
               <select
                 name="account_id"
                 defaultValue={link.default_account_id ?? ""}
-                className="rounded-xl border border-line bg-background-soft px-4 py-3 text-foreground outline-none transition focus:border-violet-500"
+                className="rounded-xl border border-line-strong bg-surface-solid px-4 py-3 text-foreground outline-none transition placeholder:text-faint hover:border-faint focus:border-brand focus:ring-2 focus:ring-brand/15"
               >
                 <option value="">Nenhuma (perguntar sempre)</option>
                 {accounts.map((account) => (

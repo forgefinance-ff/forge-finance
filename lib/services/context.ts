@@ -17,7 +17,10 @@ export type AtomicFn =
   | "pay_card_invoice"
   | "delete_transaction"
   | "settle_payable"
-  | "pay_das";
+  | "pay_das"
+  | "update_transaction"
+  | "account_transfer"
+  | "delete_transfer_group";
 
 export type ServiceCtx = {
   db: Db;
@@ -102,6 +105,30 @@ const RPC: Record<AtomicFn, (a: Record<string, unknown>) => [string, Record<stri
     { p_id: a.id, p_account_id: a.account_id ?? null, p_date: a.date },
   ],
   pay_das: (a) => ["ff_pay_das", { p_id: a.id, p_account_id: a.account_id, p_date: a.date }],
+  update_transaction: (a) => [
+    "ff_update_transaction",
+    {
+      p_id: a.id,
+      p_account_id: a.account_id ?? null,
+      p_card_id: a.card_id ?? null,
+      p_category_id: a.category_id ?? null,
+      p_type: a.type,
+      p_title: a.title,
+      p_amount: a.amount,
+      p_date: a.date,
+    },
+  ],
+  account_transfer: (a) => [
+    "ff_account_transfer",
+    {
+      p_from_account: a.from_account_id,
+      p_to_account: a.to_account_id,
+      p_amount: a.amount,
+      p_date: a.date,
+      p_description: a.description ?? null,
+    },
+  ],
+  delete_transfer_group: (a) => ["ff_delete_transfer_group", { p_group: a.group }],
 };
 
 /** Usuário logado no app: chama a função do banco diretamente (auth.uid() = ele). */

@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { getActiveScope } from "@/lib/scope-server";
 import type { Scope } from "@/lib/scope";
 import type { MovementKind } from "@/lib/movement-kinds";
@@ -67,9 +67,7 @@ async function seedDefaultCategories(userId: string) {
 export async function getCategories() {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   if (!user) return [];
 

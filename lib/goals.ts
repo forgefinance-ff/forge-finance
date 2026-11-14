@@ -1,4 +1,5 @@
-import { createClient } from "@/lib/supabase/server";
+import { cache } from "react";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { getActiveScope } from "@/lib/scope-server";
 
 export type Goal = {
@@ -12,12 +13,10 @@ export type Goal = {
   updated_at: string;
 };
 
-export async function getGoals() {
+export const getGoals = cache(async function getGoals() {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   if (!user) return [];
 
@@ -31,4 +30,4 @@ export async function getGoals() {
   if (error) throw error;
 
   return (data ?? []) as Goal[];
-}
+});

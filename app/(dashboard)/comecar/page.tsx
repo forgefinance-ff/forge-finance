@@ -23,7 +23,7 @@ import { WaitForStep } from "@/components/guide/wait-for-step";
 import { InstallAppCard } from "@/components/pwa/install-app-card";
 import { getAccounts } from "@/lib/accounts";
 import { ensureLinkCode, formatBotNumber, getGuideProgress, type GuideProgress } from "@/lib/guide";
-import { createClient } from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/supabase/server";
 import { botNumber } from "@/lib/whatsapp/onboarding";
 import { cn } from "@/lib/utils";
 
@@ -126,10 +126,7 @@ const GUIDE = [
 ];
 
 export default async function GuidePage() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
   if (!user) redirect("/login");
 
   const progress = await getGuideProgress(user.id);
@@ -283,7 +280,7 @@ export default async function GuidePage() {
                   name="account_id"
                   required
                   defaultValue=""
-                  className="h-11 rounded-xl border border-line bg-background-soft px-4 text-foreground outline-none transition focus:border-violet-500"
+                  className="h-11 rounded-xl border border-line-strong bg-surface-solid px-4 text-foreground outline-none transition placeholder:text-faint hover:border-faint focus:border-brand focus:ring-2 focus:ring-brand/15"
                 >
                   <option value="" disabled>
                     Escolha a conta
@@ -337,12 +334,11 @@ function DoneButton() {
 function ProgressHero({ progress, title, text }: { progress: GuideProgress; title: string; text: string }) {
   return (
     <div className={cn(panel, "p-8")}>
-      <span className="text-sm font-medium uppercase tracking-[0.25em] text-brand-soft">Primeiros passos</span>
-      <h1 className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">{title}</h1>
+      <h1 className="text-4xl font-normal tracking-[-0.035em] text-foreground sm:text-5xl">{title}</h1>
       <p className="mt-2 text-muted-foreground">{text}</p>
       <div className="mt-5 h-2 overflow-hidden rounded-full bg-tint-strong">
         <div
-          className="h-full rounded-full bg-gradient-to-r from-violet-600 to-fuchsia-400 transition-all"
+          className="h-full rounded-full bg-brand transition"
           style={{ width: `${Math.round((progress.done / progress.total) * 100)}%` }}
         />
       </div>

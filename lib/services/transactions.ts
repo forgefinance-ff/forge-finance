@@ -140,8 +140,8 @@ export async function payCardInvoice(ctx: ServiceCtx, raw: InvoicePaymentInput) 
 export async function deleteTransaction(ctx: ServiceCtx, transactionId: string) {
   parseInput(id("Transação não encontrada."), transactionId);
 
-  // Transferência Pessoal x Empresa (pró-labore, retirada, aporte): apaga os
-  // dois lados juntos, para os saldos não ficarem desencontrados.
+  // Transferência (entre contas ou Pessoal x Empresa): apaga os dois lados
+  // numa única operação do banco, para os saldos nunca ficarem desencontrados.
   const { data: tx } = await ctx.db
     .from("transactions")
     .select("transfer_group")
@@ -150,17 +150,93 @@ export async function deleteTransaction(ctx: ServiceCtx, transactionId: string) 
     .maybeSingle();
 
   if (tx?.transfer_group) {
-    const { data: pair } = await ctx.db
-      .from("transactions")
-      .select("id")
-      .eq("user_id", ctx.userId)
-      .eq("transfer_group", tx.transfer_group);
-
-    for (const row of pair ?? []) {
-      await ctx.atomic("delete_transaction", { id: row.id });
-    }
+    await ctx.atomic("delete_transfer_group", { group: tx.transfer_group });
     return;
   }
 
   await ctx.atomic("delete_transaction", { id: transactionId });
+}
+
+export const updateTransactionInput = z
+  .object({
+    id: id("Transação não encontrada."),
+    account_id: optionalId,
+    card_id: optionalId,
+    category_id: optionalId,
+    type: z.enum(["income", "expense"], { message: "Escolha se é entrada ou saída." }),
+    description: z
+      .union([z.null(), z.undefined(), z.string()])
+      .transform((v) => (v ?? "").trim())
+      .refine((v) => v.length <= 120, "A descrição pode ter no máximo 120 caracteres."),
+    amount: positiveAmount(),
+    date: dateString(),
+  })
+  .refine((v) => !!v.account_id !== !!v.card_id, "Escolha uma conta ou um cartão.");
+
+export type UpdateTransactionInput = z.input<typeof updateTransactionInput>;
+
+/** Edita valor, data, descrição, categoria e conta/cartão, ajustando os saldos. */
+export async function updateTransaction(ctx: ServiceCtx, raw: UpdateTransactionInput) {
+  const input = parseInput(updateTransactionInput, raw);
+
+  if (input.account_id) {
+    const { data: account } = await ctx.db
+      .from("accounts")
+      .select("scope")
+      .eq("id", input.account_id)
+      .eq("user_id", ctx.userId)
+      .maybeSingle();
+    if (!account) throw new ServiceError("Conta não encontrada.");
+    if (account.scope !== ctx.scope) throw new ServiceError("Esta conta não pertence ao escopo ativo.");
+  }
+  if (input.card_id) await requireCard(ctx, input.card_id);
+
+  await ctx.atomic("update_transaction", {
+    id: input.id,
+    account_id: input.account_id,
+    card_id: input.card_id,
+    category_id: input.category_id,
+    type: input.type,
+    title: input.description,
+    amount: input.amount,
+    date: input.date,
+  });
+}
+
+export const accountTransferInput = z
+  .object({
+    from_account_id: id("Escolha a conta de origem."),
+    to_account_id: id("Escolha a conta de destino."),
+    amount: positiveAmount(),
+    date: dateString(),
+    description: z
+      .union([z.null(), z.undefined(), z.string()])
+      .transform((v) => (v ?? "").trim().slice(0, 120)),
+  })
+  .refine((v) => v.from_account_id !== v.to_account_id, "Escolha duas contas diferentes.");
+
+export type AccountTransferInput = z.input<typeof accountTransferInput>;
+
+/** Move dinheiro entre contas próprias do mesmo escopo. Não é receita nem despesa. */
+export async function accountTransfer(ctx: ServiceCtx, raw: AccountTransferInput) {
+  const input = parseInput(accountTransferInput, raw);
+
+  const { data: accounts } = await ctx.db
+    .from("accounts")
+    .select("id, scope")
+    .eq("user_id", ctx.userId)
+    .in("id", [input.from_account_id, input.to_account_id]);
+
+  if ((accounts ?? []).length !== 2) throw new ServiceError("Conta não encontrada.");
+  if ((accounts ?? []).some((a) => a.scope !== ctx.scope)) {
+    throw new ServiceError("As duas contas precisam ser do escopo ativo.");
+  }
+
+  return (await ctx.atomic("account_transfer", {
+    from_account_id: input.from_account_id,
+    to_account_id: input.to_account_id,
+    amount: input.amount,
+    date: input.date,
+    description: input.description || null,
+  })) as string;
 }

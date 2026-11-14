@@ -10,6 +10,7 @@ import { formatBRL } from "@/lib/whatsapp/text";
 
 import type { UserContext } from "./context";
 import { brDate, num, obj, optionalRef, ref, s, scopeArg, scopeTag, str, type Args } from "./helpers";
+import { fetchAllRows } from "@/lib/totals";
 
 export type ReadTool = {
   name: string;
@@ -127,16 +128,24 @@ export const READ_TOOLS: ReadTool[] = [
       const from = str(args, "de") ?? monthStart(ctx.today);
       const to = str(args, "ate") ?? ctx.today;
 
-      const { data, error } = await db
-        .from("transactions")
-        .select("type, amount, scope, categories(name)")
-        .eq("user_id", ctx.userId)
-        .in("scope", scopes(args))
-        .eq("kind", "regular") // aportes, empréstimos e reembolsos não são resultado
-        .gte("transaction_date", from)
-        .lte("transaction_date", to);
-
-      if (error) throw new ServiceError("Não consegui calcular o resumo.");
+      // Todas as linhas, de 1.000 em 1.000 (a API corta em 1.000).
+      let data: { type: string; amount: number; scope: string; categories: unknown }[];
+      try {
+        data = await fetchAllRows((a, b) =>
+          db
+            .from("transactions")
+            .select("type, amount, scope, categories(name)")
+            .eq("user_id", ctx.userId)
+            .in("scope", scopes(args))
+            .eq("kind", "regular") // aportes, empréstimos e reembolsos não são resultado
+            .gte("transaction_date", from)
+            .lte("transaction_date", to)
+            .order("id")
+            .range(a, b)
+        );
+      } catch {
+        throw new ServiceError("Não consegui calcular o resumo.");
+      }
 
       const lines = [`Período ${brDate(from)} a ${brDate(to)}:`];
 
@@ -246,15 +255,19 @@ export const READ_TOOLS: ReadTool[] = [
           .select("activity, das_due_day, annual_limit, das_amount, opening_date, dasn_due_date")
           .eq("user_id", ctx.userId)
           .maybeSingle(),
-        db
-          .from("transactions")
-          .select("amount")
-          .eq("user_id", ctx.userId)
-          .eq("scope", "business")
-          .eq("type", "income")
-          .eq("kind", "regular")
-          .gte("transaction_date", `${year}-01-01`)
-          .lte("transaction_date", `${year}-12-31`),
+        fetchAllRows((a, b) =>
+          db
+            .from("transactions")
+            .select("amount")
+            .eq("user_id", ctx.userId)
+            .eq("scope", "business")
+            .eq("type", "income")
+            .eq("kind", "regular")
+            .gte("transaction_date", `${year}-01-01`)
+            .lte("transaction_date", `${year}-12-31`)
+            .order("id")
+            .range(a, b)
+        ).then((data) => ({ data, error: null })),
         db
           .from("mei_das_payments")
           .select("competence, amount, due_date, status, paid_at")

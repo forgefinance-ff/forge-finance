@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { getActiveScope } from "@/lib/scope-server";
 import type { Scope } from "@/lib/scope";
 
@@ -9,7 +9,10 @@ export type Account = {
   type: string;
   color: string;
   initial_balance: number;
+  /** Saldo até hoje (lançamentos com data futura ficam em balance_future). */
   current_balance: number;
+  /** Soma dos lançamentos agendados (data depois de hoje). */
+  balance_future: number;
   scope: Scope;
   created_at: string;
   updated_at: string;
@@ -19,14 +22,12 @@ export type Account = {
 export async function getAccounts(options: { allScopes?: boolean } = {}) {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   if (!user) return [];
 
   let query = supabase
-    .from("accounts")
+    .from("accounts_today")
     .select("*")
     .eq("user_id", user.id);
 
@@ -39,5 +40,11 @@ export async function getAccounts(options: { allScopes?: boolean } = {}) {
     throw error;
   }
 
-  return (data ?? []) as Account[];
+  return ((data ?? []) as (Account & { balance_today: number | string })[]).map(
+    ({ balance_today, ...account }) => ({
+      ...account,
+      current_balance: Number(balance_today),
+      balance_future: Number(account.balance_future ?? 0),
+    })
+  ) as Account[];
 }

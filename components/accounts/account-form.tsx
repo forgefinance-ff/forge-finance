@@ -1,11 +1,14 @@
 "use client";
 
-import { useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
+import { MoneyInput } from "@/components/ui/money-input";
 
 const inputClass =
-  "w-full rounded-xl border border-line bg-background-soft px-4 py-3 text-foreground outline-none transition focus:border-violet-500";
+  "w-full rounded-xl border border-line-strong bg-surface-solid px-4 py-3 text-foreground outline-none transition placeholder:text-faint hover:border-faint focus:border-brand focus:ring-2 focus:ring-brand/15";
+const labelClass = "mb-1.5 block text-sm font-medium text-text-soft";
 
 type Props = {
   action: (formData: FormData) => Promise<void>;
@@ -13,56 +16,86 @@ type Props = {
 
 export function AccountForm({ action }: Props) {
   const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   function handleSubmit(formData: FormData) {
+    setError(null);
     startTransition(async () => {
-      await action(formData);
-      (document.getElementById("account-form") as HTMLFormElement)?.reset();
+      try {
+        await action(formData);
+        formRef.current?.reset();
+        toast.success("Conta criada.");
+      } catch {
+        setError("Não foi possível criar a conta. Confira os dados e tente de novo.");
+      }
     });
   }
 
   return (
-    <form
-      id="account-form"
-      action={handleSubmit}
-      className="space-y-4 rounded-[22px] border border-line bg-surface p-6"
-    >
-      <h2 className="text-xl font-semibold text-foreground">Nova Conta</h2>
+    <form ref={formRef} action={handleSubmit} className="space-y-4 rounded-[22px] border border-line bg-surface p-6">
+      <h2 className="text-xl font-semibold text-foreground">Nova conta</h2>
 
-      <input
-        name="name"
-        required
-        placeholder="Nome da conta"
-        className={inputClass}
-      />
-
-      <div className="grid gap-4 md:grid-cols-3">
-        <select name="type" className={`${inputClass} md:col-span-1`}>
-          <option value="Conta Corrente">Conta Corrente</option>
-          <option value="Poupança">Poupança</option>
-          <option value="Carteira">Carteira</option>
-          <option value="Investimento">Investimento</option>
-        </select>
-
-        <input
-          type="color"
-          name="color"
-          defaultValue="#7C3AED"
-          className="h-[50px] w-full cursor-pointer rounded-xl border border-line bg-background-soft md:col-span-1"
-        />
-
-        <input
-          type="number"
-          step="0.01"
-          name="initial_balance"
-          defaultValue="0"
-          placeholder="Saldo inicial"
-          className={`${inputClass} md:col-span-1`}
-        />
+      <div>
+        <label htmlFor="account-name" className={labelClass}>
+          Nome da conta
+        </label>
+        <input id="account-name" name="name" required maxLength={60} placeholder="Ex.: Nubank, Carteira" className={inputClass} />
       </div>
 
-      <Button type="submit" disabled={isPending} className="w-full">
-        {isPending ? "Salvando..." : "Salvar Conta"}
+      <div className="grid gap-4 md:grid-cols-[1fr_1fr_88px]">
+        <div>
+          <label htmlFor="account-type" className={labelClass}>
+            Tipo
+          </label>
+          <select id="account-type" name="type" className={inputClass}>
+            <option value="Conta Corrente">Conta corrente</option>
+            <option value="Poupança">Poupança</option>
+            <option value="Carteira">Carteira (dinheiro)</option>
+            <option value="Investimento">Conta de investimento</option>
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="account-balance" className={labelClass}>
+            Saldo de hoje
+          </label>
+          <MoneyInput
+            id="account-balance"
+            allowNegative
+            prefix
+            name="initial_balance"
+            defaultValue={0}
+            className={inputClass}
+            aria-describedby="account-balance-hint"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="account-color" className={labelClass}>
+            Cor
+          </label>
+          <input
+            id="account-color"
+            type="color"
+            name="color"
+            defaultValue="#7C3AED"
+            className="h-[50px] w-full cursor-pointer rounded-xl border border-line-strong bg-surface-solid"
+          />
+        </div>
+      </div>
+      <p id="account-balance-hint" className="-mt-2 text-xs text-faint">
+        Quanto tem na conta agora. Saldo negativo (cheque especial)? Toque em “-”.
+      </p>
+
+      {error && (
+        <p role="alert" className="rounded-xl border border-danger/30 bg-danger/10 px-4 py-3 text-sm text-danger">
+          {error}
+        </p>
+      )}
+
+      <Button type="submit" disabled={isPending} className="min-h-11 w-full">
+        {isPending ? "Salvando..." : "Salvar conta"}
       </Button>
     </form>
   );

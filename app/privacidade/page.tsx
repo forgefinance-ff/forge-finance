@@ -107,7 +107,7 @@ const SECTIONS: Section[] = [
   {
     title: "10. Como pedir a exclusão dos seus dados",
     paragraphs: [
-      `Para excluir a sua conta e os dados associados, envie um e-mail para ${EMAIL} a partir do e-mail cadastrado, com o assunto Exclusão de dados. Para parar de usar o WhatsApp, basta desvincular o número na página WhatsApp do app. Respondemos aos pedidos em prazo razoável, conforme a LGPD.`,
+      `Em Configurações > Seus dados você baixa uma cópia completa dos seus dados (arquivo JSON) e pode excluir a conta: a exclusão apaga a conta e todos os dados associados na hora. Se preferir, envie um e-mail para ${EMAIL} a partir do e-mail cadastrado, com o assunto Exclusão de dados. Para parar de usar o WhatsApp, basta desvincular o número na página WhatsApp do app. Respondemos aos pedidos em prazo razoável, conforme a LGPD.`,
     ],
   },
   {
@@ -139,11 +139,8 @@ export default function PrivacyPage() {
         <header className="relative rounded-[22px] border border-line bg-surface p-8">
           <ThemeToggle className="absolute right-5 top-5" />
 
-          <span className="text-sm font-medium uppercase tracking-[0.25em] text-brand-soft">
-            Forge Finance
-          </span>
 
-          <h1 className="mt-2 text-4xl font-bold tracking-tight text-foreground">
+          <h1 className="text-4xl font-normal tracking-[-0.035em] text-foreground sm:text-5xl">
             Política de Privacidade
           </h1>
 

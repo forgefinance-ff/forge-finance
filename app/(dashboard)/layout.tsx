@@ -6,7 +6,9 @@ import { getAiStatus } from "@/lib/ai/config";
 import { BUSINESS_ONBOARDING_COOKIE } from "@/lib/scope";
 import { getActiveScope } from "@/lib/scope-server";
 
-import { AppSidebar, MobileNav } from "@/components/app-sidebar";
+import { AppSidebar, MobileNav, RAIL_COOKIE } from "@/components/app-sidebar";
+import { Breadcrumbs } from "@/components/breadcrumbs";
+import { getNavBadges } from "@/lib/nav-badges";
 import { SiteHeader } from "@/components/site-header";
 import { BusinessOnboarding } from "@/components/business-onboarding";
 import { SectionTabs } from "@/components/section-tabs";
@@ -65,15 +67,19 @@ export default async function DashboardLayout({
   // Guia de primeiros passos: barra de progresso até concluir (ou "Fazer depois").
   const cookieStore = await cookies();
   const guideSkipped = Boolean(cookieStore.get(GUIDE_SKIP_COOKIE)?.value);
-  const guide = await getGuideProgress(session.user.id);
+  const [guide, badges] = await Promise.all([
+    getGuideProgress(session.user.id),
+    getNavBadges(),
+  ]);
+  const railOpen = cookieStore.get(RAIL_COOKIE)?.value !== "closed";
 
   return (
     <div className="relative isolate min-h-screen">
       <div aria-hidden className="forge-backdrop" />
 
-      <AppSidebar scope={scope} />
+      <AppSidebar scope={scope} badges={badges} initialOpen={railOpen} />
 
-      <div className="flex min-h-screen min-w-0 flex-col md:pl-20">
+      <div className="forge-shell flex min-h-screen min-w-0 flex-col md:pl-24">
         <SiteHeader
           userName={userName}
           avatarUrl={profile?.avatar_url ?? null}
@@ -81,15 +87,16 @@ export default async function DashboardLayout({
           scope={scope}
         />
 
-        <main className="min-w-0 flex-1 px-4 pb-24 pt-5 md:pb-8 lg:px-8">
+        <main className="mx-auto w-full min-w-0 max-w-[1320px] flex-1 px-4 pb-24 pt-4 md:pb-10 lg:px-8">
           {!guide.complete && !guideSkipped && <GuideBanner progress={guide} />}
           {offerBusinessDefaults && <BusinessOnboarding />}
-          <SectionTabs scope={scope} />
+          <Breadcrumbs scope={scope} />
+          <SectionTabs scope={scope} badges={badges} />
           {children}
         </main>
       </div>
 
-      <MobileNav scope={scope} />
+      <MobileNav scope={scope} badges={badges} />
       <InstallAppPrompt />
     </div>
   );

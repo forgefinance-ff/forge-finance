@@ -65,12 +65,12 @@ export function RevenueLimitCard({ calc }: { calc: LimitCalc }) {
           >
             <div
               className={cn(
-                "h-full rounded-full transition-all",
+                "h-full rounded-full transition",
                 calc.level === "danger"
                   ? "bg-danger"
                   : calc.level === "warning"
                     ? "bg-warning"
-                    : "bg-gradient-to-r from-brand to-brand-indigo"
+                    : "bg-brand"
               )}
               style={{ width: `${width}%` }}
             />

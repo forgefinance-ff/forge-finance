@@ -20,3 +20,11 @@ export async function hasWhatsAppAccess(admin: SupabaseClient, userId: string): 
 
   return data.plan_id === "pro" && (data.status === "active" || data.status === "past_due");
 }
+
+/**
+ * Pessoal + Empresa (MEI) é do Forge Pro, como diz a página de planos.
+ * Com a cobrança desligada, todos usam.
+ */
+export async function hasBusinessAccess(db: SupabaseClient, userId: string): Promise<boolean> {
+  return hasWhatsAppAccess(db, userId);
+}

@@ -3,7 +3,8 @@
 import { cookies } from "next/headers";
 import { revalidatePath } from "next/cache";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
+import { canUseBusiness } from "@/lib/scope-server";
 import {
   BUSINESS_ONBOARDING_COOKIE,
   parseScope,
@@ -20,20 +21,22 @@ const cookieOptions = {
   secure: process.env.NODE_ENV === "production",
 };
 
-export async function setActiveScope(value: string) {
+export async function setActiveScope(value: string): Promise<{ ok: true } | { ok: false; reason: "pro" }> {
+  const scope = parseScope(value);
+  if (scope === "business" && !(await canUseBusiness())) return { ok: false, reason: "pro" };
+
   const cookieStore = await cookies();
-  cookieStore.set(SCOPE_COOKIE, parseScope(value), cookieOptions);
+  cookieStore.set(SCOPE_COOKIE, scope, cookieOptions);
 
   revalidatePath("/", "layout");
+  return { ok: true };
 }
 
 /** Cria categorias padrão de empresa e (opcionalmente) a conta "Caixa da empresa". */
 export async function createBusinessDefaults(formData: FormData) {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   if (!user) throw new Error("Usuário não autenticado.");
 

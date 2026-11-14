@@ -5,7 +5,7 @@ import { LoginForm } from "@/components/auth/login-form";
 
 export default function LoginPage() {
   return (
-    <AuthShell subtitle="Faça login para continuar.">
+    <AuthShell title="Que bom te ver de novo." subtitle="Entre para ver como está o seu dinheiro hoje.">
       <LoginForm />
     </AuthShell>
   );

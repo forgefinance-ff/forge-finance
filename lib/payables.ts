@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { shiftDate, todayInBrazil } from "@/lib/dates";
 import type {
   Payable,
@@ -6,7 +7,7 @@ import type {
 } from "@/lib/payables-shared";
 import { firstRelation } from "@/lib/relations";
 import { getActiveScope } from "@/lib/scope-server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 
 const SELECT = `
   id, scope, kind, description, amount, due_date, status, paid_at,
@@ -48,9 +49,7 @@ type Filters = {
 export async function getPayables(filters: Filters): Promise<Payable[]> {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   if (!user) return [];
 
@@ -97,13 +96,11 @@ export type DueSummary = {
 };
 
 /** Para o dashboard: pendentes atrasadas e as que vencem nos próximos 7 dias. */
-export async function getDueSummary(): Promise<DueSummary> {
+export const getDueSummary = cache(async function getDueSummary(): Promise<DueSummary> {
   const empty = { overdueTotal: 0, overdueCount: 0, upcoming: [] };
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   if (!user) return empty;
 
@@ -129,15 +126,13 @@ export async function getDueSummary(): Promise<DueSummary> {
     overdueCount: overdue.length,
     upcoming: rows.filter((p) => p.due_date >= today),
   };
-}
+});
 
 /** Todas as contas a receber com cliente (para totais e histórico na tela de clientes). */
 export async function getCustomerReceivables(): Promise<Payable[]> {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   if (!user) return [];
 

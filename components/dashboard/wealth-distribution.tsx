@@ -65,7 +65,7 @@ export function WealthDistribution({
               </PieChart>
             </ResponsiveContainer>
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-[10px] uppercase tracking-widest text-faint">
+              <span className="text-xs text-faint">
                 Total
               </span>
               <span className="text-sm font-semibold text-foreground">

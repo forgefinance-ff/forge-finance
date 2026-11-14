@@ -57,7 +57,7 @@ export default async function PlansPage({
         <div className="inline-flex items-center gap-2 rounded-full border border-violet-400/20 bg-violet-500/10 px-3 py-1 text-xs font-medium text-brand-soft">
           <Sparkles className="h-3.5 w-3.5" /> Forge Pro
         </div>
-        <h1 className="mx-auto mt-4 max-w-2xl text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+        <h1 className="mx-auto mt-4 max-w-2xl text-4xl font-normal tracking-[-0.035em] text-foreground sm:text-5xl">
           Mande um áudio. Seu gasto já está organizado.
         </h1>
         <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-muted-foreground">
@@ -112,7 +112,7 @@ export default async function PlansPage({
         </article>
 
         {/* Pro */}
-        <article className="relative flex flex-col rounded-2xl border border-violet-400/40 bg-gradient-to-br from-violet-500/[0.12] to-surface p-6 shadow-[0_0_40px_rgba(124,58,237,0.12)] sm:p-7">
+        <article className="relative flex flex-col rounded-2xl border-2 border-brand bg-surface p-6 shadow-[var(--shadow-panel)] sm:p-7">
           <div className="flex items-center justify-between gap-3">
             <h2 className="text-xl font-semibold text-foreground">{pro.name}</h2>
             <span className="rounded-full bg-violet-600 px-2.5 py-1 text-xs font-semibold text-white">Mais completo</span>

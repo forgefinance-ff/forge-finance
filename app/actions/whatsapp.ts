@@ -3,17 +3,14 @@
 import crypto from "node:crypto";
 import { revalidatePath } from "next/cache";
 
-import { createClient } from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { WHATSAPP_HELP } from "@/lib/whatsapp/handler";
 import { findOnboardingToken } from "@/lib/whatsapp/onboarding";
 import { metaTransport } from "@/lib/whatsapp/transport";
 
 async function requireUser() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   if (!user) throw new Error("Usuário não autenticado.");
 

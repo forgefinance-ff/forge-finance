@@ -5,6 +5,7 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { parseScope, SCOPE_EMOJI, SCOPE_LABEL } from "@/lib/scope";
 import { hasWhatsAppAccess } from "@/lib/billing/access";
 import { executeAuto, executePending, remember, runAgent, undoTransactions } from "./agent/agent";
+import { budgetAlertFor } from "./budget-alert";
 import { canAutoExecute, type PreparedAction } from "./agent/write-tools";
 import { downloadMedia } from "./meta";
 import { transcribeAudio } from "./transcribe";
@@ -90,16 +91,9 @@ async function handle(message: IncomingMessage) {
   const admin = createAdminClient();
 
   // 1) Idempotência: a Meta reenvia o webhook se demorarmos a responder.
-  const { error: dedupeError } = await admin
-    .from("whatsapp_processed_messages")
-    .insert({ wamid: message.id, phone: message.from });
-
-  if (dedupeError) {
-    if (dedupeError.code !== "23505") {
-      console.error("WhatsApp dedupe error", dedupeError.code);
-    }
-    return;
-  }
+  //    A mensagem fica "processing" até terminar. Se o servidor cair no meio,
+  //    depois de 2 minutos um reenvio da Meta pode reprocessar.
+  if (!(await claimMessage(admin, message))) return;
 
   // 2) Limite simples por número.
   const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
@@ -111,6 +105,7 @@ async function handle(message: IncomingMessage) {
 
   if ((count ?? 0) > MAX_MESSAGES_PER_HOUR) {
     await out.text(message.from, "Muitas mensagens em pouco tempo. Tente de novo daqui a pouco. 🙏");
+    await admin.from("whatsapp_processed_messages").update({ status: "done" }).eq("wamid", message.id);
     return;
   }
 
@@ -130,7 +125,39 @@ async function handle(message: IncomingMessage) {
   } catch (error) {
     console.error("WhatsApp handler error", error);
     await out.text(message.from, "Ops, algo deu errado do meu lado. Tente de novo em instantes.");
+  } finally {
+    await admin
+      .from("whatsapp_processed_messages")
+      .update({ status: "done", finished_at: new Date().toISOString() })
+      .eq("wamid", message.id);
   }
+}
+
+const STALE_MS = 2 * 60 * 1000;
+
+/** true = esta execução é dona da mensagem e deve processá-la. */
+async function claimMessage(admin: Admin, message: IncomingMessage): Promise<boolean> {
+  const { error } = await admin
+    .from("whatsapp_processed_messages")
+    .insert({ wamid: message.id, phone: message.from, status: "processing" });
+
+  if (!error) return true;
+  if (error.code !== "23505") {
+    console.error("WhatsApp dedupe error", error.code);
+    return false;
+  }
+
+  // Já vimos esta mensagem. Só retoma se ficou presa em "processing".
+  const staleBefore = new Date(Date.now() - STALE_MS).toISOString();
+  const { data } = await admin
+    .from("whatsapp_processed_messages")
+    .update({ status: "processing", created_at: new Date().toISOString() })
+    .eq("wamid", message.id)
+    .eq("status", "processing")
+    .lt("created_at", staleBefore)
+    .select("wamid");
+
+  return (data ?? []).length > 0;
 }
 
 /* ------------------------------ vinculação ------------------------------ */
@@ -348,7 +375,8 @@ async function autoRegister(admin: Admin, link: Link, actions: PreparedAction[],
     .select("id")
     .single();
 
-  const body = `${echo}${text}`;
+  const alert = await budgetAlertFor(admin, link.user_id, transactionIds);
+  const body = `${echo}${text}${alert ? `\n\n${alert}` : ""}`;
 
   if (error || !undoRow) {
     console.error("WhatsApp undo save error", error?.code);

@@ -13,7 +13,8 @@ import { transactionKindLabel, type MovementKind } from "@/lib/movement-kinds";
 import { getDueSummary } from "@/lib/payables";
 import { firstRelation } from "@/lib/relations";
 import { getActiveScope } from "@/lib/scope-server";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
+import { fetchAllRows } from "@/lib/totals";
 
 const round = (n: number) => Math.round(n * 100) / 100;
 
@@ -60,9 +61,7 @@ export async function buildQuickContext() {
 /** Contexto completo (aba do Assistente): 12 meses por categoria e mais. */
 export async function buildDeepContext() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   const scope = await getActiveScope();
   const today = todayInBrazil();
@@ -74,12 +73,16 @@ export async function buildDeepContext() {
     getInvestments(),
     getDueSummary(),
     user
-      ? supabase
-          .from("transactions")
-          .select("amount, type, kind, transaction_date, categories(name)")
-          .eq("user_id", user.id)
-          .eq("scope", scope)
-          .gte("transaction_date", from)
+      ? fetchAllRows((a, b) =>
+          supabase
+            .from("transactions")
+            .select("amount, type, kind, transaction_date, categories(name)")
+            .eq("user_id", user.id)
+            .eq("scope", scope)
+            .gte("transaction_date", from)
+            .order("id")
+            .range(a, b)
+        ).then((data) => ({ data, error: null }))
       : Promise.resolve({ data: [] as unknown[], error: null }),
   ]);
 

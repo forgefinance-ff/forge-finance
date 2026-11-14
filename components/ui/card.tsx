@@ -19,25 +19,19 @@ function Card({
           "flex-col",
           "overflow-hidden",
 
-          "rounded-2xl",
+          "rounded-[24px]",
 
           "border",
           "border-line",
 
           "bg-surface",
 
-          "backdrop-blur-xl",
+          "shadow-[var(--shadow-panel)]",
 
-          "shadow-lg",
-          "shadow-black/10 dark:shadow-black/25",
-
-          "transition-all",
+          "transition-[border-color,box-shadow]",
           "duration-300",
 
-          "hover:-translate-y-1",
-          "hover:border-brand-bright/30",
-          "hover:shadow-2xl",
-          "hover:shadow-violet-900/15",
+          "hover:border-line-strong",
 
           "[--card-spacing:24px]",
           "data-[size=sm]:[--card-spacing:18px]",

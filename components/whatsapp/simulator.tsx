@@ -116,7 +116,7 @@ export function WhatsappSimulator() {
               className={cn(
                 "max-w-[85%] whitespace-pre-wrap rounded-2xl px-4 py-2.5 text-sm",
                 bubble.from === "user"
-                  ? "rounded-br-md bg-gradient-to-br from-brand to-brand-indigo text-white"
+                  ? "rounded-br-md bg-brand text-white"
                   : "rounded-bl-md border border-line bg-tint text-foreground"
               )}
             >
@@ -184,7 +184,7 @@ export function WhatsappSimulator() {
           onChange={(e) => setText(e.target.value)}
           placeholder="Escreva uma mensagem…"
           maxLength={1000}
-          className="h-11 flex-1 rounded-full border border-line bg-background-soft px-4 text-sm text-foreground outline-none placeholder:text-faint focus:border-brand-bright/50 focus:ring-2 focus:ring-brand-bright/20"
+          className="h-11 flex-1 rounded-full border border-line-strong bg-surface-solid px-4 text-sm text-foreground outline-none placeholder:text-faint focus:border-brand-bright/50 focus:ring-2 focus:ring-brand-bright/20"
         />
         <Button type="submit" disabled={isPending || !text.trim()} aria-label="Enviar" className="h-11 w-11 rounded-full p-0">
           <SendIcon className="h-4 w-4" />

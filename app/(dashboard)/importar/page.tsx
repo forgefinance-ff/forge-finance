@@ -2,13 +2,11 @@ import { StatementImporter } from "@/components/import/statement-importer";
 import { getAccounts } from "@/lib/accounts";
 import { getCards } from "@/lib/cards";
 import { getCategories } from "@/lib/categories";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 
 async function getUserName() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
   if (!user) return "";
 
   const { data: profile } = await supabase
@@ -35,12 +33,9 @@ export default async function ImportarPage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-[22px] border border-line bg-surface p-8">
-        <span className="text-sm font-medium uppercase tracking-[0.25em] text-brand-soft">
-          Financeiro
-        </span>
+      <div className="pt-2 pb-2">
 
-        <h1 className="mt-2 text-4xl font-bold tracking-tight text-foreground">
+        <h1 className="text-4xl font-normal tracking-[-0.035em] text-foreground sm:text-5xl">
           Importar extrato
         </h1>
 

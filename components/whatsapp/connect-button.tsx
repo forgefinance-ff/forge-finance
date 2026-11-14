@@ -29,7 +29,7 @@ export function ConnectWhatsappButton({ token }: { token: string }) {
         {pending ? "Conectando..." : "Conectar este WhatsApp"}
       </button>
       {error && (
-        <p role="alert" className="text-center text-sm text-red-300">
+        <p role="alert" className="forge-auth-alert forge-auth-alert--error justify-center">
           {error}
         </p>
       )}

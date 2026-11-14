@@ -1,13 +1,31 @@
 "use client";
 
+import { StreamWords } from "@/components/motion";
 import { useEffect, useRef, useState } from "react";
-import { Loader2Icon, RotateCcwIcon, SendIcon, SparklesIcon } from "lucide-react";
+import { RotateCcwIcon, SendIcon, SparklesIcon } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import type { StandardQuestion } from "@/lib/ai/questions";
 import { cn } from "@/lib/utils";
 
-type Message = { role: "user" | "assistant"; content: string };
+type Message = { role: "user" | "assistant"; content: string; fresh?: boolean };
+
+const THINKING = ["Analisando seus dados…", "Cruzando categorias e períodos…", "Montando a resposta…"];
+
+/** Shimmering "thinking" label that rotates through a few states. */
+function ThinkingLabel() {
+  const [step, setStep] = useState(0);
+  useEffect(() => {
+    const timer = window.setInterval(() => setStep((s) => (s + 1) % THINKING.length), 2000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const label = THINKING[step];
+  return (
+    <span key={label} className="t-shimmer t-page-reveal" data-text={label}>
+      {label}
+    </span>
+  );
+}
 
 type Props = {
   configured: boolean;
@@ -107,7 +125,7 @@ export function AssistantChat({ configured, questions }: Props) {
     const trimmed = question.trim();
     if (!trimmed || loading) return;
 
-    const history = messages.slice(-8);
+    const history = messages.slice(-8).map(({ role, content }) => ({ role, content }));
     setMessages((current) => [...current, { role: "user", content: trimmed }]);
     setInput("");
     setError(null);
@@ -131,7 +149,10 @@ export function AssistantChat({ configured, questions }: Props) {
         setMessages((current) => current.slice(0, -1));
         setInput(trimmed);
       } else {
-        setMessages((current) => [...current, { role: "assistant", content: payload.answer! }]);
+        setMessages((current) => [
+          ...current.map((m) => ({ ...m, fresh: false })),
+          { role: "assistant", content: payload.answer!, fresh: true },
+        ]);
         if (payload.quota) setQuota(payload.quota);
       }
     } catch {
@@ -206,12 +227,14 @@ export function AssistantChat({ configured, questions }: Props) {
                 className={cn(
                   "max-w-[90%] rounded-2xl px-4 py-3 text-sm leading-relaxed",
                   message.role === "user"
-                    ? "rounded-br-md bg-gradient-to-br from-brand to-brand-indigo text-white"
+                    ? "rounded-br-md bg-brand text-white"
                     : "rounded-bl-md border border-line bg-tint text-text-soft"
                 )}
               >
                 {message.role === "user" ? (
                   <p className="whitespace-pre-wrap">{message.content}</p>
+                ) : message.fresh ? (
+                  <StreamWords text={message.content} render={(text) => <Answer text={text} />} />
                 ) : (
                   <Answer text={message.content} />
                 )}
@@ -221,9 +244,9 @@ export function AssistantChat({ configured, questions }: Props) {
 
           {loading && (
             <div className="flex justify-start">
-              <div className="flex items-center gap-2 rounded-2xl rounded-bl-md border border-line bg-tint px-4 py-3 text-sm text-faint">
-                <Loader2Icon className="h-4 w-4 animate-spin" />
-                Analisando seus dados…
+              <div className="flex items-center gap-2 rounded-2xl rounded-bl-md border border-line bg-tint px-4 py-3 text-sm">
+                <SparklesIcon className="h-4 w-4 text-brand-soft" />
+                <ThinkingLabel />
               </div>
             </div>
           )}
@@ -259,7 +282,7 @@ export function AssistantChat({ configured, questions }: Props) {
             rows={2}
             maxLength={1500}
             placeholder="Ex.: compare meus gastos com mercado e restaurantes nos últimos 3 meses e diga onde economizar"
-            className="min-h-[52px] flex-1 resize-none rounded-xl border border-line bg-background-soft px-4 py-3 text-sm text-foreground outline-none placeholder:text-faint focus:border-brand-bright/50"
+            className="min-h-[52px] flex-1 resize-none rounded-xl border border-line-strong bg-surface-solid px-4 py-3 text-sm text-foreground outline-none placeholder:text-faint focus:border-brand-bright/50"
           />
           <Button
             type="submit"

@@ -8,7 +8,7 @@ import { EmbeddedCheckout } from "@/components/billing/embedded-checkout";
 import { billingEnabled } from "@/lib/billing/config";
 import { getUserEntitlement, isProActive } from "@/lib/billing/get-user-plan";
 import { PLAN_CATALOG, PRO_PRICING, formatBRL, yearlyComparison } from "@/lib/billing/plans";
-import { createClient } from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 
 export const metadata: Metadata = { title: "Assinar o Forge Pro · Forge Finance" };
@@ -22,10 +22,7 @@ export default async function SubscribePage({
   const interval = plano === "mensal" ? "month" : "year";
   const planoParam = interval === "month" ? "mensal" : "anual";
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   // Sem conta: cria (ou entra) e volta direto para cá.
   if (!user) redirect(`/cadastro?next=${encodeURIComponent(`/assinar?plano=${planoParam}`)}`);

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { fail, type ActionResult } from "@/lib/action-result";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 
 const GROUPS = ["essential", "lifestyle"] as const;
 
@@ -14,9 +14,7 @@ export async function setCategorySpendingGroup(
 ): Promise<ActionResult> {
   try {
     const supabase = await createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
+    const user = await getAuthUser();
     if (!user) return { ok: false, error: "Sua sessão expirou. Entre novamente." };
 
     const value = (GROUPS as readonly string[]).includes(group) ? group : null;

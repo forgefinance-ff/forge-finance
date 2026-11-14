@@ -11,12 +11,9 @@ export default async function MetasPage() {
 
   return (
     <div className="space-y-8">
-      <div className="rounded-[22px] border border-line bg-surface p-8">
-        <span className="text-sm font-medium uppercase tracking-[0.25em] text-brand-soft">
-          Financeiro
-        </span>
+      <div className="pt-2 pb-2">
 
-        <h1 className="mt-2 text-4xl font-bold tracking-tight text-foreground">
+        <h1 className="text-4xl font-normal tracking-[-0.035em] text-foreground sm:text-5xl">
           Metas
         </h1>
 
@@ -86,7 +83,7 @@ export default async function MetasPage() {
                   <td className="p-4 w-80">
                     <div className="h-2 w-full overflow-hidden rounded-full bg-tint-strong">
                       <div
-                        className="h-full rounded-full bg-gradient-to-r from-brand to-brand-soft transition-all"
+                        className="h-full rounded-full bg-brand transition"
                         style={{ width: `${percentage}%` }}
                       />
                     </div>

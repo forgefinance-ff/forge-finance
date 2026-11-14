@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useOptimistic, useTransition } from "react";
 import { Building2Icon, UserIcon } from "lucide-react";
 import { toast } from "sonner";
@@ -7,6 +8,7 @@ import { toast } from "sonner";
 import { setActiveScope } from "@/app/actions/scope";
 import { SCOPE_LABEL, type Scope } from "@/lib/scope";
 import { cn } from "@/lib/utils";
+import { TabsPill, useSlidingPill } from "@/components/motion";
 
 const options = [
   { value: "personal", icon: UserIcon },
@@ -27,8 +29,10 @@ export function ScopeSwitcher({
   className,
 }: ScopeSwitcherProps) {
   const [optimisticScope, setOptimisticScope] = useOptimistic(scope);
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const vertical = orientation === "vertical";
+  const { containerRef, pillRef } = useSlidingPill<HTMLDivElement>(optimisticScope);
 
   function choose(next: Scope) {
     if (next === optimisticScope) return;
@@ -37,7 +41,12 @@ export function ScopeSwitcher({
       setOptimisticScope(next);
 
       try {
-        await setActiveScope(next);
+        const result = await setActiveScope(next);
+        if (!result.ok) {
+          toast("Pessoal + Empresa é do Forge Pro.", {
+            action: { label: "Ver planos", onClick: () => router.push("/assinar") },
+          });
+        }
       } catch {
         toast.error("Não foi possível trocar o escopo. Tente de novo.");
       }
@@ -46,16 +55,18 @@ export function ScopeSwitcher({
 
   return (
     <div
+      ref={containerRef}
       role="radiogroup"
       aria-label="Escopo dos dados"
       aria-busy={isPending}
       className={cn(
-        "glass flex gap-1 rounded-2xl p-1",
+        "glass relative flex gap-1 rounded-full p-1.5",
         vertical ? "flex-col" : "flex-row",
         isPending && "opacity-80",
         className
       )}
     >
+      <TabsPill pillRef={pillRef} />
       {options.map((option) => {
         const Icon = option.icon;
         const active = optimisticScope === option.value;
@@ -67,23 +78,24 @@ export function ScopeSwitcher({
             type="button"
             role="radio"
             aria-checked={active}
+            data-active={active}
             aria-label={label}
             title={label}
             onClick={() => choose(option.value)}
             className={cn(
-              "flex items-center justify-center rounded-xl border transition-all duration-300 outline-none",
-              "focus-visible:ring-2 focus-visible:ring-brand-bright/70",
-              vertical ? "h-12 w-12 flex-col gap-0.5" : "h-8 gap-1.5 px-2.5",
+              "t-tab flex items-center justify-center rounded-full outline-none",
+              "focus-visible:ring-2 focus-visible:ring-brand",
+              vertical ? "h-10 w-10" : "h-8 gap-1.5 px-3",
               active
-                ? "glass-active text-brand-soft"
-                : "border-transparent text-faint hover:bg-tint-strong hover:text-text-soft"
+                ? "text-background"
+                : "text-faint hover:text-foreground"
             )}
           >
             <Icon className={vertical ? "h-4 w-4" : "h-4 w-4 shrink-0"} />
             <span
               className={cn(
                 "font-semibold",
-                vertical ? "text-[9px] leading-none" : "text-xs",
+                vertical ? "sr-only" : "text-xs",
                 !vertical && !active && "sr-only"
               )}
             >

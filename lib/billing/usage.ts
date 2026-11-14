@@ -27,3 +27,10 @@ export async function consumeAiQuota(): Promise<AiQuota | null> {
     periodStart: row.period_start,
   };
 }
+
+/** Devolve a consulta quando o provedor de IA falha (a pessoa não paga pelo erro). */
+export async function refundAiQuota(): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("refund_my_ai_quota");
+  if (error) console.error("AI quota refund failed", error.code);
+}

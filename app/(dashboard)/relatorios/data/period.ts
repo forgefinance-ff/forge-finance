@@ -4,7 +4,7 @@ export type ReportPeriod = {
   key: PeriodKey;
   /** YYYY-MM-DD, inclusivo. null = sem limite inicial. */
   from: string | null;
-  /** YYYY-MM-DD, inclusivo. null = sem limite final. */
+  /** YYYY-MM-DD, inclusivo. "Tudo" termina hoje. */
   to: string | null;
 };
 
@@ -29,10 +29,10 @@ function isValidDate(value: string | undefined): value is string {
   return !!value && DATE_RE.test(value) && shiftDate(value, 0) === value;
 }
 
-const ALL: ReportPeriod = { key: "all", from: null, to: null };
-
 export function parsePeriod(params: ReportSearchParams = {}): ReportPeriod {
   const today = todayInBrazil();
+  // "Tudo" vai até hoje: parcelas futuras do cartão aparecem como "a vencer".
+  const ALL: ReportPeriod = { key: "all", from: null, to: today };
 
   switch (first(params.period)) {
     case "today":

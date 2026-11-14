@@ -137,6 +137,99 @@ export const WRITE_TOOLS: WriteTool[] = [
     },
   },
 
+  {
+    name: "editar_lancamento",
+    description:
+      "Corrige um lançamento já registrado (valor, descrição, categoria, conta ou data). Ex.: \"na verdade foram 48\", \"era no Inter\", \"foi ontem\". Antes, use buscar_transacoes para obter a referência X (para o último lançamento, limite 1). Informe só o que muda.",
+    input_schema: obj(
+      {
+        transacao: s.str("Referência X da transação"),
+        valor: s.num("Valor novo em reais"),
+        descricao: s.str("Descrição nova"),
+        categoria: s.str("Referência K da categoria nova"),
+        conta: s.str("Referência A da conta nova"),
+        data: s.date("Data nova"),
+      },
+      ["transacao"]
+    ),
+    async prepare(args, ctx, db) {
+      const t = ref(ctx, args.transacao, "X");
+      const { data: row } = await db
+        .from("transactions")
+        .select("id, type, kind, description, title, amount, transaction_date, account_id, card_id, category_id, transfer_group")
+        .eq("id", t.id)
+        .eq("user_id", ctx.userId)
+        .maybeSingle();
+      if (!row) throw new ServiceError("Não encontrei esse lançamento.");
+      if (row.transfer_group || row.kind === "card_payment") {
+        throw new ServiceError("Transferências e pagamentos de fatura não podem ser editados. Exclua e registre de novo.");
+      }
+
+      const account = optionalRef(ctx, args.conta, "A");
+      const category = optionalRef(ctx, args.categoria, "K");
+      const input = {
+        id: row.id,
+        account_id: account ? account.id : row.account_id,
+        card_id: account ? null : row.account_id ? null : row.card_id,
+        category_id: category ? category.id : row.category_id,
+        type: row.type,
+        description: str(args, "descricao") ?? row.description ?? row.title ?? "",
+        amount: num(args, "valor") ?? Number(row.amount),
+        date: str(args, "data") ?? String(row.transaction_date).slice(0, 10),
+      };
+      const parsed = parseInput(transactions.updateTransactionInput, input);
+
+      const changes: string[] = [];
+      if (parsed.amount !== Number(row.amount)) changes.push(`valor ${formatBRL(Number(row.amount))} → ${formatBRL(parsed.amount)}`);
+      if (parsed.description !== (row.description ?? row.title ?? "")) changes.push(`descrição → ${parsed.description}`);
+      if (category && category.id !== row.category_id) changes.push(`categoria → ${category.name}`);
+      if (account && account.id !== row.account_id) changes.push(`conta → ${account.name}`);
+      if (parsed.date !== String(row.transaction_date).slice(0, 10)) changes.push(`data → ${brDate(parsed.date)}`);
+      if (!changes.length) throw new ServiceError("Nada mudou nesse lançamento.");
+
+      return {
+        scope: account?.scope ?? t.scope,
+        summary: `✏️ Corrigir ${t.name}: ${changes.join(", ")} • ${scopeTag(account?.scope ?? t.scope)}`,
+        payload: input,
+      };
+    },
+  },
+  {
+    name: "transferir_entre_contas",
+    description:
+      "Move dinheiro entre duas contas do próprio usuário no mesmo escopo (ex.: \"passei 200 do Nubank pro Inter\"). Não é receita nem despesa. Entre Pessoal e Empresa use as ferramentas de pró-labore/retirada/aporte.",
+    input_schema: obj(
+      {
+        de: s.str("Referência A da conta de origem"),
+        para: s.str("Referência A da conta de destino"),
+        valor: s.num("Valor em reais"),
+        data: s.date("Data; sem data, hoje"),
+        descricao: s.str("Observação opcional"),
+      },
+      ["de", "para", "valor"]
+    ),
+    async prepare(args, ctx) {
+      const from = ref(ctx, args.de, "A");
+      const to = ref(ctx, args.para, "A");
+      if (from.scope !== to.scope) {
+        throw new ServiceError("As contas são de escopos diferentes (Pessoal/Empresa). Use pró-labore, retirada ou aporte.");
+      }
+      const input = {
+        from_account_id: from.id,
+        to_account_id: to.id,
+        amount: num(args, "valor") ?? NaN,
+        date: str(args, "data") ?? ctx.today,
+        description: str(args, "descricao") ?? "",
+      };
+      const parsed = parseInput(transactions.accountTransferInput, input);
+      return {
+        scope: from.scope,
+        summary: `🔁 Transferir ${formatBRL(parsed.amount)} de ${from.name} para ${to.name} • ${brDate(parsed.date)} • ${scopeTag(from.scope)}\nNão entra como receita nem despesa.`,
+        payload: input,
+      };
+    },
+  },
+
   /* ---------------- contas bancárias ---------------- */
   {
     name: "criar_conta_bancaria",
@@ -801,6 +894,12 @@ export async function executeAction(action: PreparedAction, ctx: ServiceCtx): Pr
       return null;
     case "excluir_transacao":
       await transactions.deleteTransaction(ctx, id);
+      return null;
+    case "editar_lancamento":
+      await transactions.updateTransaction(ctx, p as never);
+      return null;
+    case "transferir_entre_contas":
+      await transactions.accountTransfer(ctx, p as never);
       return null;
     case "criar_conta_bancaria":
       await registry.createAccount(ctx, p as never);

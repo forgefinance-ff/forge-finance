@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { KIND_HINT, KIND_LABEL, MOVEMENT_KINDS } from "@/lib/movement-kinds";
 
 const inputClass =
-  "w-full rounded-xl border border-line bg-background-soft px-4 py-3 text-foreground outline-none transition focus:border-violet-500";
+  "w-full rounded-xl border border-line-strong bg-surface-solid px-4 py-3 text-foreground outline-none transition placeholder:text-faint hover:border-faint focus:border-brand focus:ring-2 focus:ring-brand/15";
 
 type Props = {
   action: (formData: FormData) => Promise<void>;
@@ -30,14 +30,21 @@ export function CategoryForm({ action }: Props) {
       action={handleSubmit}
       className="space-y-4 rounded-[22px] border border-line bg-surface p-6"
     >
-      <h2 className="text-xl font-semibold text-foreground">Nova Categoria</h2>
+      <h2 className="text-xl font-semibold text-foreground">Nova categoria</h2>
 
-      <input
-        name="name"
-        required
-        placeholder="Nome da categoria"
-        className={inputClass}
-      />
+      <div>
+        <label htmlFor="category-name" className="mb-1.5 block text-xs font-medium text-faint">
+          Nome
+        </label>
+        <input
+          id="category-name"
+          name="name"
+          required
+          maxLength={40}
+          placeholder="Ex.: Mercado, Academia"
+          className={inputClass}
+        />
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block">
@@ -68,23 +75,29 @@ export function CategoryForm({ action }: Props) {
       <p className="text-xs text-faint">{KIND_HINT[kind]}</p>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <input
-          type="color"
-          name="color"
-          defaultValue="#7C3AED"
-          className="h-[50px] w-full cursor-pointer rounded-xl border border-line bg-background-soft"
-        />
+        <div>
+          <label htmlFor="category-color" className="mb-1.5 block text-xs font-medium text-faint">
+            Cor
+          </label>
+          <input
+            id="category-color"
+            type="color"
+            name="color"
+            defaultValue="#7C3AED"
+            className="h-[50px] w-full cursor-pointer rounded-xl border border-line-strong bg-surface-solid"
+          />
+        </div>
 
-        <input
-          name="icon"
-          placeholder="Ícone (ex: 💰)"
-          defaultValue="💰"
-          className={inputClass}
-        />
+        <div>
+          <label htmlFor="category-icon" className="mb-1.5 block text-xs font-medium text-faint">
+            Ícone (um emoji)
+          </label>
+          <input id="category-icon" name="icon" maxLength={4} placeholder="💰" defaultValue="💰" className={inputClass} />
+        </div>
       </div>
 
       <Button type="submit" disabled={isPending} className="w-full">
-        {isPending ? "Salvando..." : "Salvar Categoria"}
+        {isPending ? "Salvando..." : "Salvar categoria"}
       </Button>
     </form>
   );

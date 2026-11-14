@@ -1,59 +1,30 @@
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { getActiveScope } from "@/lib/scope-server";
-import { firstRelation } from "@/lib/relations";
-import { shiftDate, type ReportPeriod } from "./period";
+import { getCategoryTotals } from "@/lib/totals";
+import type { ReportPeriod } from "./period";
 
 export type CategoryExpense = {
   name: string;
   value: number;
+  icon: string | null;
 };
 
-export async function getCategoryExpenses(
-  period: ReportPeriod
-): Promise<CategoryExpense[]> {
-  const supabase = await createClient();
-
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+export async function getCategoryExpenses(period: ReportPeriod): Promise<CategoryExpense[]> {
+  const user = await getAuthUser();
   if (!user) return [];
 
-  let query = supabase
-    .from("transactions")
-    .select(`
-      amount,
-      type,
-      categories(name)
-    `)
-    .eq("user_id", user.id)
-    .eq("scope", await getActiveScope())
-    .eq("type", "expense")
-    .eq("kind", "regular");
+  const supabase = await createClient();
+  const rows = await getCategoryTotals(supabase, await getActiveScope(), "expense", period.from, period.to);
 
-  if (period.from) query = query.gte("transaction_date", period.from);
-  if (period.to) query = query.lt("transaction_date", shiftDate(period.to, 1));
-
-  const { data, error } = await query;
-
-  if (error) throw error;
-
-  const totals = new Map<string, number>();
-
-  for (const item of data ?? []) {
-    const name =
-      firstRelation(
-        item.categories as unknown as
-          | { name?: string }
-          | { name?: string }[]
-          | null
-      )?.name ?? "Sem categoria";
-
-    totals.set(name, (totals.get(name) ?? 0) + Number(item.amount));
+  // Categorias com o mesmo nome (ex.: apagada e recriada) aparecem juntas.
+  const byName = new Map<string, CategoryExpense>();
+  for (const row of rows) {
+    const current = byName.get(row.name) ?? { name: row.name, value: 0, icon: row.icon };
+    current.value += row.total;
+    byName.set(row.name, current);
   }
 
-  return [...totals.entries()].map(([name, value]) => ({
-    name,
-    value,
-  }));
+  return [...byName.values()]
+    .map((c) => ({ ...c, value: Math.round(c.value * 100) / 100 }))
+    .sort((a, b) => b.value - a.value);
 }

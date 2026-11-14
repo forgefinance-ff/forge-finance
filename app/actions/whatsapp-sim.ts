@@ -3,7 +3,7 @@
 import crypto from "node:crypto";
 
 import { createAdminClient } from "@/lib/supabase/admin";
-import { createClient } from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/supabase/server";
 import { handleIncoming } from "@/lib/whatsapp/handler";
 import { memoryTransport, type SimulatedMessage } from "@/lib/whatsapp/transport";
 
@@ -24,10 +24,7 @@ export async function simulateWhatsapp(input: {
     return { ok: false, error: "O simulador só funciona em desenvolvimento." };
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   if (!user) return { ok: false, error: "Entre no app para usar o simulador." };
 

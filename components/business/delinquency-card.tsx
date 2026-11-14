@@ -47,7 +47,7 @@ export function DelinquencyCard({ delinquency }: { delinquency: Delinquency }) {
 
       <div className="mt-5 grid gap-5 sm:grid-cols-2">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-faint">Quem mais deve</p>
+          <p className="text-xs font-semibold text-faint">Quem mais deve</p>
           {d.worstPayers.length === 0 ? (
             <p className="mt-2 text-sm text-faint">Ninguém em atraso. 🎉</p>
           ) : (
@@ -68,7 +68,7 @@ export function DelinquencyCard({ delinquency }: { delinquency: Delinquency }) {
         </div>
 
         <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-faint">
+          <p className="text-xs font-semibold text-faint">
             Quem mais comprou (12 meses)
           </p>
           {d.topCustomers.length === 0 ? (

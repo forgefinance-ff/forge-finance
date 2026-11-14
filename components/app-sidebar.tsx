@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useState } from "react";
@@ -8,14 +7,16 @@ import {
   BriefcaseIcon,
   LayoutDashboardIcon,
   ListIcon,
+  PanelLeftCloseIcon,
+  PanelLeftOpenIcon,
   Settings2Icon,
   SparklesIcon,
   TargetIcon,
   WalletCardsIcon,
 } from "lucide-react";
 
+import { TabsPill, useOptimisticPath, useSlidingPill } from "@/components/motion";
 import { ScopeSwitcher } from "@/components/scope-switcher";
-import { ThemeToggle } from "@/components/theme-toggle";
 import type { Scope } from "@/lib/scope";
 import { cn } from "@/lib/utils";
 
@@ -76,6 +77,7 @@ const planning: NavGroup = {
   icon: TargetIcon,
   items: [
     { title: "Metas", url: "/metas" },
+    { title: "Orçamentos", url: "/orcamentos" },
     { title: "Relatórios", url: "/relatorios" },
     { title: "Raio-X", url: "/raio-x" },
   ],
@@ -122,6 +124,47 @@ export function findGroup(scope: Scope, pathname: string) {
   );
 }
 
+/* -------------------------------- badges -------------------------------- */
+
+export type NavBadge = { count: number; tone: "danger" | "brand"; label: string };
+/** Avisos por página (chave = url), somados no ícone do grupo. */
+export type NavBadges = Record<string, NavBadge | undefined>;
+
+export function groupBadge(group: NavGroup, badges: NavBadges): NavBadge | undefined {
+  const list = group.items.map((item) => badges[item.url]).filter(Boolean) as NavBadge[];
+  if (list.length === 0) return undefined;
+  return {
+    count: list.reduce((sum, b) => sum + b.count, 0),
+    tone: list.some((b) => b.tone === "danger") ? "danger" : "brand",
+    label: list.map((b) => b.label).join(" · "),
+  };
+}
+
+export function BadgeCount({
+  badge,
+  floating = false,
+  className,
+}: {
+  badge: NavBadge;
+  floating?: boolean;
+  className?: string;
+}) {
+  return (
+    <span
+      title={badge.label}
+      className={cn(
+        "inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[10px] font-semibold tabular-nums leading-none",
+        badge.tone === "danger" ? "bg-danger text-white" : "bg-brand text-white",
+        floating && "absolute -right-0.5 -top-0.5 ring-2 ring-surface-solid",
+        className
+      )}
+    >
+      <span aria-hidden>{badge.count > 9 ? "9+" : badge.count}</span>
+      <span className="sr-only">{badge.label}</span>
+    </span>
+  );
+}
+
 /* ------------------------------- tooltip ------------------------------- */
 
 type TipState = { top: number; left: number } | null;
@@ -143,7 +186,7 @@ function useRailTooltip() {
   return { tip, show, hide };
 }
 
-function RailTooltip({ tip, group }: { tip: TipState; group: NavGroup }) {
+function RailTooltip({ tip, group, badge }: { tip: TipState; group: NavGroup; badge?: NavBadge }) {
   if (!tip) return null;
   const subpages = group.items.filter((item) => !item.hidden);
 
@@ -159,112 +202,198 @@ function RailTooltip({ tip, group }: { tip: TipState; group: NavGroup }) {
           {subpages.map((item) => item.title).join(" · ")}
         </span>
       )}
+      {badge && (
+        <span className={cn("mt-1 block text-xs font-medium", badge.tone === "danger" ? "text-danger" : "text-brand")}>
+          {badge.label}
+        </span>
+      )}
     </span>
   );
 }
 
-function RailItem({ group, pathname }: { group: NavGroup; pathname: string }) {
+function RailItem({
+  group,
+  pathname,
+  open,
+  badge,
+  onNavigate,
+}: {
+  group: NavGroup;
+  pathname: string;
+  open: boolean;
+  badge?: NavBadge;
+  onNavigate: (url: string) => void;
+}) {
   const Icon = group.icon;
   const active = group.items.some((item) => isActive(pathname, item.url));
   const { tip, show, hide } = useRailTooltip();
+  // Com a barra aberta (telas largas) o nome já aparece; o balão só vale fechada.
+  const tipHandlers = {
+    onMouseEnter: (e: React.MouseEvent<HTMLElement>) => {
+      if (!open || window.innerWidth < 1280) show(e);
+    },
+    onFocus: (e: React.FocusEvent<HTMLElement>) => {
+      if (!open || window.innerWidth < 1280) show(e);
+    },
+    onMouseLeave: hide,
+    onBlur: hide,
+    onClick: () => {
+      hide();
+      onNavigate(group.items[0].url);
+    },
+  };
 
   return (
-    <li className="relative">
+    <li>
       <Link
         href={group.items[0].url}
         aria-label={group.title}
         aria-current={active ? "page" : undefined}
-        onMouseEnter={show}
-        onMouseLeave={hide}
-        onFocus={show}
-        onBlur={hide}
-        onClick={hide}
+        data-active={active}
+        {...tipHandlers}
         className={cn(
-          "relative flex h-11 w-11 items-center justify-center rounded-2xl border transition-all duration-300 outline-none",
-          "focus-visible:ring-2 focus-visible:ring-brand-bright/70",
-          active
-            ? "glass-active text-brand-soft"
-            : "border-transparent text-faint hover:bg-tint-strong hover:text-text-soft"
+          "t-tab relative flex h-10 w-10 items-center justify-center gap-3 rounded-full text-sm font-medium outline-none",
+          "focus-visible:ring-2 focus-visible:ring-brand",
+          open && "xl:w-full xl:justify-start xl:px-3",
+          active ? "text-accent-foreground" : "text-faint hover:bg-tint-strong hover:text-foreground"
         )}
       >
-        {active && (
-          <span
-            aria-hidden
-            className="pointer-events-none absolute -inset-2 -z-10 rounded-full bg-brand/30 blur-xl"
-          />
+        <Icon className="h-[18px] w-[18px] shrink-0" />
+        {open && <span className="hidden flex-1 truncate xl:inline">{group.title}</span>}
+        {badge && (
+          <>
+            <BadgeCount badge={badge} floating className={cn(open && "xl:hidden")} />
+            {open && <BadgeCount badge={badge} className="hidden xl:inline-flex" />}
+          </>
         )}
-        <Icon
-          className={cn(
-            "h-5 w-5 transition-all duration-300",
-            active && "drop-shadow-[0_0_8px_rgba(192,132,252,0.9)]"
-          )}
-        />
       </Link>
 
-      <RailTooltip tip={tip} group={group} />
+      <RailTooltip tip={tip} group={group} badge={badge} />
     </li>
   );
 }
 
-/** Barra lateral compacta (desktop): um ícone por grupo. */
-export function AppSidebar({ scope }: { scope: Scope }) {
-  const pathname = usePathname();
+export const RAIL_COOKIE = "forge_rail";
+
+/**
+ * Barra lateral (desktop): pílula flutuante. Em telas largas (xl) pode abrir
+ * com os nomes das abas; a escolha fica salva em cookie. A aba ativa é
+ * marcada por uma pílula que estica ao trocar de página.
+ */
+export function AppSidebar({
+  scope,
+  badges = {},
+  initialOpen = true,
+}: {
+  scope: Scope;
+  badges?: NavBadges;
+  initialOpen?: boolean;
+}) {
+  const [current, setCurrent] = useOptimisticPath(usePathname());
+  const [open, setOpen] = useState(initialOpen);
+  const { containerRef, pillRef } = useSlidingPill<HTMLElement>(`${current}|${open}|${scope}`);
+  const groups = getNavGroups(scope);
+
+  function toggle() {
+    const next = !open;
+    setOpen(next);
+    document.cookie = `${RAIL_COOKIE}=${next ? "open" : "closed"}; path=/; max-age=31536000; samesite=lax`;
+  }
+
+  const ToggleIcon = open ? PanelLeftCloseIcon : PanelLeftOpenIcon;
 
   return (
     <aside
       aria-label="Navegação principal"
-      className="glass-bar fixed inset-y-0 left-0 z-40 hidden w-20 flex-col items-center border-r py-5 md:flex"
+      data-rail={open ? "open" : "closed"}
+      className={cn(
+        "fixed left-4 top-1/2 z-40 hidden -translate-y-1/2 flex-col items-center gap-3 md:flex",
+        open && "xl:w-56 xl:items-stretch"
+      )}
     >
-      <Link
-        href="/dashboard"
-        aria-label="Forge Finance"
-        className="mb-4 flex h-12 w-12 items-center justify-center transition-transform duration-300 hover:scale-105"
+      {open ? (
+        <>
+          <ScopeSwitcher scope={scope} orientation="vertical" className="self-center xl:hidden" />
+          <ScopeSwitcher scope={scope} orientation="horizontal" className="hidden justify-between xl:flex [&>button]:flex-1" />
+        </>
+      ) : (
+        <ScopeSwitcher scope={scope} orientation="vertical" />
+      )}
+
+      <nav
+        ref={containerRef}
+        className={cn(
+          "glass relative flex flex-col items-center gap-1 rounded-[28px] p-1.5",
+          open && "xl:items-stretch"
+        )}
       >
-        <Image
-          src="/icon-f.png"
-          alt="Forge Finance"
-          width={48}
-          height={48}
-          priority
-          className="h-12 w-12 object-contain drop-shadow-[0_0_14px_rgba(139,92,246,0.45)]"
-        />
-      </Link>
+        <TabsPill pillRef={pillRef} className="bg-accent" />
 
-      <ScopeSwitcher scope={scope} orientation="vertical" className="mb-4" />
+        <button
+          type="button"
+          onClick={toggle}
+          aria-label={open ? "Recolher menu" : "Abrir menu com nomes"}
+          title={open ? "Recolher menu" : "Abrir menu com nomes"}
+          aria-expanded={open}
+          className={cn(
+            "relative z-[1] hidden h-9 w-10 items-center justify-center rounded-full text-faint outline-none transition-colors hover:bg-tint-strong hover:text-foreground focus-visible:ring-2 focus-visible:ring-brand xl:flex",
+            open && "xl:w-full xl:justify-start xl:gap-3 xl:px-3"
+          )}
+        >
+          <ToggleIcon className="h-[18px] w-[18px] shrink-0" />
+          {open && <span className="hidden text-xs font-medium xl:inline">Recolher</span>}
+        </button>
 
-      <nav className="flex w-full flex-1 flex-col items-center overflow-y-auto py-1">
-        <ul className="glass flex flex-col items-center gap-2 rounded-[28px] p-2">
-          {getNavGroups(scope).map((group) => (
-            <RailItem key={group.title} group={group} pathname={pathname} />
+        <ul className={cn("flex flex-col items-center gap-1", open && "xl:items-stretch")}>
+          {groups.map((group) => (
+            <RailItem
+              key={group.title}
+              group={group}
+              pathname={current}
+              open={open}
+              badge={groupBadge(group, badges)}
+              onNavigate={setCurrent}
+            />
           ))}
         </ul>
+        <span aria-hidden className="my-1 h-px w-6 self-center bg-line" />
+        <ul className={cn("flex flex-col items-center gap-1", open && "xl:items-stretch")}>
+          <RailItem
+            group={settingsGroup}
+            pathname={current}
+            open={open}
+            badge={groupBadge(settingsGroup, badges)}
+            onNavigate={setCurrent}
+          />
+        </ul>
       </nav>
-
-      <ul className="mt-3 flex flex-col items-center gap-3">
-        <li>
-          <ThemeToggle placement="right" />
-        </li>
-        <RailItem group={settingsGroup} pathname={pathname} />
-      </ul>
     </aside>
   );
 }
 
 /** Navegação móvel: barra inferior com um ícone por grupo e o nome embaixo. */
-export function MobileNav({ scope }: { scope: Scope }) {
+export function MobileNav({ scope, badges = {} }: { scope: Scope; badges?: NavBadges }) {
   const pathname = usePathname();
   const groups = [...getNavGroups(scope), settingsGroup];
 
   return (
     <nav
       aria-label="Navegação principal"
-      className="glass-bar fixed inset-x-0 bottom-0 z-40 border-t pb-[env(safe-area-inset-bottom)] md:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-line bg-surface-solid pb-[env(safe-area-inset-bottom)] md:hidden"
     >
       <ul className="flex items-stretch justify-between gap-1 overflow-x-auto px-2 py-1.5">
         {groups.map((group) => {
           const Icon = group.icon;
           const active = group.items.some((item) => isActive(pathname, item.url));
-          const short = group.title.split(" ")[0];
+          const short =
+            ({
+              Dashboard: "Início",
+              Lançamentos: "Extrato",
+              "Contas e cartões": "Contas",
+              "Metas e relatórios": "Metas",
+              "Assistente IA": "IA",
+              Configurações: "Ajustes",
+            } as Record<string, string>)[group.title] ?? group.title.split(" ")[0];
 
           return (
             <li key={group.title} className="min-w-[56px] flex-1">
@@ -273,11 +402,16 @@ export function MobileNav({ scope }: { scope: Scope }) {
                 aria-label={group.title}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex flex-col items-center gap-0.5 rounded-2xl border px-1 py-1.5 text-[10px] font-medium transition-all duration-300",
-                  active ? "glass-active text-brand-soft" : "border-transparent text-faint"
+                  "flex flex-col items-center gap-0.5 rounded-2xl px-1 py-1.5 text-[10px] font-medium transition-colors duration-150",
+                  active ? "bg-accent text-accent-foreground" : "text-faint"
                 )}
               >
-                <Icon className="h-5 w-5" />
+                <span className="relative">
+                  <Icon className="h-5 w-5" />
+                  {groupBadge(group, badges) && (
+                    <BadgeCount badge={groupBadge(group, badges)!} floating className="-right-2.5 -top-1.5" />
+                  )}
+                </span>
                 <span className="max-w-full truncate">{short}</span>
               </Link>
             </li>

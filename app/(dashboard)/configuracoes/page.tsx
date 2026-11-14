@@ -4,16 +4,30 @@ import { ProfileCard } from "./components/profile-card";
 import { ChangePasswordForm } from "./components/change-password-form";
 import { LogoutButton } from "./components/logout-button";
 import { InstallAppCard } from "@/components/pwa/install-app-card";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 
-export default function SettingsPage() {
+import { DataPrivacyCard } from "./components/data-privacy-card";
+import { NotificationsCard } from "./components/notifications-card";
+
+export default async function SettingsPage() {
+  const user = await getAuthUser();
+  const supabase = await createClient();
+  const [prefsRes, linkRes] = user
+    ? await Promise.all([
+        supabase.from("notification_prefs").select("weekly_summary, budget_alerts").eq("user_id", user.id).maybeSingle(),
+        supabase.from("whatsapp_links").select("user_id").eq("user_id", user.id).maybeSingle(),
+      ])
+    : [{ data: null }, { data: null }];
+  const prefs = {
+    weekly_summary: Boolean(prefsRes.data?.weekly_summary ?? false),
+    budget_alerts: Boolean(prefsRes.data?.budget_alerts ?? true),
+  };
+
   return (
     <div className="space-y-8">
-      <div className="rounded-[22px] border border-line bg-surface p-8">
-        <span className="text-sm font-medium uppercase tracking-[0.25em] text-brand-soft">
-          Financeiro
-        </span>
+      <div className="pt-2 pb-2">
 
-        <h1 className="mt-2 text-4xl font-bold tracking-tight text-foreground">
+        <h1 className="text-4xl font-normal tracking-[-0.035em] text-foreground sm:text-5xl">
           Configurações
         </h1>
 
@@ -40,15 +54,9 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Preferências</CardTitle>
-        </CardHeader>
+      <NotificationsCard initial={prefs} hasWhatsApp={!!linkRes.data} />
 
-        <CardContent>
-          Tema, moeda e opções do sistema.
-        </CardContent>
-      </Card>
+      <DataPrivacyCard />
     </div>
   );
 }

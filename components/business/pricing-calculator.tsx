@@ -6,9 +6,10 @@ import { suggestedPrice } from "@/lib/business-calc";
 import { parseAmount } from "@/lib/money";
 
 import { brl } from "./format";
+import { MoneyInput } from "@/components/ui/money-input";
 
 const inputClass =
-  "w-full rounded-xl border border-line bg-background-soft px-3 py-2.5 text-sm text-foreground outline-none transition focus:border-violet-500";
+  "w-full rounded-xl border border-line-strong bg-surface-solid px-3 py-2.5 text-sm text-foreground outline-none transition placeholder:text-faint hover:border-faint focus:border-brand focus:ring-2 focus:ring-brand/15";
 
 /** Preço sugerido = custo ÷ (1 − % impostos e variáveis − % margem desejada). */
 export function PricingCalculator({ variablePct }: { variablePct: number }) {
@@ -32,7 +33,7 @@ export function PricingCalculator({ variablePct }: { variablePct: number }) {
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
         <label className="block">
           <span className="mb-1.5 block text-xs font-medium text-faint">Custo do produto/serviço (R$)</span>
-          <input inputMode="decimal" value={cost} onChange={(e) => setCost(e.target.value)} placeholder="0,00" className={inputClass} />
+          <MoneyInput value={cost ? parseAmount(cost) : null} onValueChange={(n) => setCost(n === null ? "" : String(n))} className={inputClass} />
         </label>
         <label className="block">
           <span className="mb-1.5 block text-xs font-medium text-faint">Impostos e variáveis (%)</span>

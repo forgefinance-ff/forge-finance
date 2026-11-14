@@ -55,7 +55,7 @@ export function AgendaCard({
                   isToday ? "border-brand/60" : "border-line"
                 )}
               >
-                <p className="text-[10.5px] uppercase tracking-wider text-faint">
+                <p className="text-[10.5px] text-faint">
                   {WEEKDAYS_SHORT[weekdayIndex(day.date)]}
                   {isToday && " · hoje"}
                 </p>
@@ -98,7 +98,7 @@ export function AgendaCard({
           <b className="text-foreground">{brl(agenda.toReceive)}</b>
         </span>
         {empty && (
-          <Link href="/contas-a-pagar-receber" className="font-medium text-brand-soft hover:underline">
+          <Link href="/contas-a-pagar-receber" className="inline-flex min-h-6 items-center font-medium text-brand-soft hover:underline">
             Cadastrar contas a pagar e receber
           </Link>
         )}

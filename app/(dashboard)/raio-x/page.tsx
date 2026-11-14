@@ -45,7 +45,7 @@ export default async function RaioXPage() {
           <div className="mt-5 flex flex-wrap justify-center gap-2">
             <Link
               href="/importar"
-              className="glass-primary rounded-xl px-4 py-2 text-sm font-medium text-white transition"
+              className="glass-primary rounded-xl px-4 py-2 text-sm font-medium text-background transition"
             >
               Importar extrato
             </Link>

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 
 import { LandingPage } from "@/components/landing/landing-page";
-import { createClient } from "@/lib/supabase/server";
+import { getAuthUser } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Forge Finance · Seu dinheiro organizado pelo WhatsApp",
@@ -12,10 +12,7 @@ export const metadata: Metadata = {
 
 /** Visitante vê a página de vendas; quem já entrou vai direto para o painel. */
 export default async function Home() {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getAuthUser();
 
   if (user) redirect("/dashboard");
 

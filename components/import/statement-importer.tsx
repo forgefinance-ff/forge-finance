@@ -55,7 +55,7 @@ type ReviewRow = StatementRow & {
 };
 
 const inputClass =
-  "w-full rounded-xl border border-line bg-background-soft px-3 py-2.5 text-sm text-foreground outline-none transition focus:border-violet-500";
+  "w-full rounded-xl border border-line-strong bg-surface-solid px-3 py-2.5 text-sm text-foreground outline-none transition placeholder:text-faint hover:border-faint focus:border-brand focus:ring-2 focus:ring-brand/15";
 
 const brl = (value: number) =>
   value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
@@ -444,6 +444,7 @@ export function StatementImporter({ accounts, categories, cards = [], userName =
             ref={fileInput}
             type="file"
             accept=".ofx,.csv,.txt,.xlsx,.xls"
+            aria-label="Arquivo do extrato (OFX, CSV ou XLSX)"
             className="hidden"
             onChange={(e) => {
               const file = e.target.files?.[0];
@@ -551,7 +552,7 @@ export function StatementImporter({ accounts, categories, cards = [], userName =
 
           <div className="overflow-x-auto rounded-2xl border border-line">
             <table className="w-full min-w-[480px] text-sm">
-              <thead className="bg-tint text-left text-xs uppercase tracking-wider text-faint">
+              <thead className="bg-tint text-left text-xs text-faint">
                 <tr>
                   <th className="px-4 py-2">Data</th>
                   <th className="px-4 py-2">Descrição</th>

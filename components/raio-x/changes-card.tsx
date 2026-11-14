@@ -24,7 +24,7 @@ export function ChangesCard({
       ) : (
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-[11px] uppercase tracking-wider text-faint">
+            <tr className="text-xs text-faint">
               <th className="pb-2 text-left font-medium">Categoria</th>
               <th className="pb-2 text-right font-medium">Média</th>
               <th className="pb-2 text-right font-medium">30 dias</th>
@@ -68,7 +68,7 @@ export function ChangesCard({
                 "h-full rounded-full",
                 pace.vsAverage !== null && pace.vsAverage > 5
                   ? "bg-danger"
-                  : "bg-gradient-to-r from-brand to-brand-bright"
+                  : "bg-brand"
               )}
               style={{ width: `${progress}%` }}
             />

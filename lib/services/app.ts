@@ -1,15 +1,13 @@
 import { getActiveScope } from "@/lib/scope-server";
 import { appAtomic, errorMessage, ServiceError, type ServiceCtx } from "@/lib/services/context";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import type { ActionResult } from "@/lib/action-result";
 
 /** Contexto do usuário logado no app (RLS ativa, escopo do cookie). */
 export async function appCtx(): Promise<ServiceCtx> {
   const db = await createClient();
 
-  const {
-    data: { user },
-  } = await db.auth.getUser();
+  const user = await getAuthUser();
 
   if (!user) throw new ServiceError("Sua sessão expirou. Entre novamente.");
 

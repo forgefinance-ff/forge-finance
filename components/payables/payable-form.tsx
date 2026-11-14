@@ -7,6 +7,7 @@ import { createPayable, updatePayable } from "@/app/actions/payables";
 import { inputClass } from "@/components/customers/customer-form";
 import { Button } from "@/components/ui/button";
 import type { Payable, PayableKind } from "@/lib/payables-shared";
+import { MoneyInput } from "@/components/ui/money-input";
 
 export type Option = { id: string; name: string };
 export type CategoryOption = Option & { type: "income" | "expense" };
@@ -87,11 +88,10 @@ export function PayableForm({
           <label htmlFor="payable-amount" className={labelClass}>
             Valor (R$) <span className="text-danger">*</span>
           </label>
-          <input
+          <MoneyInput
             id="payable-amount"
             name="amount"
             required
-            inputMode="decimal"
             defaultValue={payable ? payable.amount.toFixed(2).replace(".", ",") : ""}
             placeholder="0,00"
             className={inputClass}
