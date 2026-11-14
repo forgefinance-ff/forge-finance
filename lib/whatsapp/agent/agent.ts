@@ -41,6 +41,7 @@ Regras:
 - Para excluir ou corrigir uma transação, primeiro use buscar_transacoes para achar a referência X. Se houver mais de uma possível, pergunte qual.
 - Correções ("na verdade foram 48", "era no Inter", "foi ontem", "muda pra Mercado") = editar_lancamento no lançamento citado; sem lançamento citado, é o último que o usuário registrou (buscar_transacoes com limite 1).
 - "Passei/transferi X da conta A pra conta B" (contas do próprio usuário, mesmo escopo) = transferir_entre_contas. Não registre como receita e despesa separadas.
+- Conta que ainda não existe: se o usuário pedir um lançamento numa conta/banco que não está no contexto (ou responder o nome do banco quando você perguntou em qual conta), chame registrar_lancamento com \`conta\` = o NOME dito (ex.: "Inter"). O sistema cria a conta e lança junto, numa só confirmação. Não diga que houve erro sem ter chamado a ferramenta. Para só criar a conta (sem lançamento), use criar_conta_bancaria.
 - Se faltar algo essencial (valor, qual cliente, qual conta quando há várias), pergunte em uma frase curta. Não invente valores.
 - Nunca invente limite de faturamento nem valor do DAS: só use o que o usuário disser ou o que está configurado. Para dúvidas sobre valores oficiais, oriente a conferir no Portal do Empreendedor (gov.br/empresas-e-negocios/pt-br/empreendedor) e lembre que o Forge Finance não substitui um contador.
 - Escopo: contas, clientes e categorias têm escopo pessoal ou empresa. Uma transação usa categoria do mesmo escopo da conta. Se o usuário falar "empresa"/"MEI"/cliente, use o escopo empresa.
@@ -196,6 +197,8 @@ export async function runAgent(
           throw new Error("Ferramenta desconhecida.");
         }
       } catch (error) {
+        // Fica no log da Vercel para investigar o que a IA viu.
+        console.warn("WhatsApp tool error", call.name, errorMessage(error, "erro"), JSON.stringify(call.input).slice(0, 300));
         results.push({
           type: "tool_result",
           tool_use_id: call.id,
@@ -212,7 +215,7 @@ export async function runAgent(
   }
 
   if (prepared.length) {
-    return { kind: "confirm", actions: prepared, text: finalText };
+    return { kind: "confirm", actions: dropDuplicateAccounts(prepared), text: finalText };
   }
 
   return {
@@ -221,6 +224,22 @@ export async function runAgent(
       finalText ||
       "Não entendi. Você pode, por exemplo, registrar um gasto (\"gastei 45 no mercado\"), perguntar seu saldo ou criar uma conta a receber.",
   };
+}
+
+/**
+ * A IA às vezes pede "criar conta Inter" E "lançar na conta Inter (nova)" juntos.
+ * O lançamento já cria a conta, então o pedido separado sairia duplicado.
+ */
+function dropDuplicateAccounts(actions: PreparedAction[]): PreparedAction[] {
+  const key = (v: unknown) => String(v ?? "").trim().toLowerCase();
+  const createdWithEntry = new Set(
+    actions
+      .map((a) => (a.tool === "registrar_lancamento" ? (a.payload.new_account as { name?: string } | undefined)?.name : null))
+      .filter(Boolean)
+      .map(key)
+  );
+  if (!createdWithEntry.size) return actions;
+  return actions.filter((a) => !(a.tool === "criar_conta_bancaria" && createdWithEntry.has(key(a.payload.name))));
 }
 
 const REVALIDATE_PATHS = [

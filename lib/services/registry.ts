@@ -41,20 +41,26 @@ export const accountInput = z.object({
   initial_balance: optionalAmount(anyAmount("O saldo inicial")).transform((v) => v ?? 0),
 });
 
-export async function createAccount(ctx: ServiceCtx, raw: z.input<typeof accountInput>) {
+/** Cria a conta e devolve o id (o bot usa para lançar logo em seguida). */
+export async function createAccount(ctx: ServiceCtx, raw: z.input<typeof accountInput>): Promise<string> {
   const input = parseInput(accountInput, raw);
 
-  const { error } = await ctx.db.from("accounts").insert({
-    user_id: ctx.userId,
-    name: input.name,
-    type: input.type,
-    color: input.color,
-    initial_balance: input.initial_balance,
-    current_balance: input.initial_balance,
-    scope: ctx.scope,
-  });
+  const { data, error } = await ctx.db
+    .from("accounts")
+    .insert({
+      user_id: ctx.userId,
+      name: input.name,
+      type: input.type ?? "Conta Corrente",
+      color: input.color ?? "#3B82F6",
+      initial_balance: input.initial_balance ?? 0,
+      current_balance: input.initial_balance ?? 0,
+      scope: ctx.scope,
+    })
+    .select("id")
+    .single();
 
-  if (error) dbFail(error, "Não foi possível criar a conta.");
+  if (error || !data) dbFail(error, "Não foi possível criar a conta.");
+  return String(data.id);
 }
 
 export const deleteAccount = (ctx: ServiceCtx, accountId: string) =>

@@ -3,6 +3,8 @@
  * gravado até o usuário confirmar. Na confirmação, `executeAction` chama os
  * mesmos serviços do app (lib/services).
  */
+import crypto from "node:crypto";
+
 import { suggestedDasDueDate } from "@/lib/mei-shared";
 import { normalizeBrPhone } from "@/lib/phone";
 import type { Scope } from "@/lib/scope";
@@ -60,7 +62,10 @@ export const WRITE_TOOLS: WriteTool[] = [
         valor: s.num("Valor em reais, positivo"),
         descricao: s.str("Descrição curta, ex.: Mercado"),
         categoria: s.str("Referência K de uma categoria do mesmo tipo e escopo da conta"),
-        conta: s.str("Referência A da conta, só se o usuário citou uma"),
+        conta: s.str(
+          "Referência A da conta, só se o usuário citou uma. Se o usuário citou um banco/conta que ainda NÃO existe no contexto, passe o NOME (ex.: \"Inter\") e a conta é criada junto com o lançamento."
+        ),
+        escopo: s.scope(),
         cartao: s.str(
           "Referência T do cartão de crédito, quando a compra foi no crédito (\"no crédito\", \"no cartão\", \"parcelei\"). Com um só cartão, use ele."
         ),
@@ -103,7 +108,28 @@ export const WRITE_TOOLS: WriteTool[] = [
         };
       }
 
-      const account = pickAccount(ctx, args.conta, null);
+      // Conta citada pelo nome que ainda não existe: cria junto com o lançamento.
+      const newAccount = accountToCreate(ctx, args);
+      if (newAccount) {
+        const category = pickCategory(ctx, args.categoria, type, newAccount.scope);
+        const input = {
+          category_id: category?.id ?? null,
+          type,
+          description: str(args, "descricao") ?? "",
+          amount: num(args, "valor") ?? NaN,
+          date: str(args, "data") ?? ctx.today,
+        } as const;
+        // Valida com um id provisório: o id real só existe depois de criar a conta.
+        const parsed = parseInput(transactions.transactionInput, { ...input, account_id: crypto.randomUUID() });
+
+        return {
+          scope: newAccount.scope,
+          summary: `${type === "expense" ? "🔴" : "🟢"} ${parsed.description || "Lançamento"} — ${formatBRL(parsed.amount)}\n${scopeTag(newAccount.scope)} • ${category?.name ?? "Sem categoria"} • ${newAccount.name} (conta nova) • ${brDate(parsed.date)}\n🏦 A conta ${newAccount.name} será criada agora.`,
+          payload: { ...input, new_account: { name: newAccount.name }, needs_confirmation: true },
+        };
+      }
+
+      const account = pickAccount(ctx, resolveAccountArg(ctx, args.conta), null);
       const category = pickCategory(ctx, args.categoria, type, account.scope);
       const input = {
         account_id: account.id,
@@ -248,9 +274,12 @@ export const WRITE_TOOLS: WriteTool[] = [
       const input = {
         name: str(args, "nome") ?? "",
         type: str(args, "tipo") ?? "Conta Corrente",
+        color: "#3B82F6",
         initial_balance: num(args, "saldo_inicial") ?? 0,
       };
       parseInput(registry.accountInput, input);
+      const same = findAccountByName(ctx, input.name);
+      if (same) throw new ServiceError(`Você já tem a conta ${same.name}. Use a referência ${same.ref} dela.`);
       return {
         scope,
         summary: `🏦 Criar a conta ${input.name} (${input.type}) com saldo inicial de ${formatBRL(input.initial_balance)} • ${scopeTag(scope)}`,
@@ -850,6 +879,39 @@ type P = Record<string, never> & Record<string, unknown>;
  * lançamentos simples e claros: compra parcelada, exclusões e mudanças
  * continuam pedindo confirmação.
  */
+/** Conta do usuário com o mesmo nome (sem diferenciar maiúsculas/acentos). */
+function findAccountByName(ctx: UserContext, name: string) {
+  const key = normalizeName(name);
+  return ctx.byKind("A").find((a) => normalizeName(a.name) === key) ?? null;
+}
+
+function normalizeName(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/^(banco|conta)\s+/, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+const looksLikeRef = (value: string) => /^[A-Z]\d+$/i.test(value);
+
+/** Aceita referência (A1) ou o nome de uma conta existente. */
+function resolveAccountArg(ctx: UserContext, value: unknown): unknown {
+  const text = String(value ?? "").trim();
+  if (!text || looksLikeRef(text)) return value;
+  return findAccountByName(ctx, text)?.ref ?? value;
+}
+
+/** Nome citado que não é referência nem conta existente: conta a criar. */
+function accountToCreate(ctx: UserContext, args: Args): { name: string; scope: Scope } | null {
+  const text = str(args, "conta");
+  if (!text || looksLikeRef(text) || findAccountByName(ctx, text)) return null;
+  if (text.length > 60) throw new ServiceError("O nome da conta pode ter no máximo 60 caracteres.");
+  return { name: text, scope: scopeOr(args, ctx) };
+}
+
 export function canAutoExecute(actions: PreparedAction[]): boolean {
   return (
     actions.length > 0 &&
@@ -869,6 +931,34 @@ export async function executeActionDetailed(
 ): Promise<{ note: string | null; transactionId: string | null }> {
   if (action.tool === "registrar_lancamento") {
     const p = action.payload as P;
+    const newAccount = p.new_account as { name?: string } | undefined;
+    if (newAccount?.name && p.via !== "card") {
+      // Dois lançamentos na mesma conta nova: a segunda vez reaproveita a conta.
+      const { data: existing } = await ctx.db
+        .from("accounts")
+        .select("id")
+        .eq("user_id", ctx.userId)
+        .eq("scope", ctx.scope)
+        .ilike("name", newAccount.name.replace(/[%_\\]/g, (c) => `\\${c}`))
+        .limit(1)
+        .maybeSingle();
+      const created = !existing?.id;
+      const accountId = existing?.id
+        ? String(existing.id)
+        : await registry.createAccount(ctx, {
+            name: newAccount.name,
+            type: "Conta Corrente",
+            color: "#3B82F6",
+            initial_balance: 0,
+          });
+      const { new_account: _ignored, ...rest } = p;
+      void _ignored;
+      const id = await transactions.createTransaction(ctx, { ...rest, account_id: accountId } as never);
+      return {
+        note: created ? `🏦 Conta ${newAccount.name} criada (saldo inicial R$ 0,00; ajuste no app se quiser).` : null,
+        transactionId: typeof id === "string" ? id : null,
+      };
+    }
     const id =
       p.via === "card"
         ? await transactions.createCardPurchase(ctx, p as never)
