@@ -97,7 +97,7 @@ export function LandingPage() {
           <nav className="uv-nav__pill" aria-label="Principal">
             <Link href="/" className="uv-wordmark">
               <Image src="/icon-f.png" alt="" width={28} height={28} className="h-7 w-7" priority />
-              Forge Finance
+              <span className="brand-wordmark">forge finance</span>
             </Link>
             <div className="uv-nav__links">
               <Link href="#como-funciona" className="uv-link uv-link--muted">Como funciona</Link>
@@ -312,7 +312,7 @@ export function LandingPage() {
               <Link href="/privacidade" className="uv-link uv-link--muted">Privacidade</Link>
             </nav>
           </div>
-          <p className="uv-note mt-8">© {new Date().getFullYear()} Forge Finance. Todos os direitos reservados.</p>
+          <p className="uv-note mt-8">© {new Date().getFullYear()} <span className="brand-name">Forge Finance</span>. Todos os direitos reservados.</p>
         </div>
       </footer>
     </div>

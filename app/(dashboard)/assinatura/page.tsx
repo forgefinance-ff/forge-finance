@@ -59,7 +59,7 @@ export default async function SubscriptionPage({
       <header className="pt-2 pb-2">
         <h1 className="text-4xl font-normal tracking-[-0.035em] text-foreground sm:text-5xl">Plano e assinatura</h1>
         <p className="mt-3 text-sm leading-6 text-muted-foreground">
-          {enabled ? "Acompanhe seu plano, a renovação e o uso da IA." : "O Forge Finance está em beta: tudo liberado e sem cobranças."}
+          {enabled ? "Acompanhe seu plano, a renovação e o uso da IA." : <>O <span className="brand-name">Forge Finance</span> está em beta: tudo liberado e sem cobranças.</>}
         </p>
       </header>
 

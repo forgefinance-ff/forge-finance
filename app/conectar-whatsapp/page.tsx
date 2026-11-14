@@ -24,7 +24,7 @@ export default async function ConnectWhatsappPage({
     return (
       <AuthShell
         title="Link expirado ou já usado."
-        subtitle="Mande qualquer mensagem para o Forge Finance no WhatsApp e você recebe um link novo na hora."
+        subtitle={<>Mande qualquer mensagem para o <span className="brand-name">Forge Finance</span> no WhatsApp e você recebe um link novo na hora.</>}
       >
         <Link href="/login" className={linkButton}>
           Ir para o login

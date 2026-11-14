@@ -66,7 +66,7 @@ export default async function ImpostosPage() {
           {[!settings?.annual_limit && "o limite anual", !settings?.das_amount && "o valor do DAS"]
             .filter(Boolean)
             .join(" e ")}
-          . O Forge Finance não usa valores padrão: confira os atuais no Portal do Empreendedor e
+          . O <span className="brand-name">Forge Finance</span> não usa valores padrão: confira os atuais no Portal do Empreendedor e
           preencha em “Preencher configurações”.
         </p>
       )}

@@ -41,7 +41,7 @@ export default async function SubscribePage({
         <div className="mx-auto flex max-w-6xl items-center justify-between px-5 py-3">
           <Link href="/" className="flex items-center gap-2">
             <Image src="/icon-f.png" alt="" width={26} height={26} className="h-[26px] w-[26px]" />
-            <span className="font-semibold tracking-tight">Forge Finance</span>
+            <span className="brand-wordmark text-lg">forge finance</span>
           </Link>
           <span className="flex items-center gap-1.5 text-xs text-[#5b5575]">
             <Lock className="h-3.5 w-3.5" /> Pagamento seguro

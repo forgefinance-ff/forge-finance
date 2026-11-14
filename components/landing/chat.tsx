@@ -150,7 +150,7 @@ export function Phone({
         <Image src="/icon-f.png" alt="" width={32} height={32} className="h-8 w-8" />
         <div className="leading-tight">
           <p className="flex items-center gap-1 text-[14px] font-medium">
-            Forge Finance <BadgeCheck className="h-3.5 w-3.5 opacity-70" aria-hidden />
+            <span className="brand-wordmark text-[15px]">forge finance</span> <BadgeCheck className="h-3.5 w-3.5 opacity-70" aria-hidden />
           </p>
           <p className="uv-note">online</p>
         </div>

@@ -25,7 +25,7 @@ export function GovNotice({ className }: { className?: string }) {
         >
           gov.br/empresas-e-negocios/pt-br/empreendedor
         </a>
-        ). O Forge Finance não substitui um contador.
+        ). O <span className="brand-name">Forge Finance</span> não substitui um contador.
       </span>
     </p>
   );

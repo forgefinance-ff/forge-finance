@@ -61,8 +61,8 @@ export function SiteHeader({ userName, avatarUrl, scope }: SiteHeaderProps) {
           priority
           className="h-8 w-8 object-contain"
         />
-        <span className="hidden font-[family-name:var(--font-app-display)] text-xl font-medium tracking-tight text-foreground min-[420px]:inline">
-          Forge Finance
+        <span className="brand-wordmark hidden text-xl text-foreground min-[420px]:inline">
+          forge finance
         </span>
       </Link>
 

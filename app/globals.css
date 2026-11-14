@@ -410,3 +410,21 @@ h1, h2, h3 {
     font-size: 16px;
   }
 }
+
+/* Nome da marca: mesma fonte do "forge finance" grande do rodapé da landing
+   (Outfit 400, letras juntas, tudo minúsculo). Fora de @layer para valer mais
+   que utilitários como font-semibold. */
+.brand-wordmark {
+  font-family: var(--font-app-display), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 400;
+  letter-spacing: -0.045em;
+  text-transform: lowercase;
+  font-feature-settings: normal;
+}
+
+/* Nome da marca dentro de frases: mesma fonte, mas mantém "Forge Finance". */
+.brand-name {
+  font-family: var(--font-app-display), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}

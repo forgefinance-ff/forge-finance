@@ -32,7 +32,7 @@ export default async function SettingsPage() {
         </h1>
 
         <p className="mt-2 max-w-xl text-muted-foreground">
-          Gerencie sua conta e preferências do Forge Finance.
+          Gerencie sua conta e preferências do <span className="brand-name">Forge Finance</span>.
         </p>
       </div>
 

@@ -6,7 +6,7 @@ import "./auth.css";
 
 type AuthShellProps = {
   title: string;
-  subtitle: string;
+  subtitle: React.ReactNode;
   children: React.ReactNode;
 };
 
@@ -21,7 +21,7 @@ export function AuthShell({ title, subtitle, children }: AuthShellProps) {
       <div className="forge-auth-main">
         <Link href="/" className="forge-auth-brand self-start">
           <Image src="/icon-f.png" alt="" width={28} height={28} className="h-7 w-7" priority />
-          Forge Finance
+          <span className="brand-wordmark">forge finance</span>
         </Link>
 
         <div className="forge-auth-body">
@@ -43,7 +43,7 @@ export function AuthShell({ title, subtitle, children }: AuthShellProps) {
           <div className="forge-auth-phone__head">
             <Image src="/icon-f.png" alt="" width={32} height={32} className="h-8 w-8" />
             <div>
-              Forge Finance
+              <span className="brand-wordmark">forge finance</span>
               <small>online</small>
             </div>
           </div>

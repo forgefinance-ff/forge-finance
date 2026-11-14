@@ -176,7 +176,7 @@ function DesktopSteps({ browser }: { browser: string }) {
             <Key>
               <EllipsisVerticalIcon />
             </Key>{" "}
-            do navegador e procure <strong>Instalar Forge Finance</strong> (no Chrome fica em{" "}
+            do navegador e procure <strong>Instalar <span className="brand-name">Forge Finance</span></strong> (no Chrome fica em{" "}
             <em>Transmitir, salvar e compartilhar</em>; no Edge, em <em>Apps</em>).
           </>,
           <>

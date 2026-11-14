@@ -130,7 +130,7 @@ export default async function WhatsappPage({
           {firstAccess && (
             <div className="mt-3 space-y-3">
               <p className="text-sm text-muted-foreground">
-                Jeito mais fácil: abra a conversa com o Forge Finance, mande a mensagem que já vem
+                Jeito mais fácil: abra a conversa com o <span className="brand-name">Forge Finance</span>, mande a mensagem que já vem
                 escrita e toque no link que chegar. O número é conectado à conta em que você está
                 logado.
               </p>
@@ -150,7 +150,7 @@ export default async function WhatsappPage({
             <div className="mt-4 space-y-4">
               <p className="text-sm text-muted-foreground">
                 Envie esta mensagem, do WhatsApp que você quer vincular, para o
-                número do Forge Finance. O código vale por 15 minutos.
+                número do <span className="brand-name">Forge Finance</span>. O código vale por 15 minutos.
               </p>
 
               <p className="inline-block rounded-xl border border-violet-500/30 bg-violet-500/10 px-5 py-3 font-mono text-2xl tracking-widest text-foreground">
@@ -174,7 +174,7 @@ export default async function WhatsappPage({
             </div>
           ) : (
             <p className="mt-2 text-sm text-muted-foreground">
-              Gere um código e envie para o número do Forge Finance no WhatsApp.
+              Gere um código e envie para o número do <span className="brand-name">Forge Finance</span> no WhatsApp.
             </p>
           )}
 
@@ -190,7 +190,7 @@ export default async function WhatsappPage({
         <section className={panel}>
           <h2 className="text-lg font-semibold text-foreground">Link de primeiro acesso</h2>
           <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
-            Envie para quem ainda não usa o Forge Finance. A pessoa abre a conversa, recebe um link
+            Envie para quem ainda não usa o <span className="brand-name">Forge Finance</span>. A pessoa abre a conversa, recebe um link
             para criar a conta e o número dela já fica conectado, sem código.
           </p>
           <div className="mt-4">
