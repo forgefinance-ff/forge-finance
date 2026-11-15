@@ -11,6 +11,7 @@ import { downloadMedia } from "./meta";
 import { transcribeAudio } from "./transcribe";
 import { appUrl, connectUrl, getOrCreateOnboardingToken } from "./onboarding";
 import { formatBRL, formatDayMonth, normalize } from "./text";
+import { isIgnoredNumber, LINK_CODE, linkedDecision, unlinkedDecision } from "./guard";
 import { metaTransport, type Transport } from "./transport";
 
 export type IncomingMessage = {
@@ -42,8 +43,6 @@ type LegacyItem = {
   scope?: string;
   date: string;
 };
-
-const MAX_MESSAGES_PER_HOUR = 30;
 
 export const WHATSAPP_HELP = `*Forge Finance no WhatsApp* 💜
 
@@ -95,20 +94,19 @@ async function handle(message: IncomingMessage) {
   //    depois de 2 minutos um reenvio da Meta pode reprocessar.
   if (!(await claimMessage(admin, message))) return;
 
-  // 2) Limite simples por número.
-  const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
-  const { count } = await admin
-    .from("whatsapp_processed_messages")
-    .select("wamid", { count: "exact", head: true })
-    .eq("phone", message.from)
-    .gte("created_at", since);
-
-  if ((count ?? 0) > MAX_MESSAGES_PER_HOUR) {
-    await out.text(message.from, "Muitas mensagens em pouco tempo. Tente de novo daqui a pouco. 🙏");
-    await admin.from("whatsapp_processed_messages").update({ status: "done" }).eq("wamid", message.id);
+  // 2) Números ignorados de vez (ex.: robôs de empresas): nem responde.
+  if (isIgnoredNumber(message.from)) {
+    await markDone(admin, message.id);
     return;
   }
 
+  // 3) Contagens para a trava anti-loop (incluem a mensagem atual).
+  const [lastHour, lastDay] = await Promise.all([
+    countSince(admin, message.from, 60 * 60 * 1000),
+    countSince(admin, message.from, 24 * 60 * 60 * 1000),
+  ]);
+
+  let linked = false;
   try {
     const { data: link } = await admin
       .from("whatsapp_links")
@@ -117,20 +115,53 @@ async function handle(message: IncomingMessage) {
       .maybeSingle();
 
     if (!link) {
-      await handleUnlinked(admin, message);
+      // Sem conta: link de cadastro no máximo 1x a cada 24 h; depois, silêncio.
+      // É isso que impede um robô de conversar com o bot sem parar.
+      const decision = unlinkedDecision({
+        isLinkCode: LINK_CODE.test(message.text ?? ""),
+        lastHour,
+        lastDay,
+      });
+      if (decision !== "silent") await handleUnlinked(admin, message);
       return;
     }
+
+    linked = true;
+    const decision = linkedDecision(lastHour, lastDay);
+    if (decision === "warn") {
+      await out.text(message.from, "Muitas mensagens em pouco tempo. Vou pausar as respostas por um tempo. 🙏");
+      return;
+    }
+    if (decision === "silent") return;
 
     await handleLinked(admin, link as Link, message);
   } catch (error) {
     console.error("WhatsApp handler error", error);
-    await out.text(message.from, "Ops, algo deu errado do meu lado. Tente de novo em instantes.");
+    // Só avisa quem tem conta: para números desconhecidos (ou robôs), silêncio.
+    if (linked) await out.text(message.from, "Ops, algo deu errado do meu lado. Tente de novo em instantes.");
   } finally {
     await admin
       .from("whatsapp_processed_messages")
       .update({ status: "done", finished_at: new Date().toISOString() })
       .eq("wamid", message.id);
   }
+}
+
+async function markDone(admin: Admin, wamid: string) {
+  await admin
+    .from("whatsapp_processed_messages")
+    .update({ status: "done", finished_at: new Date().toISOString() })
+    .eq("wamid", wamid);
+}
+
+/** Quantas mensagens este número mandou na janela (conta a atual). */
+async function countSince(admin: Admin, phone: string, ms: number): Promise<number> {
+  const { count } = await admin
+    .from("whatsapp_processed_messages")
+    .select("wamid", { count: "exact", head: true })
+    .eq("phone", phone)
+    .gte("created_at", new Date(Date.now() - ms).toISOString());
+  return count ?? 0;
 }
 
 const STALE_MS = 2 * 60 * 1000;
@@ -163,7 +194,7 @@ async function claimMessage(admin: Admin, message: IncomingMessage): Promise<boo
 /* ------------------------------ vinculação ------------------------------ */
 
 async function handleUnlinked(admin: Admin, message: IncomingMessage) {
-  const match = message.text?.match(/^\s*vincular\s+(\d{6})\s*$/i);
+  const match = message.text?.match(LINK_CODE);
 
   if (!match) {
     // Primeiro acesso: manda um link que cria a conta (ou entra) e já
