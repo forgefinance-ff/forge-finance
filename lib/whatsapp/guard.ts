@@ -51,3 +51,39 @@ export function unlinkedDecision(opts: { isLinkCode: boolean; lastHour: number; 
 }
 
 export const LINK_CODE = /^\s*vincular\s+(\d{6})\s*$/i;
+
+/* ---------- menos mensagens enviadas (cada uma é cobrada pela Meta) ---------- */
+
+/** Limite da Meta para o texto de uma mensagem com botões. */
+export const BUTTON_BODY_MAX = 1000;
+
+/** Cabe o texto numa mensagem com botões, em vez de mandar duas. */
+export function fitButtonBody(body: string, max = BUTTON_BODY_MAX): string {
+  if (body.length <= max) return body;
+  const note = "\n\n…(detalhes no app)";
+  return `${body.slice(0, max - note.length).trimEnd()}${note}`;
+}
+
+const ACKS = new Set([
+  "obrigado", "obrigada", "obg", "brigado", "brigada", "valeu", "vlw", "tmj", "blz", "beleza",
+  "show", "top", "otimo", "perfeito", "massa", "certo", "entendi", "joia", "ta bom", "tudo bem",
+  "obrigado!", "valeu!", "muito obrigado", "muito obrigada", "ok obrigado", "ok obrigada",
+]);
+
+/**
+ * Mensagem que é só um "obrigado"/"👍" e não pede nada. O bot não responde
+ * (nem chama a IA). "ok", "sim" e "não" ficam de fora: confirmam ações.
+ */
+export function isAcknowledgement(text: string): boolean {
+  const clean = text
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toLowerCase()
+    .replace(/[.!,;]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!clean) return false;
+  if (ACKS.has(clean)) return true;
+  // Só emojis/símbolos (👍, ❤️, 🙏...), sem letras nem números.
+  return !/[\p{L}\p{N}]/u.test(clean) && /\p{Extended_Pictographic}/u.test(clean);
+}

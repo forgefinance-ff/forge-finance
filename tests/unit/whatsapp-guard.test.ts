@@ -34,3 +34,18 @@ test("anti-loop: lista de números ignorados", () => {
   assert.equal(isIgnoredNumber("5521988887777", "551140041144"), false);
   assert.equal(isIgnoredNumber("551140041144", ""), false);
 });
+
+import { fitButtonBody, isAcknowledgement } from "../../lib/whatsapp/guard.ts";
+
+test("economia: agradecimentos não geram resposta", () => {
+  for (const t of ["obrigado", "Valeu!", "vlw", "👍", "🙏🙏", "Muito obrigada.", "ta bom"]) assert.equal(isAcknowledgement(t), true, t);
+  for (const t of ["ok", "sim", "gastei 45 no mercado", "obrigado, e quanto gastei?", "50", "👍 gastei 10"]) assert.equal(isAcknowledgement(t), false, t);
+});
+
+test("economia: confirmação longa cabe em uma mensagem só", () => {
+  assert.equal(fitButtonBody("curto"), "curto");
+  const long = "x".repeat(1500);
+  const fitted = fitButtonBody(long);
+  assert.ok(fitted.length <= 1000);
+  assert.match(fitted, /detalhes no app/);
+});

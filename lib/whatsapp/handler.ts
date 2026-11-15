@@ -11,7 +11,7 @@ import { downloadMedia } from "./meta";
 import { transcribeAudio } from "./transcribe";
 import { appUrl, connectUrl, getOrCreateOnboardingToken } from "./onboarding";
 import { formatBRL, formatDayMonth, normalize } from "./text";
-import { isIgnoredNumber, LINK_CODE, linkedDecision, unlinkedDecision } from "./guard";
+import { BUTTON_BODY_MAX, fitButtonBody, isAcknowledgement, isIgnoredNumber, LINK_CODE, linkedDecision, unlinkedDecision } from "./guard";
 import { metaTransport, type Transport } from "./transport";
 
 export type IncomingMessage = {
@@ -292,18 +292,25 @@ async function handleLinked(admin: Admin, link: Link, message: IncomingMessage) 
   if (message.type === "text" && message.text) {
     const normalized = normalize(message.text);
 
+    // "obrigado", "valeu", "👍"...: não precisa de resposta (e cada resposta é cobrada).
+    if (isAcknowledgement(message.text)) return;
+
     if (["ajuda", "menu", "help", "oi", "ola"].includes(normalized)) {
       await out.text(link.phone, WHATSAPP_HELP);
       return;
     }
 
     if (["sim", "confirmar", "confirmo", "ok"].includes(normalized)) {
-      await decideLatest(admin, link, "confirm");
+      if (await decideLatest(admin, link, "confirm")) return;
+      // Nada pendente: "ok" é só um "entendi"; "sim" pode responder uma pergunta do assistente.
+      if (normalized === "ok") return;
+      await askAgent(admin, link, message.text, false);
       return;
     }
 
     if (["nao", "cancelar", "cancela"].includes(normalized)) {
-      await decideLatest(admin, link, "cancel");
+      if (await decideLatest(admin, link, "cancel")) return;
+      await askAgent(admin, link, message.text, false);
       return;
     }
 
@@ -375,13 +382,9 @@ async function askAgent(admin: Admin, link: Link, text: string, fromAudio: boole
     `Aguardando confirmação:\n${result.actions.map((a) => a.summary).join("\n")}`
   );
 
-  // O corpo com botões aceita até 1000 caracteres; acima disso, manda o texto antes.
-  if (body.length > 1000) {
-    await out.text(link.phone, body);
-    await out.buttons(link.phone, heading, pending.id);
-  } else {
-    await out.buttons(link.phone, body, pending.id);
-  }
+  // Sempre UMA mensagem (cada mensagem enviada é cobrada pela Meta).
+  const compact = `${echo}${heading}\n\n${result.actions.map((a) => a.summary.split("\n")[0]).join("\n")}`;
+  await out.buttons(link.phone, fitButtonBody(body.length <= BUTTON_BODY_MAX ? body : compact), pending.id);
 }
 
 /* ------------------------------ registro direto ------------------------------ */
@@ -415,13 +418,8 @@ async function autoRegister(admin: Admin, link: Link, actions: PreparedAction[],
     return;
   }
 
-  // O corpo com botão aceita até 1000 caracteres; acima disso, manda o texto antes.
-  if (body.length > 1000) {
-    await out.text(link.phone, body);
-    await out.undo(link.phone, "Algo errado? Toque para desfazer.", undoRow.id);
-  } else {
-    await out.undo(link.phone, body, undoRow.id);
-  }
+  // Sempre UMA mensagem (cada mensagem enviada é cobrada pela Meta).
+  await out.undo(link.phone, fitButtonBody(body), undoRow.id);
 }
 
 async function undo(admin: Admin, link: Link, undoId: string) {
@@ -489,7 +487,8 @@ async function paywall(admin: Admin, link: Link) {
 
 /* ------------------------------ confirmação ------------------------------ */
 
-async function decideLatest(admin: Admin, link: Link, action: "confirm" | "cancel") {
+/** true = havia algo pendente e foi decidido. */
+async function decideLatest(admin: Admin, link: Link, action: "confirm" | "cancel"): Promise<boolean> {
   const { data } = await admin
     .from("whatsapp_pending")
     .select("id")
@@ -500,12 +499,10 @@ async function decideLatest(admin: Admin, link: Link, action: "confirm" | "cance
     .limit(1)
     .maybeSingle();
 
-  if (!data) {
-    await out.text(link.phone, "Não há nada aguardando confirmação.");
-    return;
-  }
+  if (!data) return false;
 
   await decide(admin, link, action, data.id);
+  return true;
 }
 
 /** Converte pendências do formato antigo em ações do agente. */

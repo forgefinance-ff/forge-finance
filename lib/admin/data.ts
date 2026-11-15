@@ -28,7 +28,14 @@ export type AdminOverview = {
     manual_access: number;
     mrr_cents: number;
   };
-  costs: { ai_requests_month: number; whatsapp_inbound_month: number; whatsapp_actions_month: number };
+  costs: {
+    ai_requests_month: number;
+    whatsapp_inbound_month: number;
+    whatsapp_actions_month: number;
+    /** Enviadas de fato pelo bot no mês (contadas desde 15/11/2026). */
+    whatsapp_service_sent_month: number;
+    whatsapp_template_sent_month: number;
+  };
   health: {
     whatsapp_failed_7d: number;
     whatsapp_stuck: number;
@@ -39,12 +46,23 @@ export type AdminOverview = {
 };
 
 export async function getAdminOverview(): Promise<AdminOverview> {
-  const { data, error } = await createAdminClient().rpc("ff_admin_overview", {
-    p_month_price_cents: PRO_PRICING.month.cents,
-    p_year_price_cents: PRO_PRICING.year.cents,
-  });
+  const db = createAdminClient();
+  const monthStart = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }).slice(0, 7) + "-01";
+  const [{ data, error }, { data: outbound }] = await Promise.all([
+    db.rpc("ff_admin_overview", {
+      p_month_price_cents: PRO_PRICING.month.cents,
+      p_year_price_cents: PRO_PRICING.year.cents,
+    }),
+    db.from("whatsapp_outbound_daily").select("kind, sent").gte("day", monthStart),
+  ]);
   if (error || !data) throw new Error(`Falha ao carregar a visão geral (${error?.code ?? "sem dados"}).`);
-  return data as AdminOverview;
+
+  const overview = data as AdminOverview;
+  const sum = (kind: string) =>
+    ((outbound ?? []) as { kind: string; sent: number }[]).filter((r) => r.kind === kind).reduce((s, r) => s + r.sent, 0);
+  overview.costs.whatsapp_service_sent_month = sum("service");
+  overview.costs.whatsapp_template_sent_month = sum("template");
+  return overview;
 }
 
 export type AdminUserRow = {

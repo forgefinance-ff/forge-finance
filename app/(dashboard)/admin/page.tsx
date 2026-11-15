@@ -5,8 +5,13 @@ import { Kpi, Panel, pct } from "@/components/admin/stat";
 import { getAdminOverview } from "@/lib/admin/data";
 import { formatCurrency } from "@/lib/formatters";
 
-/** Tarifa da Meta por mensagem de serviço/utilidade no Brasil (out/2026) e a franquia grátis mensal. */
+/**
+ * Meta no Brasil desde 01/10/2026: respostas do bot ("serviço") têm 1.000 grátis
+ * por mês e depois US$ 0,0068 cada (~R$ 0,035); modelos de utilidade custam
+ * US$ 0,00782 cada (~R$ 0,040), sempre.
+ */
 const WHATSAPP_SERVICE_PRICE = 0.035;
+const WHATSAPP_TEMPLATE_PRICE = 0.04;
 const WHATSAPP_FREE_SERVICE = 1000;
 
 function dateTime(value: string | null) {
@@ -31,7 +36,17 @@ export default async function AdminOverviewPage() {
 
   const aiCostPerRequest = Number(process.env.ADMIN_AI_COST_PER_REQUEST ?? "") || null;
   const aiCost = aiCostPerRequest ? c.ai_requests_month * aiCostPerRequest : null;
-  const whatsappCost = Math.max(0, c.whatsapp_inbound_month - WHATSAPP_FREE_SERVICE) * WHATSAPP_SERVICE_PRICE;
+  // A contagem de envios começou em 15/11/2026. Em novembro, cada mensagem
+  // recebida tinha gerado uma resposta, então usa o maior dos dois; a partir
+  // de dezembro vale só o que foi enviado de fato.
+  const month = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }).slice(0, 7);
+  const serviceSent =
+    month <= "2026-11"
+      ? Math.max(c.whatsapp_service_sent_month ?? 0, c.whatsapp_inbound_month)
+      : (c.whatsapp_service_sent_month ?? 0);
+  const whatsappCost =
+    Math.max(0, serviceSent - WHATSAPP_FREE_SERVICE) * WHATSAPP_SERVICE_PRICE +
+    (c.whatsapp_template_sent_month ?? 0) * WHATSAPP_TEMPLATE_PRICE;
   const totalCost = (aiCost ?? 0) + whatsappCost;
 
   const viaWhatsApp = Math.min(o.channels_30d.whatsapp_actions, o.channels_30d.entries_total);
@@ -50,8 +65,8 @@ export default async function AdminOverviewPage() {
   if (r.canceling) alerts.push(`${r.canceling} pagante(s) pediram para cancelar no fim do período. Vale mandar mensagem.`);
   if (h.whatsapp_stuck) alerts.push(`${h.whatsapp_stuck} mensagem(ns) do WhatsApp travadas há mais de 10 minutos.`);
   if (h.whatsapp_failed_7d) alerts.push(`${h.whatsapp_failed_7d} ação(ões) do WhatsApp deram erro nos últimos 7 dias.`);
-  if (c.whatsapp_inbound_month > WHATSAPP_FREE_SERVICE * 0.8)
-    alerts.push(`O WhatsApp já usou ${c.whatsapp_inbound_month} de ${WHATSAPP_FREE_SERVICE} mensagens grátis do mês.`);
+  if (serviceSent > WHATSAPP_FREE_SERVICE * 0.8)
+    alerts.push(`O bot já enviou ${serviceSent} de ${WHATSAPP_FREE_SERVICE} mensagens grátis do mês na Meta.`);
   for (const row of h.rate_limited_1h) alerts.push(`${row.email ?? "Alguém sem login"} fez ${row.hits} pedidos em 1 hora (${row.bucket}).`);
 
   return (
@@ -148,7 +163,7 @@ export default async function AdminOverviewPage() {
         <Panel title="Gastos do mês" description="Estimativa.">
           <dl className="space-y-3 text-sm">
             <div className="flex justify-between gap-3">
-              <dt className="text-muted-foreground">WhatsApp ({c.whatsapp_inbound_month} de {WHATSAPP_FREE_SERVICE} grátis)</dt>
+              <dt className="text-muted-foreground">WhatsApp ({serviceSent} enviadas, {WHATSAPP_FREE_SERVICE} grátis)</dt>
               <dd className="tabular-nums text-foreground">{formatCurrency(whatsappCost)}</dd>
             </div>
             <div className="flex justify-between gap-3">

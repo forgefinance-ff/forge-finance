@@ -1,5 +1,7 @@
 import crypto from "node:crypto";
 
+import { createAdminClient } from "@/lib/supabase/admin";
+
 const GRAPH = `https://graph.facebook.com/${
   process.env.WHATSAPP_GRAPH_VERSION ?? "v21.0"
 }`;
@@ -42,11 +44,20 @@ async function sendMessage(to: string, message: Record<string, unknown>): Promis
     signal: AbortSignal.timeout(15_000),
   });
 
-  if (!response.ok) {
-    console.error("WhatsApp send error", response.status, await response.text());
-    return false;
+  const ok = response.ok;
+  if (!ok) console.error("WhatsApp send error", response.status, await response.text());
+  await countOutbound(message.type === "template" ? "template" : "service", ok);
+  return ok;
+}
+
+/** Conta cada envio (é o que a Meta cobra). Nunca atrapalha o envio. */
+async function countOutbound(kind: "service" | "template", ok: boolean) {
+  try {
+    const { error } = await createAdminClient().rpc("ff_wa_outbound_inc", { p_kind: kind, p_ok: ok });
+    if (error) console.error("WhatsApp outbound count", error.code);
+  } catch {
+    // sem contador, segue o jogo
   }
-  return true;
 }
 
 export async function sendText(to: string, body: string) {
