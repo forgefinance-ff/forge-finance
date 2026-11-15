@@ -1,6 +1,9 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { billingEnabled } from "./config";
+import { isManualAccessValid } from "./manual-access";
+
+export { isManualAccessValid } from "./manual-access";
 
 /**
  * O registro pelo WhatsApp é do Forge Pro. Com a cobrança desligada (beta),
@@ -11,12 +14,12 @@ export async function hasWhatsAppAccess(admin: SupabaseClient, userId: string): 
 
   const { data, error } = await admin
     .from("user_entitlements")
-    .select("plan_id, status, access_source")
+    .select("plan_id, status, access_source, current_period_end")
     .eq("user_id", userId)
     .maybeSingle();
 
   if (error || !data) return false;
-  if (data.access_source === "admin") return true;
+  if (data.access_source === "admin") return isManualAccessValid(data.current_period_end);
 
   return data.plan_id === "pro" && (data.status === "active" || data.status === "past_due");
 }
@@ -28,3 +31,4 @@ export async function hasWhatsAppAccess(admin: SupabaseClient, userId: string): 
 export async function hasBusinessAccess(db: SupabaseClient, userId: string): Promise<boolean> {
   return hasWhatsAppAccess(db, userId);
 }
+

@@ -1,3 +1,4 @@
+import { isManualAccessValid } from "./manual-access";
 import { createClient } from "@/lib/supabase/server";
 import { PLAN_CATALOG, type BillingInterval, type PlanId } from "./plans";
 
@@ -55,6 +56,6 @@ export async function getUserEntitlement(userId?: string): Promise<UserEntitleme
 /** Assinante com acesso ao Forge Pro agora (inclui cobrança em nova tentativa). */
 export function isProActive(entitlement: UserEntitlement | null): boolean {
   if (!entitlement) return false;
-  if (entitlement.accessSource === "admin") return true;
+  if (entitlement.accessSource === "admin") return isManualAccessValid(entitlement.currentPeriodEnd);
   return entitlement.planId === "pro" && (entitlement.status === "active" || entitlement.status === "past_due");
 }

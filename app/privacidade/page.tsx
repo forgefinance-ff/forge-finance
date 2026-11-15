@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { ThemeToggle } from "@/components/theme-toggle";
+import { SUPPORT_EMAIL } from "@/lib/support";
 
 export const metadata: Metadata = {
   title: "Política de Privacidade | Forge Finance",
@@ -9,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 const CONTROLLER = "Thiago Paes da Costa Canto";
-const EMAIL = "thiagopaes957@gmail.com";
+const EMAIL = SUPPORT_EMAIL;
 const UPDATED = "2 de novembro de 2026";
 
 type Section = {

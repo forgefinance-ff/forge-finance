@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { MessageCircle, SearchIcon, Settings } from "lucide-react";
+import { MessageCircle, SearchIcon, Settings, ShieldCheck } from "lucide-react";
 
 import { getAllPages } from "@/components/app-sidebar";
 import { ScopeSwitcher } from "@/components/scope-switcher";
@@ -24,9 +24,13 @@ type SiteHeaderProps = {
   avatarUrl: string | null;
   aiConfigured: boolean;
   scope: Scope;
+  /** Só vem true para os e-mails de ADMIN_EMAILS (checado no servidor). */
+  isAdmin?: boolean;
+  /** Conversas de suporte com mensagem nova (só para admins). */
+  adminSupportUnread?: number;
 };
 
-export function SiteHeader({ userName, avatarUrl, scope }: SiteHeaderProps) {
+export function SiteHeader({ userName, avatarUrl, scope, isAdmin = false, adminSupportUnread = 0 }: SiteHeaderProps) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -126,6 +130,25 @@ export function SiteHeader({ userName, avatarUrl, scope }: SiteHeaderProps) {
         >
           <MessageCircle className="h-[18px] w-[18px]" aria-hidden />
         </Link>
+
+        {isAdmin && (
+          <Link
+            href={adminSupportUnread > 0 ? "/admin/suporte" : "/admin"}
+            aria-label={adminSupportUnread > 0 ? `Painel admin (${adminSupportUnread} conversa(s) de suporte esperando)` : "Painel admin"}
+            title={adminSupportUnread > 0 ? "Tem mensagem de suporte esperando" : "Painel admin"}
+            className="glass relative flex h-10 w-10 items-center justify-center rounded-full text-text-soft transition-colors hover:text-foreground"
+          >
+            <ShieldCheck className="h-[18px] w-[18px]" aria-hidden />
+            {adminSupportUnread > 0 && (
+              <span
+                aria-hidden
+                className="absolute -right-0.5 -top-0.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[11px] font-semibold text-white ring-2 ring-background"
+              >
+                {adminSupportUnread}
+              </span>
+            )}
+          </Link>
+        )}
 
         <Link
           href="/configuracoes"
