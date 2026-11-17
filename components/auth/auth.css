@@ -287,3 +287,143 @@
 @media (prefers-reduced-motion: reduce) {
   .forge-auth-bubble { animation: none; opacity: 1; translate: 0 0; }
 }
+
+/* =====================================================================
+   Visual novo (componente sign-in): campos de vidro, botão roxo,
+   entrada em cascata e painel roxo com cartões flutuantes.
+   ===================================================================== */
+.forge-auth { display: block; }
+.forge-auth h1 {
+  font-family: var(--font-app-display), system-ui, sans-serif;
+  font-weight: 300;
+  letter-spacing: -0.045em;
+  color: var(--auth-ink);
+  text-wrap: balance;
+}
+.forge-auth h1 strong { font-weight: 600; color: var(--auth-accent); }
+.forge-auth .auth-muted { color: var(--auth-muted); }
+.forge-auth .auth-rule { border-color: var(--auth-rule); }
+.forge-auth .auth-paper-bg { background: var(--auth-paper); }
+
+/* Campo de vidro */
+.forge-auth .glass-input {
+  border-color: var(--auth-rule-strong);
+  background: color-mix(in oklab, var(--auth-ink) 4%, transparent);
+  backdrop-filter: blur(4px);
+}
+.forge-auth .glass-input:focus-within {
+  border-color: color-mix(in oklab, var(--auth-accent) 70%, transparent);
+  background: color-mix(in oklab, var(--auth-accent) 8%, transparent);
+}
+.forge-auth .glass-input .forge-auth-input,
+.forge-auth .glass-input .forge-auth-input:hover,
+.forge-auth .glass-input .forge-auth-input:focus-visible {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+.forge-auth .forge-auth-input {
+  min-height: 56px;
+  border-radius: 16px;
+  padding: 1rem;
+  font-size: 1rem;
+}
+/* Campos sem o embrulho (esqueci/redefinir senha) ficam iguais */
+.forge-auth .forge-auth-input:not(.glass-input *) {
+  border-color: var(--auth-rule-strong);
+  background: color-mix(in oklab, var(--auth-ink) 4%, transparent);
+}
+.forge-auth .forge-auth-input:not(.glass-input *):focus-visible {
+  border-color: color-mix(in oklab, var(--auth-accent) 70%, transparent);
+  background: color-mix(in oklab, var(--auth-accent) 8%, transparent);
+  box-shadow: none;
+}
+.forge-auth .forge-auth-eye { right: 0.75rem; }
+
+/* Botões */
+.forge-auth .forge-auth-button {
+  min-height: 56px;
+  border-radius: 16px;
+  background: var(--auth-accent);
+  color: white;
+  font-weight: 500;
+}
+.forge-auth .forge-auth-button:hover:not(:disabled) { background: oklch(45% 0.25 290); }
+.forge-auth .auth-outline-button {
+  display: flex;
+  width: 100%;
+  min-height: 56px;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  border: 1px solid var(--auth-rule-strong);
+  border-radius: 16px;
+  background: var(--auth-card);
+  font-weight: 500;
+  color: var(--auth-ink);
+  transition: background-color 150ms;
+}
+.forge-auth .auth-outline-button:hover:not(:disabled) { background: var(--auth-paper-2); }
+.forge-auth .auth-outline-button:disabled { opacity: 0.6; cursor: progress; }
+
+/* Painel da direita */
+.forge-auth .auth-hero {
+  background:
+    radial-gradient(90% 70% at 85% 10%, oklch(62% 0.22 300), transparent 60%),
+    radial-gradient(80% 60% at 10% 90%, oklch(40% 0.2 280), transparent 60%),
+    oklch(50% 0.25 290);
+}
+.forge-auth .auth-hero-quote {
+  max-width: 20ch;
+  text-align: center;
+  font-family: var(--font-app-display), system-ui, sans-serif;
+  font-weight: 300;
+  font-size: clamp(1.75rem, 1rem + 1.6vw, 2.5rem);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  color: white;
+  text-wrap: balance;
+}
+.forge-auth .forge-auth-phone { box-shadow: 0 40px 80px -30px oklch(15% 0.1 290 / 0.6); }
+
+/* Entrada em cascata (do componente original) */
+.forge-auth .animate-element {
+  opacity: 0;
+  filter: blur(4px);
+  transform: translateY(12px);
+  animation: fadeSlideIn 0.6s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.forge-auth .animate-slide-right {
+  opacity: 0;
+  filter: blur(4px);
+  transform: translateX(32px);
+  animation: slideRightIn 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.forge-auth .animate-testimonial {
+  opacity: 0;
+  filter: blur(4px);
+  transform: translateY(20px) scale(0.96);
+  animation: testimonialIn 0.7s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+.forge-auth .animate-delay-100 { animation-delay: 0.1s; }
+.forge-auth .animate-delay-200 { animation-delay: 0.2s; }
+.forge-auth .animate-delay-300 { animation-delay: 0.3s; }
+.forge-auth .animate-delay-400 { animation-delay: 0.4s; }
+.forge-auth .animate-delay-500 { animation-delay: 0.5s; }
+.forge-auth .animate-delay-600 { animation-delay: 0.6s; }
+.forge-auth .animate-delay-700 { animation-delay: 0.7s; }
+.forge-auth .animate-delay-800 { animation-delay: 0.8s; }
+.forge-auth .animate-delay-900 { animation-delay: 0.9s; }
+.forge-auth .animate-delay-1000 { animation-delay: 1s; }
+.forge-auth .animate-delay-1200 { animation-delay: 1.2s; }
+.forge-auth .animate-delay-1400 { animation-delay: 1.4s; }
+
+@keyframes fadeSlideIn { to { opacity: 1; filter: blur(0); transform: translateY(0); } }
+@keyframes slideRightIn { to { opacity: 1; filter: blur(0); transform: translateX(0); } }
+@keyframes testimonialIn { to { opacity: 1; filter: blur(0); transform: translateY(0) scale(1); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .forge-auth .animate-element,
+  .forge-auth .animate-slide-right,
+  .forge-auth .animate-testimonial { animation: none; opacity: 1; filter: none; transform: none; }
+}

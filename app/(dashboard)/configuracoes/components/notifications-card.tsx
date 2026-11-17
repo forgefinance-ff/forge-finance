@@ -5,13 +5,18 @@ import { toast } from "sonner";
 
 import { saveNotificationPrefs } from "@/app/actions/account";
 
-type Prefs = { weekly_summary: boolean; budget_alerts: boolean };
+type Prefs = { weekly_summary: boolean; monthly_summary: boolean; budget_alerts: boolean };
 
 const OPTIONS: { key: keyof Prefs; title: string; description: string }[] = [
   {
     key: "weekly_summary",
     title: "Resumo semanal no WhatsApp",
     description: "Todo domingo à noite: quanto entrou, quanto saiu e o que vence na semana.",
+  },
+  {
+    key: "monthly_summary",
+    title: "Resumo do mês no WhatsApp",
+    description: "No último dia do mês: quanto entrou, saiu, sobrou e onde o dinheiro foi.",
   },
   {
     key: "budget_alerts",

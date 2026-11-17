@@ -5,8 +5,10 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { AlertCircleIcon, ArrowRightIcon, EyeIcon, EyeOffIcon, Loader2Icon } from "lucide-react";
 
+import { GlassInputWrapper } from "@/components/ui/sign-in";
 import { createClient } from "@/lib/supabase/client";
 import { authErrorMessage } from "./auth-errors";
+import { GoogleButton } from "./google-button";
 import { useNextParam, withNext } from "./use-next-param";
 
 export function LoginForm() {
@@ -50,6 +52,7 @@ export function LoginForm() {
         <label htmlFor="login-email" className="forge-auth-label">
           E-mail
         </label>
+        <GlassInputWrapper>
         <input
           id="login-email"
           type="email"
@@ -61,6 +64,7 @@ export function LoginForm() {
           onChange={(e) => setEmail(e.target.value)}
           className="forge-auth-input"
         />
+        </GlassInputWrapper>
       </div>
 
       <div>
@@ -72,6 +76,7 @@ export function LoginForm() {
             Esqueci minha senha
           </Link>
         </div>
+        <GlassInputWrapper>
         <div className="forge-auth-field">
           <input
             id="login-password"
@@ -90,9 +95,10 @@ export function LoginForm() {
             aria-label={showPassword ? "Esconder senha" : "Mostrar senha"}
             aria-pressed={showPassword}
           >
-            {showPassword ? <EyeOffIcon className="h-4 w-4" /> : <EyeIcon className="h-4 w-4" />}
+            {showPassword ? <EyeOffIcon className="h-5 w-5" /> : <EyeIcon className="h-5 w-5" />}
           </button>
         </div>
+        </GlassInputWrapper>
       </div>
 
       <button type="submit" disabled={loading} className="forge-auth-button">
@@ -108,6 +114,8 @@ export function LoginForm() {
           </>
         )}
       </button>
+
+      <GoogleButton next={next} />
 
       <p className="forge-auth-note text-center">
         Ainda não tem conta?{" "}

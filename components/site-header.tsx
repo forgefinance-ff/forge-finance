@@ -56,7 +56,7 @@ export function SiteHeader({ userName, avatarUrl, scope, isAdmin = false, adminS
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 bg-background/95 px-4 backdrop-blur-md sm:h-20 lg:px-8">
-      <Link href="/dashboard" className="flex items-center gap-2.5">
+      <Link href="/dashboard" className="flex items-center gap-2.5 md:hidden">
         <Image
           src="/icon-f.png"
           alt=""
@@ -153,7 +153,7 @@ export function SiteHeader({ userName, avatarUrl, scope, isAdmin = false, adminS
         <Link
           href="/configuracoes"
           aria-label="Configurações"
-          className="glass hidden h-10 w-10 items-center justify-center rounded-full text-text-soft transition-colors hover:text-foreground sm:flex"
+          className="glass hidden h-10 w-10 items-center justify-center rounded-full text-text-soft transition-colors hover:text-foreground sm:flex md:hidden"
         >
           <Settings className="h-[18px] w-[18px]" />
         </Link>
@@ -161,7 +161,7 @@ export function SiteHeader({ userName, avatarUrl, scope, isAdmin = false, adminS
         <Link
           href="/configuracoes"
           aria-label={`Perfil de ${userName}`}
-          className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-accent text-sm font-semibold text-accent-foreground"
+          className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-accent text-sm font-semibold text-accent-foreground md:hidden"
         >
           {avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element

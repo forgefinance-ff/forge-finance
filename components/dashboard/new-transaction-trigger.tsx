@@ -1,7 +1,9 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+import { NEW_TRANSACTION_EVENT, NEW_TRANSACTION_PARAM } from "@/lib/quick-actions";
 
 import { transferBetweenAccounts, type ActionResult } from "@/app/actions/transactions";
 
@@ -37,6 +39,28 @@ export function NewTransactionTrigger({
 }: Props) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
+
+  // Atalho "Registrar transação" da barra lateral: abre aqui se esta página
+  // tem o formulário; o primeiro que atender marca o evento como resolvido.
+  useEffect(() => {
+    function onNew(event: Event) {
+      if (event.defaultPrevented) return;
+      event.preventDefault();
+      setOpen(true);
+    }
+    window.addEventListener(NEW_TRANSACTION_EVENT, onNew);
+
+    // Vindo de outra página com ?nova=1: abre e limpa o endereço.
+    const url = new URL(window.location.href);
+    if (url.searchParams.get(NEW_TRANSACTION_PARAM) === "1") {
+      url.searchParams.delete(NEW_TRANSACTION_PARAM);
+      window.history.replaceState(null, "", url.pathname + url.search + url.hash);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setOpen(true);
+    }
+
+    return () => window.removeEventListener(NEW_TRANSACTION_EVENT, onNew);
+  }, []);
 
   return (
     <>

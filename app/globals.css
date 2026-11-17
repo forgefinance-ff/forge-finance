@@ -395,10 +395,16 @@ h1, h2, h3 {
   }
 }
 
-/* Espaço da barra lateral: acompanha quando ela abre com os nomes (xl). */
+/* Espaço da barra lateral (presa à esquerda): 4,5rem só com ícones; 15rem
+   quando abre com os nomes (xl), 17rem. Com ela aberta, as sub-abas do topo somem,
+   porque já aparecem dentro do grupo na barra. */
 .forge-shell { transition: padding-left 250ms cubic-bezier(0.22, 1, 0.36, 1); }
+@media (min-width: 48rem) {
+  .forge-shell { padding-left: 4.5rem; }
+}
 @media (min-width: 80rem) {
-  body:has(aside[data-rail="open"]) .forge-shell { padding-left: 16.5rem; }
+  body:has(aside[data-rail="open"]) .forge-shell { padding-left: 17rem; }
+  body:has(aside[data-rail="open"]) [data-section-tabs] { display: none; }
 }
 
 /* Celular: campos com menos de 16px fazem o iPhone dar zoom ao tocar. Fica fora

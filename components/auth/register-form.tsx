@@ -6,8 +6,10 @@ import { useRouter } from "next/navigation";
 
 import { AlertCircleIcon, ArrowRightIcon, Loader2Icon, MailCheckIcon } from "lucide-react";
 
+import { GlassInputWrapper } from "@/components/ui/sign-in";
 import { createClient } from "@/lib/supabase/client";
 import { authErrorMessage } from "./auth-errors";
+import { GoogleButton } from "./google-button";
 import { useNextParam, withNext } from "./use-next-param";
 
 export function RegisterForm() {
@@ -82,6 +84,7 @@ export function RegisterForm() {
       )}
       <div>
         <label htmlFor="register-name" className="forge-auth-label">Nome</label>
+        <GlassInputWrapper>
         <input
           id="register-name"
           autoComplete="name"
@@ -91,10 +94,12 @@ export function RegisterForm() {
           onChange={(e) => setName(e.target.value)}
           className="forge-auth-input"
         />
+        </GlassInputWrapper>
       </div>
 
       <div>
         <label htmlFor="register-email" className="forge-auth-label">E-mail</label>
+        <GlassInputWrapper>
         <input
           id="register-email"
           autoComplete="email"
@@ -105,10 +110,12 @@ export function RegisterForm() {
           onChange={(e) => setEmail(e.target.value)}
           className="forge-auth-input"
         />
+        </GlassInputWrapper>
       </div>
 
       <div>
         <label htmlFor="register-password" className="forge-auth-label">Senha</label>
+        <GlassInputWrapper>
         <input
           id="register-password"
           autoComplete="new-password"
@@ -120,6 +127,7 @@ export function RegisterForm() {
           onChange={(e) => setPassword(e.target.value)}
           className="forge-auth-input"
         />
+        </GlassInputWrapper>
       </div>
 
       <button type="submit" disabled={loading} className="forge-auth-button">
@@ -135,6 +143,8 @@ export function RegisterForm() {
           </>
         )}
       </button>
+
+      <GoogleButton next={next} label="Criar conta com o Google" />
 
       <p className="forge-auth-note text-center">
         Já tem conta?{" "}
