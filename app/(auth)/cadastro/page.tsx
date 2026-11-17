@@ -10,7 +10,14 @@ const whatsappStart = botNumber
 
 export default function CadastroPage() {
   return (
-    <AuthShell title="Crie sua conta." subtitle="Leva menos de um minuto. Depois é só mandar seus gastos por mensagem.">
+    <AuthShell
+      title={
+        <>
+          Crie sua conta <strong>grátis</strong>
+        </>
+      }
+      subtitle="Leva menos de um minuto. Depois é só mandar seus gastos por mensagem."
+    >
       <RegisterForm />
 
       {whatsappStart && (

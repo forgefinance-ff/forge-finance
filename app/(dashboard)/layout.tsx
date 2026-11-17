@@ -7,8 +7,14 @@ import { BUSINESS_ONBOARDING_COOKIE } from "@/lib/scope";
 import { getActiveScope } from "@/lib/scope-server";
 import { isAdminEmail } from "@/lib/admin/auth";
 import { getSupportUnreadCount } from "@/lib/admin/support";
+import { SummaryReady } from "@/components/summary/summary-ready";
+import { SUMMARY_SEEN_COOKIE } from "@/lib/summary-cookie";
+import { todayInBrazil } from "@/lib/dates";
+import { freshSummaryMonth, monthName } from "@/lib/monthly-summary-core";
 
-import { AppSidebar, MobileNav, RAIL_COOKIE } from "@/components/app-sidebar";
+import { AppSidebar, MobileNav, RAIL_COOKIE, type SidebarPlan } from "@/components/app-sidebar";
+import { getUserEntitlement, isOnTrial, isProActive } from "@/lib/billing/get-user-plan";
+import { trialDaysLeft } from "@/lib/billing/manual-access";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { getNavBadges } from "@/lib/nav-badges";
 import { SiteHeader } from "@/components/site-header";
@@ -72,22 +78,42 @@ export default async function DashboardLayout({
   const cookieStore = await cookies();
   const guideSkipped = Boolean(cookieStore.get(GUIDE_SKIP_COOKIE)?.value);
   const isAdmin = isAdminEmail(session.user.email);
-  const [guide, badges, supportUnread, adminSupportUnread] = await Promise.all([
+  const [guide, badges, supportUnread, entitlement, adminSupportUnread] = await Promise.all([
     getGuideProgress(session.user.id),
     getNavBadges(),
     supabase.rpc("ff_support_unread").then(({ data }) => Number(data ?? 0)),
+    getUserEntitlement(session.user.id).catch(() => null),
     // Só admins: conversas de suporte esperando resposta (número no escudo).
     isAdmin ? getSupportUnreadCount().catch(() => 0) : Promise.resolve(0),
   ]);
+  // Sem dados do plano, a barra não mostra o cartão (melhor nada que errado).
+  const plan: SidebarPlan | undefined = !entitlement
+    ? undefined
+    : isProActive(entitlement)
+      ? { kind: "pro" }
+      : isOnTrial(entitlement)
+        ? { kind: "trial", daysLeft: trialDaysLeft(entitlement.trialEndsAt) }
+        : { kind: "free" };
   const railOpen = cookieStore.get(RAIL_COOKIE)?.value !== "closed";
+
+  // Resumo do mês: aviso uma vez no último dia do mês (ou nos 3 primeiros do seguinte).
+  const summaryMonth = freshSummaryMonth(todayInBrazil());
+  const showSummary = Boolean(summaryMonth) && cookieStore.get(SUMMARY_SEEN_COOKIE)?.value !== summaryMonth;
 
   return (
     <div className="relative isolate min-h-screen">
       <div aria-hidden className="forge-backdrop" />
 
-      <AppSidebar scope={scope} badges={badges} initialOpen={railOpen} />
+      <AppSidebar
+        scope={scope}
+        badges={badges}
+        initialOpen={railOpen}
+        userName={userName}
+        avatarUrl={profile?.avatar_url ?? null}
+        plan={plan}
+      />
 
-      <div className="forge-shell flex min-h-screen min-w-0 flex-col md:pl-24">
+      <div className="forge-shell flex min-h-screen min-w-0 flex-col">
         <SiteHeader
           userName={userName}
           avatarUrl={profile?.avatar_url ?? null}
@@ -107,6 +133,7 @@ export default async function DashboardLayout({
       </div>
 
       <MobileNav scope={scope} badges={badges} />
+      {showSummary && summaryMonth && <SummaryReady month={summaryMonth} monthName={monthName(summaryMonth)} />}
       <InstallAppPrompt />
       <SupportBubble email={SUPPORT_EMAIL} whatsapp={SUPPORT_WHATSAPP} initialUnread={supportUnread} />
     </div>

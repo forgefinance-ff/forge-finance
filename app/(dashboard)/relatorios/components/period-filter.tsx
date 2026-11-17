@@ -5,6 +5,8 @@ import { usePathname, useRouter } from "next/navigation";
 import { CalendarDays } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { CalendarRangeSelect } from "@/components/ui/calendar-range-select";
+import { dateToIso, isoToBR, isoToDate } from "@/lib/date-iso";
 import type { PeriodKey } from "../data/period";
 
 type Props = {
@@ -20,9 +22,6 @@ const PRESETS: { key: PeriodKey; label: string }[] = [
   { key: "30d", label: "30 dias" },
   { key: "90d", label: "90 dias" },
 ];
-
-const dateInputClass =
-  "rounded-lg border border-line-strong bg-surface-solid px-3 py-2 text-sm text-foreground outline-none transition placeholder:text-faint hover:border-faint focus:border-brand focus:ring-2 focus:ring-brand/15";
 
 export function PeriodFilter({ period, from, to }: Props) {
   const router = useRouter();
@@ -92,34 +91,30 @@ export function PeriodFilter({ period, from, to }: Props) {
       </div>
 
       {showCustom && (
-        <div className="flex flex-wrap items-end gap-3">
-          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-            De
-            <input
-              type="date"
-              value={customFrom}
-              onChange={(event) => setCustomFrom(event.target.value)}
-              className={dateInputClass}
+        <div className="flex flex-col gap-3 md:flex-row md:items-end">
+          <div className="w-fit rounded-2xl border border-line bg-surface-solid">
+            <CalendarRangeSelect
+              numberOfMonths={2}
+              value={{ from: isoToDate(customFrom), to: isoToDate(customTo) }}
+              onChange={(range) => {
+                setCustomFrom(range?.from ? dateToIso(range.from) : "");
+                setCustomTo(range?.to ? dateToIso(range.to) : "");
+              }}
             />
-          </label>
+          </div>
 
-          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
-            Até
-            <input
-              type="date"
-              value={customTo}
-              onChange={(event) => setCustomTo(event.target.value)}
-              className={dateInputClass}
-            />
-          </label>
-
-          <Button
-            size="sm"
-            disabled={!customFrom || !customTo || isPending}
-            onClick={applyCustom}
-          >
-            Aplicar
-          </Button>
+          <div className="flex flex-col gap-2">
+            <p className="text-sm text-muted-foreground">
+              {customFrom && customTo
+                ? `${isoToBR(customFrom)} até ${isoToBR(customTo)}`
+                : customFrom
+                  ? `De ${isoToBR(customFrom)}: escolha o último dia`
+                  : "Escolha o primeiro e o último dia"}
+            </p>
+            <Button size="sm" disabled={!customFrom || !customTo || isPending} onClick={applyCustom}>
+              Aplicar
+            </Button>
+          </div>
         </div>
       )}
     </div>

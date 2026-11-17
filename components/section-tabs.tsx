@@ -38,7 +38,7 @@ export function SectionTabs({ scope, badges = {} }: { scope: Scope; badges?: Nav
   if (!group || tabs.length < 2) return null;
 
   return (
-    <nav ref={navRef} aria-label={group.title} className="mb-5 -mx-1 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <nav ref={navRef} data-section-tabs aria-label={group.title} className="mb-5 -mx-1 overflow-x-auto px-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       <ul ref={containerRef} className="glass relative inline-flex min-w-max items-center gap-1 rounded-full p-1">
         <TabsPill pillRef={pillRef} />
         {tabs.map((tab) => {

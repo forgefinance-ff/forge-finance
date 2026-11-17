@@ -59,6 +59,9 @@ function readMs(el: Element | null, name: string, fallback: number) {
   return raw.endsWith("ms") ? n : raw.endsWith("s") ? n * 1000 : n;
 }
 
+/** Evento para abrir o balão de qualquer lugar: window.dispatchEvent(new Event(OPEN_SUPPORT_EVENT)). */
+export const OPEN_SUPPORT_EVENT = "forge:open-support";
+
 export function SupportBubble({ initialUnread = 0 }: Props) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Msg[]>(SEED);
@@ -102,6 +105,16 @@ export function SupportBubble({ initialUnread = 0 }: Props) {
     timers.current = [];
   };
   useEffect(() => clearTimers, []);
+
+  // Outros lugares do app (ex.: atalho da barra lateral) podem abrir o suporte.
+  useEffect(() => {
+    function onOpen() {
+      setStamp(`Hoje ${new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" })}`);
+      setOpen(true);
+    }
+    window.addEventListener(OPEN_SUPPORT_EVENT, onOpen);
+    return () => window.removeEventListener(OPEN_SUPPORT_EVENT, onOpen);
+  }, []);
 
   // Abre: hora atual no topo, rola para o fim, foco no campo.
   useEffect(() => {

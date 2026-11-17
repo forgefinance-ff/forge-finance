@@ -5,6 +5,7 @@ import { ForgeBubble } from "@/components/dashboard/forge-bubble";
 import { GoalsMini } from "@/components/dashboard/goals-mini";
 import { MonthHero } from "@/components/dashboard/month-hero";
 import { NeedsYou } from "@/components/dashboard/needs-you";
+import { PeriodStats } from "@/components/dashboard/period-stats";
 import { NewTransactionTrigger } from "@/components/dashboard/new-transaction-trigger";
 import { RecentList } from "@/components/dashboard/recent-list";
 import { WalletStack } from "@/components/dashboard/wallet-stack";
@@ -107,6 +108,12 @@ export function DashboardOverview({
           </div>
         </div>
       </div>
+
+      {data.hasData && (
+        <Reveal>
+          <PeriodStats rows={data.periodRows} today={today} />
+        </Reveal>
+      )}
 
       {alerts}
 

@@ -5,6 +5,7 @@ import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight, Plus, X } from "lucide-rea
 
 import { BankCard } from "@/components/cards/bank-card";
 import { SuccessCheck } from "@/components/motion";
+import { DatePicker } from "@/components/ui/date-picker";
 import { Button } from "@/components/ui/button";
 import { MoneyInput } from "@/components/ui/money-input";
 import { createCategory } from "@/app/actions/categories";
@@ -470,11 +471,10 @@ export function TransactionForm({
         <label htmlFor={`${uid}-date`} className={labelClass}>
           Data
         </label>
-        <input
+        <DatePicker
           id={`${uid}-date`}
-          type="date"
           name="transaction_date"
-          required
+          today={today}
           defaultValue={transaction?.transaction_date?.slice(0, 10) ?? today}
           className={inputClass}
         />

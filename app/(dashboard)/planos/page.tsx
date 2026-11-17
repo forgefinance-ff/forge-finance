@@ -2,7 +2,8 @@ import Link from "next/link";
 import { Check, Lock, MessageCircle, RotateCcw, ShieldCheck, Sparkles, X } from "lucide-react";
 
 import { billingEnabled } from "@/lib/billing/config";
-import { getUserEntitlement, isProActive } from "@/lib/billing/get-user-plan";
+import { getUserEntitlement, isOnTrial, isProActive } from "@/lib/billing/get-user-plan";
+import { trialDaysLeft } from "@/lib/billing/manual-access";
 import { PLAN_CATALOG, PRO_PRICING, formatBRL, yearlyComparison } from "@/lib/billing/plans";
 
 const NOTICES: Record<string, { tone: "info" | "error"; text: string }> = {
@@ -47,6 +48,8 @@ export default async function PlansPage({
   const entitlement = await getUserEntitlement();
   const isPro = isProActive(entitlement);
   const enabled = billingEnabled();
+  const onTrial = enabled && isOnTrial(entitlement);
+  const daysLeft = trialDaysLeft(entitlement?.trialEndsAt);
   const { perMonth, savings } = yearlyComparison();
   const free = PLAN_CATALOG.find((plan) => plan.id === "free")!;
   const pro = PLAN_CATALOG.find((plan) => plan.id === "pro")!;
@@ -64,6 +67,13 @@ export default async function PlansPage({
           Com o Forge Pro você registra, consulta e organiza suas finanças direto no WhatsApp, por texto ou áudio, sem abrir o app.
         </p>
       </header>
+
+      {onTrial && (
+        <p className="rounded-xl border border-violet-400/25 bg-violet-500/10 px-4 py-3 text-sm text-text-soft">
+          Você está no teste grátis do Pro: falta{daysLeft === 1 ? "" : "m"} {daysLeft} dia{daysLeft === 1 ? "" : "s"}. Assine
+          antes de acabar para não perder o WhatsApp e o modo Empresa.
+        </p>
+      )}
 
       {notice && (
         <p
