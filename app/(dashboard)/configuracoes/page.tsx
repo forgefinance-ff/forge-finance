@@ -14,12 +14,13 @@ export default async function SettingsPage() {
   const supabase = await createClient();
   const [prefsRes, linkRes] = user
     ? await Promise.all([
-        supabase.from("notification_prefs").select("weekly_summary, budget_alerts").eq("user_id", user.id).maybeSingle(),
+        supabase.from("notification_prefs").select("weekly_summary, monthly_summary, budget_alerts").eq("user_id", user.id).maybeSingle(),
         supabase.from("whatsapp_links").select("user_id").eq("user_id", user.id).maybeSingle(),
       ])
     : [{ data: null }, { data: null }];
   const prefs = {
     weekly_summary: Boolean(prefsRes.data?.weekly_summary ?? false),
+    monthly_summary: Boolean(prefsRes.data?.monthly_summary ?? true),
     budget_alerts: Boolean(prefsRes.data?.budget_alerts ?? true),
   };
 

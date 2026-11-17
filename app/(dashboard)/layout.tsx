@@ -5,8 +5,15 @@ import { createClient } from "@/lib/supabase/server";
 import { getAiStatus } from "@/lib/ai/config";
 import { BUSINESS_ONBOARDING_COOKIE } from "@/lib/scope";
 import { getActiveScope } from "@/lib/scope-server";
+import { isAdminEmail } from "@/lib/admin/auth";
+import { SummaryReady } from "@/components/summary/summary-ready";
+import { SUMMARY_SEEN_COOKIE } from "@/lib/summary-cookie";
+import { todayInBrazil } from "@/lib/dates";
+import { freshSummaryMonth, monthName } from "@/lib/monthly-summary-core";
 
-import { AppSidebar, MobileNav, RAIL_COOKIE } from "@/components/app-sidebar";
+import { AppSidebar, MobileNav, RAIL_COOKIE, type SidebarPlan } from "@/components/app-sidebar";
+import { getUserEntitlement, isOnTrial, isProActive } from "@/lib/billing/get-user-plan";
+import { trialDaysLeft } from "@/lib/billing/manual-access";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { getNavBadges } from "@/lib/nav-badges";
 import { SiteHeader } from "@/components/site-header";
@@ -14,6 +21,8 @@ import { BusinessOnboarding } from "@/components/business-onboarding";
 import { SectionTabs } from "@/components/section-tabs";
 import { GuideBanner } from "@/components/guide/guide-banner";
 import { InstallAppPrompt } from "@/components/pwa/install-app-prompt";
+import { SupportBubble } from "@/components/support/support-bubble";
+import { SUPPORT_EMAIL, SUPPORT_WHATSAPP } from "@/lib/support";
 import { GUIDE_SKIP_COOKIE, getGuideProgress } from "@/lib/guide";
 
 export default async function DashboardLayout({
@@ -67,24 +76,46 @@ export default async function DashboardLayout({
   // Guia de primeiros passos: barra de progresso até concluir (ou "Fazer depois").
   const cookieStore = await cookies();
   const guideSkipped = Boolean(cookieStore.get(GUIDE_SKIP_COOKIE)?.value);
-  const [guide, badges] = await Promise.all([
+  const [guide, badges, supportUnread, entitlement] = await Promise.all([
     getGuideProgress(session.user.id),
     getNavBadges(),
+    supabase.rpc("ff_support_unread").then(({ data }) => Number(data ?? 0)),
+    getUserEntitlement(session.user.id).catch(() => null),
   ]);
+  // Sem dados do plano, a barra não mostra o cartão (melhor nada que errado).
+  const plan: SidebarPlan | undefined = !entitlement
+    ? undefined
+    : isProActive(entitlement)
+      ? { kind: "pro" }
+      : isOnTrial(entitlement)
+        ? { kind: "trial", daysLeft: trialDaysLeft(entitlement.trialEndsAt) }
+        : { kind: "free" };
   const railOpen = cookieStore.get(RAIL_COOKIE)?.value !== "closed";
+
+  // Resumo do mês: aviso uma vez no último dia do mês (ou nos 3 primeiros do seguinte).
+  const summaryMonth = freshSummaryMonth(todayInBrazil());
+  const showSummary = Boolean(summaryMonth) && cookieStore.get(SUMMARY_SEEN_COOKIE)?.value !== summaryMonth;
 
   return (
     <div className="relative isolate min-h-screen">
       <div aria-hidden className="forge-backdrop" />
 
-      <AppSidebar scope={scope} badges={badges} initialOpen={railOpen} />
+      <AppSidebar
+        scope={scope}
+        badges={badges}
+        initialOpen={railOpen}
+        userName={userName}
+        avatarUrl={profile?.avatar_url ?? null}
+        plan={plan}
+      />
 
-      <div className="forge-shell flex min-h-screen min-w-0 flex-col md:pl-24">
+      <div className="forge-shell flex min-h-screen min-w-0 flex-col">
         <SiteHeader
           userName={userName}
           avatarUrl={profile?.avatar_url ?? null}
           aiConfigured={ai.configured}
           scope={scope}
+          isAdmin={isAdminEmail(session.user.email)}
         />
 
         <main className="mx-auto w-full min-w-0 max-w-[1320px] flex-1 px-4 pb-24 pt-4 md:pb-10 lg:px-8">
@@ -97,7 +128,9 @@ export default async function DashboardLayout({
       </div>
 
       <MobileNav scope={scope} badges={badges} />
+      {showSummary && summaryMonth && <SummaryReady month={summaryMonth} monthName={monthName(summaryMonth)} />}
       <InstallAppPrompt />
+      <SupportBubble email={SUPPORT_EMAIL} whatsapp={SUPPORT_WHATSAPP} initialUnread={supportUnread} />
     </div>
   );
 }

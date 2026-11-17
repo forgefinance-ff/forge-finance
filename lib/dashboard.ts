@@ -37,6 +37,8 @@ export type DashboardData = {
   chart7d: ChartPoint[];
   chart30d: ChartPoint[];
   chart12m: ChartPoint[];
+  /** Receitas e despesas dos últimos 13 meses, para o filtro de período. */
+  periodRows: RawTransaction[];
 
   recentTransactions: RecentTransaction[];
 
@@ -47,7 +49,7 @@ export type DashboardData = {
   analytics: DashboardAnalytics;
 };
 
-type RawTransaction = {
+export type RawTransaction = {
   amount: number;
   type: "income" | "expense";
   transaction_date: string;
@@ -178,6 +180,7 @@ export async function getDashboardData(): Promise<DashboardData> {
       chart7d: [],
       chart30d: [],
       chart12m: [],
+      periodRows: [],
       recentTransactions: [],
       accountsTotal: 0,
       investmentsTotal: 0,
@@ -323,6 +326,7 @@ export async function getDashboardData(): Promise<DashboardData> {
     chart7d: buildChartByDay(rawTransactions, 7),
     chart30d: buildChartByDay(rawTransactions, 30),
     chart12m: buildChartByMonth(rawTransactions, 12),
+    periodRows: rawTransactions.map((row) => ({ ...row, transaction_date: String(row.transaction_date).slice(0, 10) })),
     recentTransactions,
     hasData: (transactions?.length ?? 0) > 0,
     accountsTotal,

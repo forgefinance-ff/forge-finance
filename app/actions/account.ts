@@ -53,11 +53,12 @@ export async function deleteMyAccount(formData: FormData): Promise<ActionResult>
 
 const prefsInput = z.object({
   weekly_summary: z.boolean(),
+  monthly_summary: z.boolean(),
   budget_alerts: z.boolean(),
 });
 
 /** Avisos: resumo semanal e alertas de orçamento (no WhatsApp). */
-export async function saveNotificationPrefs(prefs: { weekly_summary: boolean; budget_alerts: boolean }): Promise<ActionResult> {
+export async function saveNotificationPrefs(prefs: { weekly_summary: boolean; monthly_summary: boolean; budget_alerts: boolean }): Promise<ActionResult> {
   const user = await getAuthUser();
   if (!user) return { ok: false, error: "Entre de novo para continuar." };
 

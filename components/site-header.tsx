@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { MessageCircle, SearchIcon, Settings } from "lucide-react";
+import { MessageCircle, SearchIcon, Settings, ShieldCheck } from "lucide-react";
 
 import { getAllPages } from "@/components/app-sidebar";
 import { ScopeSwitcher } from "@/components/scope-switcher";
@@ -24,9 +24,11 @@ type SiteHeaderProps = {
   avatarUrl: string | null;
   aiConfigured: boolean;
   scope: Scope;
+  /** Só vem true para os e-mails de ADMIN_EMAILS (checado no servidor). */
+  isAdmin?: boolean;
 };
 
-export function SiteHeader({ userName, avatarUrl, scope }: SiteHeaderProps) {
+export function SiteHeader({ userName, avatarUrl, scope, isAdmin = false }: SiteHeaderProps) {
   const router = useRouter();
   const [query, setQuery] = useState("");
   const [open, setOpen] = useState(false);
@@ -52,7 +54,7 @@ export function SiteHeader({ userName, avatarUrl, scope }: SiteHeaderProps) {
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-3 bg-background/95 px-4 backdrop-blur-md sm:h-20 lg:px-8">
-      <Link href="/dashboard" className="flex items-center gap-2.5">
+      <Link href="/dashboard" className="flex items-center gap-2.5 md:hidden">
         <Image
           src="/icon-f.png"
           alt=""
@@ -127,10 +129,21 @@ export function SiteHeader({ userName, avatarUrl, scope }: SiteHeaderProps) {
           <MessageCircle className="h-[18px] w-[18px]" aria-hidden />
         </Link>
 
+        {isAdmin && (
+          <Link
+            href="/admin"
+            aria-label="Painel admin"
+            title="Painel admin"
+            className="glass flex h-10 w-10 items-center justify-center rounded-full text-text-soft transition-colors hover:text-foreground"
+          >
+            <ShieldCheck className="h-[18px] w-[18px]" aria-hidden />
+          </Link>
+        )}
+
         <Link
           href="/configuracoes"
           aria-label="Configurações"
-          className="glass hidden h-10 w-10 items-center justify-center rounded-full text-text-soft transition-colors hover:text-foreground sm:flex"
+          className="glass hidden h-10 w-10 items-center justify-center rounded-full text-text-soft transition-colors hover:text-foreground sm:flex md:hidden"
         >
           <Settings className="h-[18px] w-[18px]" />
         </Link>
@@ -138,7 +151,7 @@ export function SiteHeader({ userName, avatarUrl, scope }: SiteHeaderProps) {
         <Link
           href="/configuracoes"
           aria-label={`Perfil de ${userName}`}
-          className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-accent text-sm font-semibold text-accent-foreground"
+          className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-accent text-sm font-semibold text-accent-foreground md:hidden"
         >
           {avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
