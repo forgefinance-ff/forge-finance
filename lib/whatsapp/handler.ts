@@ -13,6 +13,10 @@ import { appUrl, connectUrl, getOrCreateOnboardingToken } from "./onboarding";
 import { formatBRL, formatDayMonth, normalize } from "./text";
 import { BUTTON_BODY_MAX, fitButtonBody, isAcknowledgement, isIgnoredNumber, LINK_CODE, linkedDecision, unlinkedDecision } from "./guard";
 import { metaTransport, type Transport } from "./transport";
+import { allowRequest } from "@/lib/rate-limit";
+
+/** Tentativas de VINCULAR somadas de todos os números, por hora. */
+const LINK_CODE_GLOBAL_PER_HOUR = 60;
 
 export type IncomingMessage = {
   id: string;
@@ -208,17 +212,35 @@ async function handleUnlinked(admin: Admin, message: IncomingMessage) {
     return;
   }
 
+  // Limite GLOBAL de tentativas de código (além do limite por número): sem
+  // ele, quem tivesse muitos chips poderia chutar códigos de outras pessoas.
+  if (!(await allowRequest("global", "wa_link_code", LINK_CODE_GLOBAL_PER_HOUR, 3600))) {
+    await out.text(
+      message.from,
+      "Muitas tentativas de vínculo agora. Tente de novo em alguns minutos ou toque no link que eu mando quando você diz *oi*."
+    );
+    return;
+  }
+
+  // Consome o código na mesma operação da busca (dois números não usam o mesmo código).
   const { data: codeRow } = await admin
     .from("whatsapp_link_codes")
-    .select("code, user_id")
+    .delete()
     .eq("code", match[1])
     .gt("expires_at", new Date().toISOString())
+    .select("code, user_id")
     .maybeSingle();
 
   if (!codeRow) {
     await out.text(message.from, "Código inválido ou expirado. Gere um novo na página *WhatsApp* do app.");
     return;
   }
+
+  const { data: previous } = await admin
+    .from("whatsapp_links")
+    .select("phone")
+    .eq("user_id", codeRow.user_id)
+    .maybeSingle();
 
   const { error } = await admin.from("whatsapp_links").upsert(
     { user_id: codeRow.user_id, phone: message.from, verified_at: new Date().toISOString() },
@@ -236,7 +258,20 @@ async function handleUnlinked(admin: Admin, message: IncomingMessage) {
     return;
   }
 
-  await admin.from("whatsapp_link_codes").delete().eq("code", codeRow.code);
+  // Conversa antiga deste número não vale para a conta nova.
+  await admin.from("whatsapp_conversation").delete().eq("phone", message.from);
+
+  // Avisa o número que foi trocado (se havia outro).
+  if (previous?.phone && previous.phone !== message.from) {
+    await admin.from("whatsapp_conversation").delete().eq("phone", previous.phone);
+    await out
+      .text(
+        previous.phone,
+        "⚠️ Outro número de WhatsApp foi conectado à sua conta do Forge Finance e este foi desconectado. Se não foi você, entre no app, desconecte o número na página *WhatsApp* e troque sua senha."
+      )
+      .catch(() => undefined);
+  }
+
   revalidatePath("/whatsapp");
 
   await out.text(message.from, `✅ Número vinculado!\n\n${WHATSAPP_HELP}`);
@@ -349,7 +384,9 @@ async function askAgent(admin: Admin, link: Link, text: string, fromAudio: boole
     return;
   }
 
-  if (canAutoExecute(result.actions)) {
+  // Salva direto só quando a IA agiu apenas com o texto do usuário. Se ela leu
+  // dados antes (que podem conter texto de terceiros), pede confirmação.
+  if (!result.readFirst && canAutoExecute(result.actions)) {
     await autoRegister(admin, link, result.actions, echo);
     return;
   }

@@ -25,7 +25,12 @@ type Message = { role: "user" | "assistant"; content: string | Block[] };
 
 export type AgentResult =
   | { kind: "reply"; text: string }
-  | { kind: "confirm"; actions: PreparedAction[]; text: string };
+  /**
+   * readFirst: a IA consultou dados (ex.: descrições de lançamentos, que podem
+   * vir de extratos importados com texto de terceiros) antes de preparar as
+   * ações. Nesse caso nada é salvo sem o usuário confirmar.
+   */
+  | { kind: "confirm"; actions: PreparedAction[]; text: string; readFirst: boolean };
 
 const SYSTEM = `Você é o assistente do Forge Finance no WhatsApp. Você opera o app inteiro pelo chat: consulta dados e prepara ações (lançamentos, contas, categorias, cartões, metas, investimentos, clientes, contas a pagar/receber, impostos do MEI).
 
@@ -160,6 +165,7 @@ export async function runAgent(
 
   const prepared: PreparedAction[] = [];
   let finalText = "";
+  let readFirst = false;
 
   // O contexto fica fixo durante o pedido: a API exige o mesmo prefixo entre as
   // rodadas. Referências novas (X, P) chegam à IA pelos resultados das ferramentas.
@@ -186,6 +192,7 @@ export async function runAgent(
 
       try {
         if (read) {
+          readFirst = true;
           results.push({ type: "tool_result", tool_use_id: call.id, content: await read.run(call.input, ctx, db) });
         } else if (write) {
           if (prepared.length >= MAX_ACTIONS) throw new Error(`Limite de ${MAX_ACTIONS} ações por mensagem.`);
@@ -215,7 +222,7 @@ export async function runAgent(
   }
 
   if (prepared.length) {
-    return { kind: "confirm", actions: dropDuplicateAccounts(prepared), text: finalText };
+    return { kind: "confirm", actions: dropDuplicateAccounts(prepared), text: finalText, readFirst };
   }
 
   return {

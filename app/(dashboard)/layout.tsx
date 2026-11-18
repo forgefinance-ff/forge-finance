@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, getAuthUser } from "@/lib/supabase/server";
 import { getAiStatus } from "@/lib/ai/config";
 import { BUSINESS_ONBOARDING_COOKIE } from "@/lib/scope";
 import { getActiveScope } from "@/lib/scope-server";
@@ -33,24 +33,23 @@ export default async function DashboardLayout({
 }) {
   const supabase = await createClient();
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
+  // Token verificado (getClaims), não só lido do cookie.
+  const user = await getAuthUser();
 
-  if (!session) {
+  if (!user) {
     redirect("/login");
   }
 
   const { data: profile } = await supabase
     .from("profiles")
     .select("full_name, avatar_url")
-    .eq("id", session.user.id)
+    .eq("id", user.id)
     .maybeSingle();
 
   const userName =
     profile?.full_name ||
-    (session.user.user_metadata?.full_name as string | undefined) ||
-    session.user.email?.split("@")[0] ||
+    (user.user_metadata?.full_name as string | undefined) ||
+    user.email?.split("@")[0] ||
     "Usuário";
 
   const ai = getAiStatus();
@@ -67,7 +66,7 @@ export default async function DashboardLayout({
       const { count } = await supabase
         .from("categories")
         .select("id", { count: "exact", head: true })
-        .eq("user_id", session.user.id)
+        .eq("user_id", user.id)
         .eq("scope", "business");
 
       offerBusinessDefaults = (count ?? 0) === 0;
@@ -77,12 +76,12 @@ export default async function DashboardLayout({
   // Guia de primeiros passos: barra de progresso até concluir (ou "Fazer depois").
   const cookieStore = await cookies();
   const guideSkipped = Boolean(cookieStore.get(GUIDE_SKIP_COOKIE)?.value);
-  const isAdmin = isAdminEmail(session.user.email);
+  const isAdmin = isAdminEmail(user.email);
   const [guide, badges, supportUnread, entitlement, adminSupportUnread] = await Promise.all([
-    getGuideProgress(session.user.id),
+    getGuideProgress(user.id),
     getNavBadges(),
     supabase.rpc("ff_support_unread").then(({ data }) => Number(data ?? 0)),
-    getUserEntitlement(session.user.id).catch(() => null),
+    getUserEntitlement(user.id).catch(() => null),
     // Só admins: conversas de suporte esperando resposta (número no escudo).
     isAdmin ? getSupportUnreadCount().catch(() => 0) : Promise.resolve(0),
   ]);

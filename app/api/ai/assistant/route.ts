@@ -62,12 +62,17 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Não autenticado." }, { status: 401 });
   }
 
+  // Só JSON: um formulário de outro site (text/plain) não chega aqui.
+  if (!request.headers.get("content-type")?.toLowerCase().startsWith("application/json")) {
+    return NextResponse.json({ error: "Formato inválido." }, { status: 415 });
+  }
+
   const parsed = bodySchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) {
     return NextResponse.json({ error: "Pergunta inválida." }, { status: 400 });
   }
 
-  if (!(await allowRequest("ai_assistant", MAX_REQUESTS, WINDOW_SECONDS))) {
+  if (!(await allowRequest(user.id, "ai_assistant", MAX_REQUESTS, WINDOW_SECONDS))) {
     return NextResponse.json(
       { error: "Muitas perguntas seguidas. Aguarde um minuto." },
       { status: 429 }
@@ -128,7 +133,7 @@ export async function POST(request: Request) {
 
     if (!response.ok) {
       console.error("AI provider error", response.status);
-      await refundAiQuota();
+      await refundAiQuota(user.id);
       return NextResponse.json(
         { error: "O provedor de IA retornou um erro. Tente novamente." },
         { status: 502 }
@@ -146,7 +151,7 @@ export async function POST(request: Request) {
       .trim();
 
     if (!answer) {
-      await refundAiQuota();
+      await refundAiQuota(user.id);
       return NextResponse.json(
         { error: "Resposta vazia do provedor." },
         { status: 502 }
@@ -156,7 +161,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ answer, quota: { used: quota.used, limit: quota.monthlyLimit, remaining: quota.remaining } });
   } catch (error) {
     console.error("AI request failed", error);
-    await refundAiQuota();
+    await refundAiQuota(user.id);
     return NextResponse.json(
       { error: "Não foi possível consultar a IA agora." },
       { status: 502 }

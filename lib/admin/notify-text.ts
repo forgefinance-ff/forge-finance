@@ -21,7 +21,7 @@ export function oneLine(text: string, max: number): string {
 export function supportNotifyText(opts: { who: string; body: string; url: string }): string {
   return [
     "📩 *Nova mensagem no suporte do Forge*",
-    `De: ${opts.who}`,
+    `De: ${oneLine(opts.who, 80)}`,
     `"${oneLine(opts.body, 300)}"`,
     "",
     `Responder: ${opts.url}`,
