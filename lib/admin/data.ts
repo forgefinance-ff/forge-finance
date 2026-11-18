@@ -1,4 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
+
+import { requireAdmin } from "./auth";
 import { PRO_PRICING } from "@/lib/billing/plans";
 
 export type AdminOverview = {
@@ -46,6 +48,7 @@ export type AdminOverview = {
 };
 
 export async function getAdminOverview(): Promise<AdminOverview> {
+  await requireAdmin();
   const db = createAdminClient();
   const monthStart = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }).slice(0, 7) + "-01";
   const [{ data, error }, { data: outbound }] = await Promise.all([
@@ -105,6 +108,7 @@ export function parseFilter(value: string | undefined): UserFilter {
 export const PAGE_SIZE = 50;
 
 export async function getAdminUsers(opts: { search?: string; filter: UserFilter; page: number }) {
+  await requireAdmin();
   const { data, error } = await createAdminClient().rpc("ff_admin_users", {
     p_search: opts.search?.trim() || null,
     p_filter: opts.filter,
@@ -126,6 +130,7 @@ export type AdminActionRow = {
 };
 
 export async function getRecentAdminActions(limit = 15): Promise<AdminActionRow[]> {
+  await requireAdmin();
   const { data } = await createAdminClient()
     .from("admin_actions")
     .select("id, admin_email, target_user_id, action, reason, created_at")

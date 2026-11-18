@@ -1,3 +1,4 @@
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export type AiQuota = {
@@ -28,9 +29,11 @@ export async function consumeAiQuota(): Promise<AiQuota | null> {
   };
 }
 
-/** Devolve a consulta quando o provedor de IA falha (a pessoa não paga pelo erro). */
-export async function refundAiQuota(): Promise<void> {
-  const supabase = await createClient();
-  const { error } = await supabase.rpc("refund_my_ai_quota");
+/**
+ * Devolve a consulta quando o provedor de IA falha (a pessoa não paga pelo erro).
+ * Só o servidor devolve (service role); o usuário não consegue chamar direto.
+ */
+export async function refundAiQuota(userId: string): Promise<void> {
+  const { error } = await createAdminClient().rpc("ff_refund_ai_quota", { p_user_id: userId });
   if (error) console.error("AI quota refund failed", error.code);
 }

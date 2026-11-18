@@ -64,7 +64,7 @@ export default async function ConnectWhatsappPage({
   return (
     <AuthShell
       title={`Conectar o WhatsApp ${phone}`}
-      subtitle="Último passo: confirme a conexão. Depois você registra gastos, receitas e consultas mandando texto ou áudio, e sempre confirma antes de salvar."
+      subtitle="Último passo: digite os 4 últimos números do SEU WhatsApp para confirmar. Se alguém te mandou este link, não continue: ele conectaria o celular dessa pessoa à sua conta."
     >
       <div className="space-y-5">
         <p className="forge-auth-note">

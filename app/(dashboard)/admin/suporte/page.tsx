@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { requireAdmin } from "@/lib/admin/auth";
 import { MessagesSquare } from "lucide-react";
 
 import { AutoRefresh } from "@/components/admin/auto-refresh";
@@ -20,6 +21,7 @@ function when(value: string) {
 type SearchParams = Promise<{ c?: string; f?: string }>;
 
 export default async function AdminSupportPage({ searchParams }: { searchParams: SearchParams }) {
+  await requireAdmin();
   const params = await searchParams;
   const filter: Filter = params.f && params.f in FILTERS ? (params.f as Filter) : "open";
   const threads = await getSupportThreads(filter);

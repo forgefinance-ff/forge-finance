@@ -1,5 +1,6 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getRecentAdminActions } from "@/lib/admin/data";
+import { requireAdmin } from "@/lib/admin/auth";
 
 const ACTION_LABEL: Record<string, string> = {
   grant_pro: "Liberou o Pro",
@@ -10,6 +11,7 @@ const ACTION_LABEL: Record<string, string> = {
 };
 
 export default async function AdminLogPage() {
+  await requireAdmin();
   const actions = await getRecentAdminActions(100);
 
   const ids = [...new Set(actions.map((a) => a.target_user_id).filter(Boolean))] as string[];

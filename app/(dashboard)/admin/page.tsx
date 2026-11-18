@@ -1,4 +1,5 @@
 import { CheckCircle2, TriangleAlert } from "lucide-react";
+import { requireAdmin } from "@/lib/admin/auth";
 
 import { DonutChart, SignupsChart } from "@/components/admin/charts";
 import { Kpi, Panel, pct } from "@/components/admin/stat";
@@ -24,6 +25,7 @@ function dateTime(value: string | null) {
 }
 
 export default async function AdminOverviewPage() {
+  await requireAdmin();
   const o = await getAdminOverview();
   const f = o.funnel;
   const r = o.revenue;

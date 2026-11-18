@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { requireAdmin } from "@/lib/admin/auth";
 
 import { UserActions } from "@/components/admin/user-actions";
 import { Badge } from "@/components/ui/badge";
@@ -49,6 +50,7 @@ function PlanBadge({ user }: { user: AdminUserRow }) {
 type SearchParams = Promise<{ q?: string; filtro?: string; pagina?: string }>;
 
 export default async function AdminUsersPage({ searchParams }: { searchParams: SearchParams }) {
+  await requireAdmin();
   const params = await searchParams;
   const filter = parseFilter(params.filtro);
   const page = Math.max(1, Number(params.pagina) || 1);

@@ -1,14 +1,9 @@
 "use client";
 
 import { useClientValue } from "@/hooks/use-client-value";
+import { safeNext } from "@/lib/safe-next";
 
-/** Só aceita caminhos internos (evita redirecionar para outro site). */
-export function safeNext(value: string | null | undefined) {
-  if (!value || !value.startsWith("/") || value.startsWith("//") || value.startsWith("/\\")) {
-    return null;
-  }
-  return value;
-}
+export { safeNext };
 
 /** Lê o ?next= da URL (para voltar ao fluxo certo depois do login/cadastro). */
 export function useNextParam() {

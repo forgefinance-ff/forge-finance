@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 
+import { isCronAuthorized } from "@/lib/cron-auth";
 import { sendDailyReminders } from "@/lib/reminders";
 
 export const runtime = "nodejs";
@@ -12,9 +13,7 @@ export const maxDuration = 60;
  * CRON_SECRET está definida no projeto.
  */
 export async function GET(request: Request) {
-  const secret = process.env.CRON_SECRET;
-
-  if (!secret || request.headers.get("authorization") !== `Bearer ${secret}`) {
+  if (!isCronAuthorized(request)) {
     return NextResponse.json({ error: "Não autorizado." }, { status: 401 });
   }
 

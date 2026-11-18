@@ -82,6 +82,11 @@ export async function findOnboardingToken(admin: Admin, token: string) {
   return data ? { token: String(data.token), phone: String(data.phone) } : null;
 }
 
+/**
+ * Mostra só país e DDD. Os últimos dígitos ficam ocultos de propósito: na
+ * conexão a pessoa digita os 4 finais do próprio número, o que barra quem
+ * abre um link repassado por outra pessoa.
+ */
 export function maskPhone(phone: string) {
-  return `+${phone.slice(0, 2)} ${phone.slice(2, 4)} •••••${phone.slice(-4)}`;
+  return `+${phone.slice(0, 2)} ${phone.slice(2, 4)} •••••-••••`;
 }
