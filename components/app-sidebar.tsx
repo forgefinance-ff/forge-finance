@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import {
   BriefcaseIcon,
+  CalendarDaysIcon,
   ChevronDownIcon,
   CrownIcon,
   LayoutDashboardIcon,
@@ -41,6 +42,12 @@ const dashboard: NavGroup = {
   title: "Dashboard",
   icon: LayoutDashboardIcon,
   items: [{ title: "Dashboard", url: "/dashboard" }],
+};
+
+const agenda: NavGroup = {
+  title: "Agenda",
+  icon: CalendarDaysIcon,
+  items: [{ title: "Agenda", url: "/agenda" }],
 };
 
 /** Só no escopo Empresa, logo depois do Dashboard. */
@@ -107,8 +114,8 @@ export const settingsGroup: NavGroup = {
 
 export function getNavGroups(scope: Scope): NavGroup[] {
   return scope === "business"
-    ? [dashboard, business, entries, wallet, planning, assistant]
-    : [dashboard, entries, wallet, planning, assistant];
+    ? [dashboard, agenda, business, entries, wallet, planning, assistant]
+    : [dashboard, agenda, entries, wallet, planning, assistant];
 }
 
 /** Todas as páginas (para a busca "Ir para uma página"). */
