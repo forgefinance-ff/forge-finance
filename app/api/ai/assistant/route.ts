@@ -3,6 +3,8 @@ import { z } from "zod";
 
 import { getAiStatus } from "@/lib/ai/config";
 import { buildDeepContext, buildQuickContext } from "@/lib/ai/context";
+import type { TokenUsage } from "@/lib/ai/pricing";
+import { recordAiUsage } from "@/lib/ai/record-usage";
 import { getAuthUser } from "@/lib/supabase/server";
 import { consumeAiQuota, refundAiQuota } from "@/lib/billing/usage";
 import { allowRequest } from "@/lib/rate-limit";
@@ -142,7 +144,11 @@ export async function POST(request: Request) {
 
     const payload = (await response.json()) as {
       content?: { type: string; text?: string }[];
+      model?: string;
+      usage?: TokenUsage;
     };
+
+    await recordAiUsage({ userId: user.id, source: "assistant", model: payload.model ?? ai.model, usage: payload.usage });
 
     const answer = (payload.content ?? [])
       .filter((block) => block.type === "text" && block.text)

@@ -46,15 +46,40 @@ async function sendMessage(to: string, message: Record<string, unknown>): Promis
 
   const ok = response.ok;
   if (!ok) console.error("WhatsApp send error", response.status, await response.text());
-  await countOutbound(message.type === "template" ? "template" : "service", ok);
+  await countOutbound(to, message.type === "template" ? "template" : "service", ok);
   return ok;
 }
 
-/** Conta cada envio (é o que a Meta cobra). Nunca atrapalha o envio. */
-async function countOutbound(kind: "service" | "template", ok: boolean) {
+/** Conta cada envio, no total e por usuário (é o que a Meta cobra). Nunca atrapalha o envio. */
+async function countOutbound(to: string, kind: "service" | "template", ok: boolean) {
   try {
-    const { error } = await createAdminClient().rpc("ff_wa_outbound_inc", { p_kind: kind, p_ok: ok });
-    if (error) console.error("WhatsApp outbound count", error.code);
+    const db = createAdminClient();
+    const [total, perUser] = await Promise.all([
+      db.rpc("ff_wa_outbound_inc", { p_kind: kind, p_ok: ok }),
+      db.rpc("ff_usage_wa_outbound", { p_phone: to, p_kind: kind, p_ok: ok }),
+    ]);
+    if (total.error) console.error("WhatsApp outbound count", total.error.code);
+    if (perUser.error) console.error("WhatsApp outbound usage", perUser.error.code);
+  } catch {
+    // sem contador, segue o jogo
+  }
+}
+
+/** Mensagem recebida de um usuário. Nunca atrapalha o atendimento. */
+export async function countInbound(userId: string, audio: boolean) {
+  try {
+    const { error } = await createAdminClient().rpc("ff_usage_wa_inbound", { p_user_id: userId, p_audio: audio });
+    if (error) console.error("WhatsApp inbound usage", error.code);
+  } catch {
+    // sem contador, segue o jogo
+  }
+}
+
+/** A Meta avisou pelo webhook que uma mensagem aceita não foi entregue. */
+export async function countDeliveryFailure(phone: string) {
+  try {
+    const { error } = await createAdminClient().rpc("ff_usage_wa_delivery_failed", { p_phone: phone });
+    if (error) console.error("WhatsApp delivery usage", error.code);
   } catch {
     // sem contador, segue o jogo
   }

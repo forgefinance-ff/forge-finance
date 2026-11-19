@@ -408,15 +408,15 @@ function FreeGuide({ progress }: { progress: GuideProgress }) {
 
       <section className="rounded-[22px] border border-emerald-500/30 bg-emerald-500/[0.06] p-6">
         <p className="flex items-center gap-2 text-sm font-semibold text-emerald-700 dark:text-emerald-300">
-          <MessageCircleIcon className="h-4 w-4" /> Forge Pro
+          <MessageCircleIcon className="h-4 w-4" /> Forge Pessoal e Forge MEI
         </p>
         <h2 className="mt-1 text-lg font-semibold text-foreground">Prefere só mandar uma mensagem?</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          No Forge Pro você registra gastos pelo WhatsApp, por texto ou áudio: “gastei 45 no mercado” e pronto. Sem
+          Nos planos pagos você registra gastos pelo WhatsApp, por texto ou áudio: “gastei 45 no mercado” e pronto. Sem
           abrir o app.
         </p>
-        <Link href="/assinar?plano=anual" className={cn(greenButton, "mt-4 h-11 text-sm")}>
-          Conhecer o Forge Pro <ArrowRightIcon className="h-4 w-4" />
+        <Link href="/planos" className={cn(greenButton, "mt-4 h-11 text-sm")}>
+          Conhecer os planos <ArrowRightIcon className="h-4 w-4" />
         </Link>
       </section>
 

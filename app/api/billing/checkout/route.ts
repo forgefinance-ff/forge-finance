@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { billingEnabled, stripePriceId } from "@/lib/billing/config";
+import { isPaidPlan, parsePaidPlan } from "@/lib/billing/plans";
 import { stripeRequest } from "@/lib/billing/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -23,10 +24,11 @@ export async function POST(request: Request) {
 
   const form = await request.formData().catch(() => null);
   const interval = form?.get("interval") === "year" ? "year" : "month";
-  const priceId = stripePriceId(interval);
+  const plan = parsePaidPlan(form?.get("tipo"));
+  const priceId = stripePriceId(plan, interval);
 
   if (!priceId) {
-    console.error("Checkout: preço do Stripe não configurado", interval);
+    console.error("Checkout: preço do Stripe não configurado", plan, interval);
     return back("erro");
   }
 
@@ -46,7 +48,7 @@ export async function POST(request: Request) {
       .eq("user_id", user.id)
       .maybeSingle();
 
-    if (entitlement?.plan_id === "pro" && (entitlement.status === "active" || entitlement.status === "past_due")) {
+    if (isPaidPlan(entitlement?.plan_id) && (entitlement?.status === "active" || entitlement?.status === "past_due")) {
       return NextResponse.redirect(`${origin}/assinatura?checkout=ja-assinante`, 303);
     }
 

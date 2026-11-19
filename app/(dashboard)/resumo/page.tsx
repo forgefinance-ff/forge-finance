@@ -6,7 +6,7 @@ import { HistoryChart } from "@/components/summary/history-chart";
 import { MarkSummarySeen } from "@/components/summary/mark-seen";
 import { billingEnabled } from "@/lib/billing/config";
 import { trialDaysLeft } from "@/lib/billing/manual-access";
-import { getUserEntitlement, isOnTrial, isProActive } from "@/lib/billing/get-user-plan";
+import { getUserEntitlement, isOnTrial, isPaidActive } from "@/lib/billing/get-user-plan";
 import { todayInBrazil } from "@/lib/dates";
 import { formatCurrency } from "@/lib/formatters";
 import {
@@ -46,7 +46,7 @@ export default async function MonthlySummaryPage({ searchParams }: { searchParam
   const canGoNext = shiftMonthYm(ym, 1) <= thisMonth;
   const year = ym.slice(0, 4);
 
-  const showInvite = billingEnabled() && !isProActive(entitlement);
+  const showInvite = billingEnabled() && !isPaidActive(entitlement);
   const onTrial = isOnTrial(entitlement);
   const daysLeft = trialDaysLeft(entitlement?.trialEndsAt);
 
@@ -224,7 +224,7 @@ export default async function MonthlySummaryPage({ searchParams }: { searchParam
           {onTrial ? (
             <>
               <h2 className="text-lg font-semibold text-foreground">
-                Seu teste grátis do Pro termina em {daysLeft} dia{daysLeft === 1 ? "" : "s"}
+                Seu teste grátis termina em {daysLeft} dia{daysLeft === 1 ? "" : "s"}
               </h2>
               <p className="mt-1 text-sm text-muted-foreground">
                 Continue registrando pelo WhatsApp, com o modo Empresa e este resumo todo mês.
@@ -234,7 +234,7 @@ export default async function MonthlySummaryPage({ searchParams }: { searchParam
             <>
               <h2 className="text-lg font-semibold text-foreground">Seu teste grátis acabou</h2>
               <p className="mt-1 text-sm text-muted-foreground">
-                Volte a registrar pelo WhatsApp e a usar o modo Empresa com o Forge Pro.
+                Volte a registrar pelo WhatsApp com o Forge Pessoal, ou use também o modo Empresa com o Forge MEI.
               </p>
             </>
           )}
@@ -242,7 +242,7 @@ export default async function MonthlySummaryPage({ searchParams }: { searchParam
             href="/planos"
             className="mt-4 inline-flex h-11 items-center rounded-full bg-brand px-6 text-sm font-semibold text-white hover:brightness-110"
           >
-            Continuar com o Pro
+            Ver planos
           </Link>
         </section>
       )}

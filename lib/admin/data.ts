@@ -1,7 +1,7 @@
 import { createAdminClient } from "@/lib/supabase/admin";
 
 import { requireAdmin } from "./auth";
-import { PRO_PRICING } from "@/lib/billing/plans";
+import { PLAN_PRICING } from "@/lib/billing/plans";
 
 export type AdminOverview = {
   generated_at: string;
@@ -53,8 +53,10 @@ export async function getAdminOverview(): Promise<AdminOverview> {
   const monthStart = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }).slice(0, 7) + "-01";
   const [{ data, error }, { data: outbound }] = await Promise.all([
     db.rpc("ff_admin_overview", {
-      p_month_price_cents: PRO_PRICING.month.cents,
-      p_year_price_cents: PRO_PRICING.year.cents,
+      p_month_price_cents: PLAN_PRICING.pro.month.cents,
+      p_year_price_cents: PLAN_PRICING.pro.year.cents,
+      p_pessoal_month_price_cents: PLAN_PRICING.pessoal.month.cents,
+      p_pessoal_year_price_cents: PLAN_PRICING.pessoal.year.cents,
     }),
     db.from("whatsapp_outbound_daily").select("kind, sent").gte("day", monthStart),
   ]);
@@ -66,6 +68,79 @@ export async function getAdminOverview(): Promise<AdminOverview> {
   overview.costs.whatsapp_service_sent_month = sum("service");
   overview.costs.whatsapp_template_sent_month = sum("template");
   return overview;
+}
+
+export type AdminUsageRow = {
+  user_id: string;
+  email: string | null;
+  full_name: string | null;
+  plan_id: string;
+  access_source: string;
+  status: string;
+  ai_requests: number;
+  unpriced_requests: number;
+  input_tokens: number;
+  output_tokens: number;
+  cache_read_tokens: number;
+  cache_write_tokens: number;
+  ai_cost_usd_micros: number;
+  inbound: number;
+  inbound_audio: number;
+  outbound_service: number;
+  outbound_template: number;
+  outbound_failed: number;
+  delivery_failed: number;
+  total_users: number;
+  total_ai_requests: number;
+  total_unpriced_requests: number;
+  total_tokens: number;
+  total_ai_cost_usd_micros: number;
+  total_inbound: number;
+  total_outbound_service: number;
+  total_outbound_template: number;
+  total_delivery_failed: number;
+};
+
+export type AdminUsage = {
+  rows: AdminUsageRow[];
+  totals: {
+    users: number;
+    aiRequests: number;
+    unpricedRequests: number;
+    tokens: number;
+    aiCostUsdMicros: number;
+    inbound: number;
+    outboundService: number;
+    outboundTemplate: number;
+    deliveryFailed: number;
+  };
+};
+
+/** Uso do mês (AAAA-MM-01) por usuário. Devolve null se a migration ainda não rodou. */
+export async function getAdminUsage(month: string, limit = 200): Promise<AdminUsage | null> {
+  await requireAdmin();
+  const { data, error } = await createAdminClient().rpc("ff_admin_usage", { p_month: month, p_limit: limit, p_offset: 0 });
+  if (error) {
+    console.error("Admin usage", error.code);
+    return null;
+  }
+
+  const rows = (data ?? []) as AdminUsageRow[];
+  const first = rows[0];
+  return {
+    rows,
+    totals: {
+      users: Number(first?.total_users ?? 0),
+      aiRequests: Number(first?.total_ai_requests ?? 0),
+      unpricedRequests: Number(first?.total_unpriced_requests ?? 0),
+      tokens: Number(first?.total_tokens ?? 0),
+      aiCostUsdMicros: Number(first?.total_ai_cost_usd_micros ?? 0),
+      inbound: Number(first?.total_inbound ?? 0),
+      outboundService: Number(first?.total_outbound_service ?? 0),
+      outboundTemplate: Number(first?.total_outbound_template ?? 0),
+      deliveryFailed: Number(first?.total_delivery_failed ?? 0),
+    },
+  };
 }
 
 export type AdminUserRow = {

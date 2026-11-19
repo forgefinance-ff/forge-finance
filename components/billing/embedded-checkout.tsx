@@ -44,7 +44,7 @@ function loadStripeJs(): Promise<void> {
   return loader;
 }
 
-export function EmbeddedCheckout({ interval }: { interval: "month" | "year" }) {
+export function EmbeddedCheckout({ interval, plan }: { interval: "month" | "year"; plan: "pessoal" | "pro" }) {
   const container = useRef<HTMLDivElement>(null);
   const [state, setState] = useState<"loading" | "ready" | "error">("loading");
   const [message, setMessage] = useState("");
@@ -76,7 +76,7 @@ export function EmbeddedCheckout({ interval }: { interval: "month" | "year" }) {
           const response = await fetch("/api/billing/embedded", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ interval }),
+            body: JSON.stringify({ interval, plan }),
           });
           const data = (await response.json()) as { clientSecret?: string; error?: string; redirect?: string };
 
@@ -114,7 +114,7 @@ export function EmbeddedCheckout({ interval }: { interval: "month" | "year" }) {
       cancelled = true;
       checkout?.destroy();
     };
-  }, [interval, router]);
+  }, [interval, plan, router]);
 
   return (
     <div className="relative min-h-[520px]">

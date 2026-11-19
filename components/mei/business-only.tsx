@@ -19,8 +19,8 @@ export function BusinessOnly({ feature }: { feature: string }) {
       try {
         const result = await setActiveScope("business");
         if (!result.ok) {
-          toast("Pessoal + Empresa é do Forge Pro.", {
-            action: { label: "Ver planos", onClick: () => router.push("/assinar") },
+          toast("Pessoal + Empresa é do Forge MEI.", {
+            action: { label: "Ver planos", onClick: () => router.push("/planos") },
           });
         }
       } catch {

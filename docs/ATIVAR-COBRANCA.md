@@ -1,8 +1,8 @@
-# Forge Pro: como ativar a cobrança (Stripe)
+# Forge Pessoal e Forge MEI: como ativar a cobrança (Stripe)
 
 Tudo já está no código, mas a cobrança fica **DESLIGADA** até você colocar
-`BILLING_ENABLED=true` na Vercel. Enquanto estiver desligada, o app segue em
-modo beta: ninguém consegue assinar e o WhatsApp funciona para todos.
+`BILLING_ENABLED=true` na Vercel. Enquanto estiver desligada, ninguém consegue
+assinar e o WhatsApp e o modo Empresa funcionam para todos.
 
 ---
 
@@ -10,22 +10,22 @@ modo beta: ninguém consegue assinar e o WhatsApp funciona para todos.
 
 1. Substitua os arquivos do projeto pelos do ZIP e suba para o GitHub.
 2. No Supabase, abra **SQL Editor** e rode o arquivo
-   `supabase/migrations/20261108090000_stripe_checkout.sql`.
-   Ele cria o plano **Forge Pro**, tira Plus e Business de venda e cria as
-   tabelas do "Desfazer" no WhatsApp. Pode rodar mais de uma vez sem problema.
+   `supabase/migrations/20261118110000_planos_pessoal_mei.sql`.
+   Ele cria o **Forge Pessoal**, transforma o antigo Forge Pro no **Forge MEI**
+   e atualiza a receita do painel admin. Pode rodar mais de uma vez sem problema.
 
 ## 2. Stripe em MODO TESTE (faça já, sem cobrar ninguém)
 
 1. Crie a conta em **stripe.com/br** com seu CPF (deixe o CNPJ vazio).
 2. Confira se o botão **"Modo de teste"** está ligado no painel.
-3. **Produto e preços**: Catálogo de produtos → Adicionar produto
-   - Nome: `Forge Pro`
-   - Preço 1: **R$ 19,90**, recorrente, **mensal**
-   - Preço 2: **R$ 199,00**, recorrente, **anual**
-   - Copie o ID de cada preço (começa com `price_...`).
+3. **Produtos e preços**: Catálogo de produtos → Adicionar produto
+   - Produto `Forge Pessoal`: **R$ 19,90** mensal e **R$ 199,00** anual
+   - Produto `Forge MEI`: **R$ 29,90** mensal e **R$ 299,00** anual
+   - Todos recorrentes. Copie o ID de cada preço (começa com `price_...`).
 4. **Portal do cliente**: Configurações → Faturamento → Portal do cliente.
    Ative: cancelar assinatura (no fim do período), atualizar forma de
-   pagamento e ver histórico de faturas. Salve.
+   pagamento, ver histórico de faturas e **trocar de plano** entre o Forge
+   Pessoal e o Forge MEI (é por aqui que o assinante muda de plano). Salve.
 5. **Webhook**: Desenvolvedores → Webhooks → Adicionar endpoint
    - URL: `https://SEU-SITE/api/billing/webhook`
    - Eventos:
@@ -50,8 +50,10 @@ Projeto → Settings → Environment Variables:
 | `STRIPE_SECRET_KEY` | chave secreta (`sk_test_...` no teste) |
 | `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` | chave publicável (`pk_test_...` no teste) — usada no pagamento dentro do site |
 | `STRIPE_WEBHOOK_SECRET` | `whsec_...` do passo 2.5 |
-| `STRIPE_PRICE_PRO_MONTHLY` | `price_...` do mensal |
-| `STRIPE_PRICE_PRO_YEARLY` | `price_...` do anual |
+| `STRIPE_PRICE_PESSOAL_MONTHLY` | `price_...` do Pessoal mensal |
+| `STRIPE_PRICE_PESSOAL_YEARLY` | `price_...` do Pessoal anual |
+| `STRIPE_PRICE_MEI_MONTHLY` | `price_...` do MEI mensal |
+| `STRIPE_PRICE_MEI_YEARLY` | `price_...` do MEI anual |
 | `BILLING_ENABLED` | `false` (deixe assim até o fim do teste) |
 
 **Nunca** coloque a chave secreta em variável que comece com `NEXT_PUBLIC_`.
@@ -66,8 +68,8 @@ Para testar o fluxo inteiro antes de lançar, coloque `BILLING_ENABLED=true`
 ## 4. Lançar de verdade (depois do teste)
 
 1. No Stripe, desligue o modo teste e **ative a conta** (dados pessoais e banco).
-2. Recrie no modo produção: produto, os 2 preços, o portal e o webhook.
-3. Na Vercel, troque as 5 variáveis do Stripe pelas de produção.
+2. Recrie no modo produção: os 2 produtos, os 4 preços, o portal e o webhook.
+3. Na Vercel, troque as 7 variáveis do Stripe pelas de produção.
 4. Coloque `BILLING_ENABLED=true` em Production.
 5. Assine o **Vercel Pro** (o plano grátis não permite uso comercial).
 
@@ -89,8 +91,9 @@ abra o pagamento → **Reembolsar**, e cancele a assinatura do cliente.
 - **Pede confirmação** quando: a IA tem dúvida, não achou categoria, é compra
   parcelada, ou é exclusão/edição.
 - Isso corta pela metade as mensagens do bot (a Meta cobra por mensagem).
-- Com a cobrança ligada, **só assinante do Forge Pro usa o WhatsApp**. Quem
-  não assina recebe o aviso com o link de assinatura no máximo 1 vez por dia.
+- Com a cobrança ligada, **só quem assina o Forge Pessoal ou o Forge MEI usa o
+  WhatsApp**. Quem não assina recebe o aviso com o link de assinatura no máximo
+  1 vez por dia. No Forge Pessoal, o bot não mexe na parte da Empresa.
 
 ## Transcrição de áudio
 

@@ -4,12 +4,12 @@ import { AlertTriangle, CheckCircle2, CircleHelp, MessageCircle, Sparkles } from
 
 import { getAiStatus } from "@/lib/ai/config";
 import { billingEnabled } from "@/lib/billing/config";
-import { getUserEntitlement, isProActive } from "@/lib/billing/get-user-plan";
-import { PLAN_CATALOG, PRO_PRICING, formatBRL } from "@/lib/billing/plans";
+import { getUserEntitlement, isPaidActive } from "@/lib/billing/get-user-plan";
+import { PLAN_CATALOG, PLAN_PRICING, formatBRL, isPaidPlan } from "@/lib/billing/plans";
 import { createClient, getAuthUser } from "@/lib/supabase/server";
 
 const STATUS_LABEL: Record<string, string> = {
-  beta: "Acesso beta gratuito",
+  beta: "Plano gratuito",
   active: "Ativo",
   past_due: "Pagamento pendente",
   canceled: "Plano gratuito",
@@ -33,7 +33,8 @@ export default async function SubscriptionPage({
 
   const entitlement = await getUserEntitlement(user.id);
   const plan = entitlement ? PLAN_CATALOG.find((item) => item.id === entitlement.planId) : undefined;
-  const isPro = isProActive(entitlement);
+  const isPaid = isPaidActive(entitlement);
+  const paidPlan = isPaidPlan(entitlement?.planId) ? entitlement.planId : "pro";
   const enabled = billingEnabled();
   const ai = getAiStatus();
   const currentPeriodStart = `${new Date().toISOString().slice(0, 7)}-01`;
@@ -51,26 +52,26 @@ export default async function SubscriptionPage({
   const periodEnd = formatDate(entitlement?.currentPeriodEnd ?? null);
   const price =
     entitlement?.billingInterval === "year"
-      ? `${formatBRL(PRO_PRICING.year.cents)}/ano`
-      : `${formatBRL(PRO_PRICING.month.cents)}/mês`;
+      ? `${formatBRL(PLAN_PRICING[paidPlan].year.cents)}/ano`
+      : `${formatBRL(PLAN_PRICING[paidPlan].month.cents)}/mês`;
 
   return (
     <div className="mx-auto max-w-4xl space-y-7">
       <header className="pt-2 pb-2">
         <h1 className="text-4xl font-normal tracking-[-0.035em] text-foreground sm:text-5xl">Plano e assinatura</h1>
         <p className="mt-3 text-sm leading-6 text-muted-foreground">
-          {enabled ? "Acompanhe seu plano, a renovação e o uso da IA." : <>O <span className="brand-name">Forge Finance</span> está em beta: tudo liberado e sem cobranças.</>}
+          {enabled ? "Acompanhe seu plano, a renovação e o uso da IA." : <>Por enquanto, tudo no <span className="brand-name">Forge Finance</span> está liberado e sem cobranças.</>}
         </p>
       </header>
 
       {checkout === "sucesso" && (
         <p className="flex items-start gap-2 rounded-xl border border-emerald-400/25 bg-emerald-400/10 px-4 py-3 text-sm text-success">
           <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
-          Pagamento recebido! Seu Forge Pro é ativado em alguns segundos. Se ainda aparecer o plano gratuito, atualize a página.
+          Pagamento recebido! Seu plano é ativado em alguns segundos. Se ainda aparecer o plano gratuito, atualize a página.
         </p>
       )}
       {checkout === "ja-assinante" && (
-        <p className="rounded-xl border border-violet-400/25 bg-violet-500/10 px-4 py-3 text-sm text-text-soft">Você já é Forge Pro. 💜</p>
+        <p className="rounded-xl border border-violet-400/25 bg-violet-500/10 px-4 py-3 text-sm text-text-soft">Você já tem um plano ativo. 💜</p>
       )}
       {portal === "erro" && (
         <p className="rounded-xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-700 dark:text-red-300">
@@ -84,7 +85,7 @@ export default async function SubscriptionPage({
             <p className="text-sm text-muted-foreground">Seu plano atual</p>
             <h2 className="mt-1 text-2xl font-semibold text-foreground">{plan?.name ?? "Acesso indisponível"}</h2>
             <p className="mt-2 text-sm text-muted-foreground">
-              {isPro ? price : plan ? "Gratuito" : "Não foi possível confirmar seu plano."}
+              {isPaid ? price : plan ? "Gratuito" : "Não foi possível confirmar seu plano."}
             </p>
           </div>
           <span
@@ -100,23 +101,23 @@ export default async function SubscriptionPage({
         </div>
 
         <div className="mt-6 space-y-3 border-t border-line pt-5 text-sm text-text-soft">
-          {isPro && periodEnd && (
+          {isPaid && periodEnd && (
             <p>
               {entitlement?.cancelAtPeriodEnd
-                ? `Assinatura cancelada. Você mantém o Forge Pro até ${periodEnd}.`
+                ? `Assinatura cancelada. Você mantém o ${plan?.name ?? "plano"} até ${periodEnd}.`
                 : `Próxima renovação em ${periodEnd}.`}
             </p>
           )}
           {entitlement?.status === "past_due" && (
             <p className="text-amber-700 dark:text-amber-300">
-              Não conseguimos cobrar seu cartão. Atualize a forma de pagamento para não perder o Forge Pro.
+              Não conseguimos cobrar seu cartão. Atualize a forma de pagamento para não perder seu plano.
             </p>
           )}
-          {!isPro && (
+          {!isPaid && (
             <p>
               {enabled
-                ? "No plano gratuito, o registro pelo WhatsApp fica desativado. Assine o Forge Pro para liberar."
-                : "Durante o beta, você usa tudo, inclusive o WhatsApp, sem pagar nada."}
+                ? "No plano gratuito, o registro pelo WhatsApp fica desativado. Assine o Forge Pessoal ou o Forge MEI para liberar."
+                : "Por enquanto, você usa tudo, inclusive o WhatsApp, sem pagar nada."}
             </p>
           )}
 
@@ -131,12 +132,12 @@ export default async function SubscriptionPage({
                 </button>
               </form>
             )}
-            {!isPro && (
+            {(!isPaid || paidPlan === "pessoal") && (
               <Link
                 href="/planos"
                 className="inline-flex h-10 items-center rounded-xl border border-violet-300/25 bg-violet-500/10 px-4 text-sm font-medium text-brand-soft hover:bg-violet-500/20"
               >
-                {enabled ? "Assinar o Forge Pro" : "Conhecer o Forge Pro"}
+                {isPaid ? "Conhecer o Forge MEI" : enabled ? "Ver planos e assinar" : "Conhecer os planos"}
               </Link>
             )}
           </div>
@@ -186,7 +187,7 @@ export default async function SubscriptionPage({
         <div>
           <h2 className="font-semibold text-foreground">Cancelamento e garantia</h2>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">
-            Cancele quando quiser em &quot;Gerenciar assinatura&quot;, sem multa: o Forge Pro continua até o fim do período pago e
+            Cancele quando quiser em &quot;Gerenciar assinatura&quot;, sem multa: seu plano continua até o fim do período pago e
             depois sua conta volta para o Free, com todos os dados. Se desistir em até 7 dias da assinatura, devolvemos o valor.
           </p>
         </div>

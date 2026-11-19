@@ -6,19 +6,24 @@ import { useState } from "react";
 
 import { PopNumber, useSlidingPill } from "@/components/motion";
 
-type Props = {
-  billingOn: boolean;
+export type PricingPlan = {
+  slug: "pessoal" | "mei";
+  name: string;
+  description: string;
   monthlyCents: number;
   yearlyCents: number;
   features: string[];
 };
 
+type Props = {
+  billingOn: boolean;
+  plans: PricingPlan[];
+};
+
 const brl = (cents: number) => (cents / 100).toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-export function Pricing({ billingOn, monthlyCents, yearlyCents, features }: Props) {
+export function Pricing({ billingOn, plans }: Props) {
   const [interval, setPeriod] = useState<"year" | "month">("year");
-  const perMonth = Math.round(yearlyCents / 12);
-  const savings = monthlyCents * 12 - yearlyCents;
   const yearly = interval === "year";
   const { containerRef, pillRef } = useSlidingPill<HTMLDivElement>(interval);
 
@@ -33,45 +38,54 @@ export function Pricing({ billingOn, monthlyCents, yearlyCents, features }: Prop
         ))}
       </div>
 
-      <div className="uv-plan">
-        <h3>Forge Pro</h3>
-        <p className="uv-body mt-3">Um plano só, com tudo liberado desde o primeiro dia.</p>
+      <div className="uv-plans">
+      {plans.map((plan) => {
+        const perMonth = Math.round(plan.yearlyCents / 12);
+        const savings = plan.monthlyCents * 12 - plan.yearlyCents;
 
-        <p className="uv-label mt-8">{yearly ? "Plano anual, equivale a" : "Plano mensal"}</p>
-        <p className="mt-2 flex items-baseline gap-2">
-          <PopNumber value={brl(yearly ? perMonth : monthlyCents)} className="uv-figure text-[clamp(2.5rem,4.2vw,3.75rem)]" />
-          <span className="uv-label">por mês</span>
-        </p>
-        <p className="uv-note mt-3 min-h-5">
-          {yearly ? `${brl(yearlyCents)} por ano. Economize ${brl(savings)}.` : "Cobrado todo mês, cancele quando quiser"}
-        </p>
+        return (
+          <div key={plan.slug} className="uv-plan">
+            <h3>{plan.name}</h3>
+            <p className="uv-body mt-3 min-h-[3.25rem]">{plan.description}</p>
 
-        <ul className="uv-plan__list">
-          {features.map((feature, index) => (
-            <li key={feature} className="t-reveal-item" style={{ "--i": index } as React.CSSProperties}>
-              <Check className="h-4 w-4" strokeWidth={2.5} aria-hidden />
-              {feature}
-            </li>
-          ))}
-        </ul>
+            <p className="uv-label mt-8">{yearly ? "Plano anual, equivale a" : "Plano mensal"}</p>
+            <p className="mt-2 flex items-baseline gap-2">
+              <PopNumber value={brl(yearly ? perMonth : plan.monthlyCents)} className="uv-figure text-[clamp(2.5rem,4.2vw,3.75rem)]" />
+              <span className="uv-label">por mês</span>
+            </p>
+            <p className="uv-note mt-3 min-h-5">
+              {yearly ? `${brl(plan.yearlyCents)} por ano. Economize ${brl(savings)}.` : "Cobrado todo mês, cancele quando quiser"}
+            </p>
 
-        <Link
-          href={billingOn ? `/assinar?plano=${yearly ? "anual" : "mensal"}` : "/cadastro"}
-          className="uv-btn uv-btn--primary mt-8 w-full"
-        >
-          {billingOn ? "Assinar o Forge Pro" : "Entrar no beta grátis"}
-        </Link>
+            <ul className="uv-plan__list">
+              {plan.features.map((feature, index) => (
+                <li key={feature} className="t-reveal-item" style={{ "--i": index } as React.CSSProperties}>
+                  <Check className="h-4 w-4" strokeWidth={2.5} aria-hidden />
+                  {feature}
+                </li>
+              ))}
+            </ul>
 
-        <p className="uv-note mt-5">
-          {billingOn ? (
-            <>
-              <span className="text-[var(--uv-ink)]">7 dias para desistir.</span> Não gostou, devolvemos tudo.
-            </>
-          ) : (
-            "Estamos em beta: tudo liberado sem custo por enquanto."
-          )}
-        </p>
+            <Link
+              href={billingOn ? `/assinar?tipo=${plan.slug}&plano=${yearly ? "anual" : "mensal"}` : "/cadastro"}
+              className="uv-btn uv-btn--primary mt-8 w-full"
+            >
+              {billingOn ? `Assinar o ${plan.name}` : "Testar grátis por 30 dias"}
+            </Link>
+          </div>
+        );
+      })}
       </div>
+
+      <p className="uv-note text-center">
+        {billingOn ? (
+          <>
+            <span className="text-[var(--uv-ink)]">7 dias para desistir.</span> Não gostou, devolvemos tudo.
+          </>
+        ) : (
+          "Teste tudo grátis por 30 dias, sem cartão."
+        )}
+      </p>
     </div>
   );
 }

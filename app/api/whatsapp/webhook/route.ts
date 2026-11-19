@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { verifySignature } from "@/lib/whatsapp/meta";
+import { countDeliveryFailure, verifySignature } from "@/lib/whatsapp/meta";
 import { handleIncoming, type IncomingMessage } from "@/lib/whatsapp/handler";
 
 export const runtime = "nodejs";
@@ -100,6 +100,9 @@ export async function POST(request: Request) {
     for (const change of entry.changes ?? []) {
       for (const status of change.value?.statuses ?? []) {
         logStatus(status);
+        if (status.status === "failed" && status.recipient_id) {
+          await countDeliveryFailure(status.recipient_id);
+        }
       }
 
       for (const message of change.value?.messages ?? []) {

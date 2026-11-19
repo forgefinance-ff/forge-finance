@@ -5,10 +5,14 @@
  */
 import { revalidatePath } from "next/cache";
 
+import type { TokenUsage } from "@/lib/ai/pricing";
+import { recordAiUsage } from "@/lib/ai/record-usage";
+import { hasBusinessAccess } from "@/lib/billing/access";
 import { botAtomic, errorMessage, type Db } from "@/lib/services/context";
 import * as transactions from "@/lib/services/transactions";
 
 import { describeContext, loadUserContext, type UserContext } from "./context";
+import { BUSINESS_PLAN_MESSAGE, personalPlanInput } from "./plan-guard";
 import { READ_TOOLS } from "./read-tools";
 import { executeActionDetailed, WRITE_TOOLS, type PreparedAction } from "./write-tools";
 
@@ -63,9 +67,10 @@ const TOOLS = [...READ_TOOLS, ...WRITE_TOOLS].map(({ name, description, input_sc
   input_schema,
 }));
 
-async function callClaude(context: string, messages: Message[]) {
+async function callClaude(userId: string, context: string, messages: Message[]) {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY ausente.");
+  const model = process.env.WHATSAPP_AI_MODEL ?? "claude-haiku-5-5";
 
   const tools = TOOLS.map((tool, i) =>
     i === TOOLS.length - 1 ? { ...tool, cache_control: { type: "ephemeral" } } : tool
@@ -79,7 +84,7 @@ async function callClaude(context: string, messages: Message[]) {
       "anthropic-version": "2023-06-01",
     },
     body: JSON.stringify({
-      model: process.env.WHATSAPP_AI_MODEL ?? "claude-haiku-5-5",
+      model,
       max_tokens: 1200,
       system: [
         { type: "text", text: SYSTEM, cache_control: { type: "ephemeral" } },
@@ -103,7 +108,13 @@ async function callClaude(context: string, messages: Message[]) {
     throw new Error(`anthropic ${response.status}`);
   }
 
-  const payload = (await response.json()) as { content?: Block[]; stop_reason?: string };
+  const payload = (await response.json()) as {
+    content?: Block[];
+    stop_reason?: string;
+    model?: string;
+    usage?: TokenUsage;
+  };
+  await recordAiUsage({ userId, source: "whatsapp", model: payload.model ?? model, usage: payload.usage });
   return payload.content ?? [];
 }
 
@@ -156,7 +167,9 @@ export async function runAgent(
   link: { user_id: string; phone: string; default_account_id: string | null },
   text: string
 ): Promise<AgentResult> {
-  const ctx: UserContext = await loadUserContext(db, link.user_id, link.phone, link.default_account_id);
+  // Forge Pessoal: o bot só enxerga e altera o escopo Pessoal.
+  const canUseBusiness = await hasBusinessAccess(db, link.user_id);
+  const ctx: UserContext = await loadUserContext(db, link.user_id, link.phone, link.default_account_id, canUseBusiness);
   const messages = await loadMemory(db, link.phone);
 
   const last = messages[messages.length - 1];
@@ -172,7 +185,7 @@ export async function runAgent(
   const context = describeContext(ctx);
 
   for (let round = 0; round < MAX_ROUNDS; round++) {
-    const blocks = await callClaude(context, messages);
+    const blocks = await callClaude(link.user_id, context, messages);
     const calls = blocks.filter((b): b is Extract<Block, { type: "tool_use" }> => b.type === "tool_use");
     finalText = blocks
       .filter((b): b is Extract<Block, { type: "text" }> => b.type === "text")
@@ -191,12 +204,15 @@ export async function runAgent(
       const write = WRITE_TOOLS.find((t) => t.name === call.name);
 
       try {
+        const input = canUseBusiness ? call.input : personalPlanInput(call.name, call.input);
+        if (!input) throw new Error(BUSINESS_PLAN_MESSAGE);
+
         if (read) {
           readFirst = true;
-          results.push({ type: "tool_result", tool_use_id: call.id, content: await read.run(call.input, ctx, db) });
+          results.push({ type: "tool_result", tool_use_id: call.id, content: await read.run(input, ctx, db) });
         } else if (write) {
           if (prepared.length >= MAX_ACTIONS) throw new Error(`Limite de ${MAX_ACTIONS} ações por mensagem.`);
-          const action = await write.prepare(call.input, ctx, db);
+          const action = await write.prepare(input, ctx, db);
           prepared.push({ tool: write.name, ...action });
           preparedThisRound++;
           results.push({ type: "tool_result", tool_use_id: call.id, content: "Preparado. Aguardando confirmação do usuário." });

@@ -13,7 +13,8 @@ import { todayInBrazil } from "@/lib/dates";
 import { freshSummaryMonth, monthName } from "@/lib/monthly-summary-core";
 
 import { AppSidebar, MobileNav, RAIL_COOKIE, type SidebarPlan } from "@/components/app-sidebar";
-import { getUserEntitlement, isOnTrial, isProActive } from "@/lib/billing/get-user-plan";
+import { getUserEntitlement, isOnTrial, isPaidActive } from "@/lib/billing/get-user-plan";
+import { planName } from "@/lib/billing/plans";
 import { trialDaysLeft } from "@/lib/billing/manual-access";
 import { Breadcrumbs } from "@/components/breadcrumbs";
 import { getNavBadges } from "@/lib/nav-badges";
@@ -88,8 +89,8 @@ export default async function DashboardLayout({
   // Sem dados do plano, a barra não mostra o cartão (melhor nada que errado).
   const plan: SidebarPlan | undefined = !entitlement
     ? undefined
-    : isProActive(entitlement)
-      ? { kind: "pro" }
+    : isPaidActive(entitlement)
+      ? { kind: "paid", name: planName(entitlement.planId) }
       : isOnTrial(entitlement)
         ? { kind: "trial", daysLeft: trialDaysLeft(entitlement.trialEndsAt) }
         : { kind: "free" };

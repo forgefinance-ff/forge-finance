@@ -24,7 +24,9 @@ function PlanBadge({ user }: { user: AdminUserRow }) {
   if (paying) {
     return (
       <div className="space-y-1">
-        <Badge>Pro {user.billing_interval === "year" ? "anual" : "mensal"}</Badge>
+        <Badge>
+          {user.plan_id === "pessoal" ? "Pessoal" : "MEI"} {user.billing_interval === "year" ? "anual" : "mensal"}
+        </Badge>
         {user.status === "past_due" && <p className="text-xs text-warning">pagamento atrasado</p>}
         {user.cancel_at_period_end && <p className="text-xs text-warning">cancela em {shortDate(user.current_period_end)}</p>}
         {!user.cancel_at_period_end && user.current_period_end && (
@@ -37,7 +39,7 @@ function PlanBadge({ user }: { user: AdminUserRow }) {
     const expired = user.current_period_end && new Date(user.current_period_end) < new Date();
     return (
       <div className="space-y-1">
-        <Badge variant="secondary">Pro manual</Badge>
+        <Badge variant="secondary">MEI manual</Badge>
         <p className={cn("text-xs", expired ? "text-destructive" : "text-muted-foreground")}>
           {user.current_period_end ? `${expired ? "venceu" : "até"} ${shortDate(user.current_period_end)}` : "sem prazo"}
         </p>

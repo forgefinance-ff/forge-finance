@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 
 import { billingEnabled, stripePriceId } from "@/lib/billing/config";
 import { ensureStripeCustomer } from "@/lib/billing/customer";
+import { parsePaidPlan } from "@/lib/billing/plans";
 import { StripeError, stripeRequest } from "@/lib/billing/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
@@ -14,7 +15,7 @@ export const runtime = "nodejs";
  */
 export async function POST(request: Request) {
   if (!billingEnabled()) {
-    return NextResponse.json({ error: "As assinaturas abrem ao fim do beta." }, { status: 403 });
+    return NextResponse.json({ error: "As assinaturas abrem em breve." }, { status: 403 });
   }
 
   const supabase = await createClient();
@@ -24,22 +25,24 @@ export async function POST(request: Request) {
 
   if (!user) return NextResponse.json({ error: "Entre na sua conta para assinar." }, { status: 401 });
 
-  const body = (await request.json().catch(() => null)) as { interval?: string } | null;
+  const body = (await request.json().catch(() => null)) as { interval?: string; plan?: string } | null;
   const interval = body?.interval === "month" ? "month" : "year";
-  const priceId = stripePriceId(interval);
+  const plan = parsePaidPlan(body?.plan);
+  const priceId = stripePriceId(plan, interval);
 
   if (!priceId) {
-    console.error("Embedded checkout: preço do Stripe não configurado", interval);
+    console.error("Embedded checkout: preço do Stripe não configurado", plan, interval);
     return NextResponse.json({ error: "Pagamento indisponível no momento." }, { status: 500 });
   }
 
   const origin = new URL(request.url).origin;
 
   try {
-    const { customerId, alreadyPro } = await ensureStripeCustomer(createAdminClient(), user);
+    const { customerId, alreadySubscribed } = await ensureStripeCustomer(createAdminClient(), user);
 
-    if (alreadyPro) {
-      return NextResponse.json({ error: "Você já é Forge Pro.", redirect: "/assinatura" }, { status: 409 });
+    // Uma assinatura por pessoa: trocar de plano é feito em Plano e assinatura.
+    if (alreadySubscribed) {
+      return NextResponse.json({ error: "Você já tem um plano ativo.", redirect: "/assinatura" }, { status: 409 });
     }
 
     const params = {

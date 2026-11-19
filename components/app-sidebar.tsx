@@ -369,7 +369,7 @@ function ExpandedItem({
 /* ------------------------------ plano ------------------------------ */
 
 export type SidebarPlan =
-  | { kind: "pro" }
+  | { kind: "paid"; name: string }
   | { kind: "trial"; daysLeft: number }
   | { kind: "free" };
 
@@ -377,14 +377,14 @@ const TRIAL_DAYS = 30;
 
 /** Cartão do plano no rodapé da barra (só com a barra aberta). */
 function PlanCard({ plan }: { plan: SidebarPlan }) {
-  if (plan.kind === "pro") {
+  if (plan.kind === "paid") {
     return (
       <Link
         href="/assinatura"
         className="flex items-center gap-2 rounded-xl border border-line px-3 py-2 text-xs font-medium text-text-soft outline-none transition-colors hover:border-line-strong hover:text-foreground focus-visible:ring-2 focus-visible:ring-brand"
       >
         <CrownIcon aria-hidden className="h-4 w-4 text-brand" />
-        <span className="flex-1">Forge Pro ativo</span>
+        <span className="flex-1">{plan.name} ativo</span>
       </Link>
     );
   }
@@ -397,7 +397,7 @@ function PlanCard({ plan }: { plan: SidebarPlan }) {
       <div className="rounded-xl border border-line bg-surface-elevated p-3">
         <p className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
           <SparklesIcon aria-hidden className="h-3.5 w-3.5 text-brand" />
-          Teste grátis do Pro
+          Teste grátis
         </p>
         <p className="mt-0.5 text-xs text-faint">
           {plan.daysLeft === 1 ? "Falta 1 dia" : `Faltam ${plan.daysLeft} dias`}
