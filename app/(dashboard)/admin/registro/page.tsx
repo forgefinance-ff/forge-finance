@@ -3,9 +3,9 @@ import { getRecentAdminActions } from "@/lib/admin/data";
 import { requireAdmin } from "@/lib/admin/auth";
 
 const ACTION_LABEL: Record<string, string> = {
-  grant_pro: "Liberou o Pro",
+  grant_pro: "Liberou o MEI",
   extend_access: "Estendeu o acesso",
-  revoke_pro: "Retirou o Pro",
+  revoke_pro: "Retirou o MEI",
   reset_ai_quota: "Zerou a cota de IA",
   disconnect_whatsapp: "Desconectou o WhatsApp",
 };

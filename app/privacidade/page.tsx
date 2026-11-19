@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
-import { ThemeToggle } from "@/components/theme-toggle";
+import { LegalPage, type LegalSection } from "@/components/legal/legal-page";
+import { SELLER_NAME } from "@/lib/legal";
 import { SUPPORT_EMAIL } from "@/lib/support";
 
 export const metadata: Metadata = {
@@ -9,21 +10,15 @@ export const metadata: Metadata = {
     "Como o Forge Finance coleta, usa e protege seus dados pessoais, incluindo o registro de gastos pelo WhatsApp.",
 };
 
-const CONTROLLER = "Thiago Paes da Costa Canto";
+const CONTROLLER = SELLER_NAME;
 const EMAIL = SUPPORT_EMAIL;
-const UPDATED = "2 de novembro de 2026";
+const UPDATED = "18 de novembro de 2026";
 
-type Section = {
-  title: string;
-  paragraphs?: string[];
-  items?: string[];
-};
-
-const SECTIONS: Section[] = [
+const SECTIONS: LegalSection[] = [
   {
     title: "1. Quem somos",
     paragraphs: [
-      `O Forge Finance é um aplicativo de controle financeiro pessoal. O responsável pelo tratamento dos seus dados pessoais (controlador, nos termos da Lei Geral de Proteção de Dados, LGPD, Lei 13.709/2018) é ${CONTROLLER}, pessoa física, que pode ser contatado pelo e-mail ${EMAIL}.`,
+      `O Forge Finance é um aplicativo de controle financeiro pessoal e para Microempreendedores Individuais (MEI). O responsável pelo tratamento dos seus dados pessoais (controlador, nos termos da Lei Geral de Proteção de Dados, LGPD, Lei 13.709/2018) é ${CONTROLLER}, pessoa física, que pode ser contatado pelo e-mail ${EMAIL}.`,
     ],
   },
   {
@@ -31,6 +26,9 @@ const SECTIONS: Section[] = [
     items: [
       "Dados de cadastro e acesso: nome (se informado), e-mail e credenciais de autenticação.",
       "Dados financeiros que você mesmo registra: contas, saldos, transações, categorias, metas, orçamentos e investimentos.",
+      "Dados do modo Empresa, se você usar: clientes, contas a pagar e a receber, DAS e configurações do MEI.",
+      "Dados da assinatura: plano, período, situação do pagamento e identificadores do Stripe.",
+      "Mensagens que você envia ao suporte pelo aplicativo.",
       "Número de WhatsApp que você vincula ao app, usado para reconhecer que as mensagens vêm de você.",
       "Mensagens que você envia ao bot do WhatsApp (texto ou áudio) com gastos e receitas a registrar.",
       "Dados técnicos de funcionamento e segurança, como identificadores de mensagens (para evitar lançamentos duplicados) e registros de erros.",
@@ -55,7 +53,7 @@ const SECTIONS: Section[] = [
       "Você vincula o seu número gerando um código na página WhatsApp do app e enviando esse código ao bot.",
       "Quando você envia um texto, ele é lido por um modelo de IA (Claude, da Anthropic), que extrai valor, categoria, conta e data.",
       "Quando você envia um áudio, ele é baixado da Meta, transcrito em texto por um serviço de transcrição (OpenAI) e então interpretado como o texto acima. Não guardamos o arquivo de áudio.",
-      "O bot mostra o lançamento e só o grava depois que você toca em Confirmar. Lançamentos não confirmados expiram e são descartados.",
+      "Lançamentos claros são gravados na hora, com um botão para desfazer por 24 horas. Exclusões, alterações e casos com dúvida só são gravados depois que você toca em Confirmar; pedidos não confirmados expiram e são descartados.",
       "Você pode desvincular o número a qualquer momento na página WhatsApp do app.",
     ],
   },
@@ -71,6 +69,7 @@ const SECTIONS: Section[] = [
       "Anthropic: interpretação das mensagens e assistente de IA.",
       "OpenAI: transcrição de áudios enviados ao bot.",
       "Stripe: processamento dos pagamentos das assinaturas. Os dados do cartão são informados diretamente ao Stripe e não passam nem ficam guardados no Forge Finance.",
+      "Sentry: registro de erros técnicos do aplicativo.",
     ],
   },
   {
@@ -89,6 +88,7 @@ const SECTIONS: Section[] = [
     title: "8. Segurança",
     paragraphs: [
       "Adotamos medidas técnicas razoáveis para proteger os seus dados, como conexão criptografada (HTTPS), controle de acesso por usuário no banco de dados, verificação de assinatura nas mensagens recebidas da Meta e do Stripe, e confirmação antes de excluir ou alterar dados pelo WhatsApp. Nenhum sistema é totalmente imune a falhas, e por isso recomendamos que você use uma senha forte e exclusiva.",
+      "A equipe do Forge Finance usa um painel administrativo restrito, que mostra dados da conta (nome, e-mail, plano, datas de uso, quantidade de lançamentos e se o WhatsApp está conectado) e as mensagens enviadas ao suporte. Esse painel não mostra o conteúdo dos seus lançamentos, saldos ou valores, e as ações da equipe ficam registradas.",
     ],
   },
   {
@@ -132,54 +132,5 @@ const SECTIONS: Section[] = [
 ];
 
 export default function PrivacyPage() {
-  return (
-    <main className="relative isolate min-h-screen px-4 py-12 text-text-soft">
-      <div aria-hidden className="forge-backdrop" />
-
-      <div className="mx-auto max-w-3xl space-y-6">
-        <header className="relative rounded-[22px] border border-line bg-surface p-8">
-          <ThemeToggle className="absolute right-5 top-5" />
-
-
-          <h1 className="text-4xl font-normal tracking-[-0.035em] text-foreground sm:text-5xl">
-            Política de Privacidade
-          </h1>
-
-          <p className="mt-2 text-muted-foreground">Última atualização: {UPDATED}</p>
-        </header>
-
-        {SECTIONS.map((section) => (
-          <section
-            key={section.title}
-            className="rounded-[22px] border border-line bg-surface p-6"
-          >
-            <h2 className="text-lg font-semibold text-foreground">{section.title}</h2>
-
-            {section.paragraphs?.map((text) => (
-              <p key={text} className="mt-3 leading-relaxed">
-                {text}
-              </p>
-            ))}
-
-            {section.items && (
-              <ul className="mt-3 list-disc space-y-2 pl-5 leading-relaxed">
-                {section.items.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            )}
-          </section>
-        ))}
-
-        <p className="pb-6 text-center text-sm text-faint">
-          <a
-            href={`mailto:${EMAIL}`}
-            className="underline underline-offset-4 hover:text-text-soft"
-          >
-            {EMAIL}
-          </a>
-        </p>
-      </div>
-    </main>
-  );
+  return <LegalPage title="Política de Privacidade" updated={UPDATED} email={EMAIL} sections={SECTIONS} />;
 }

@@ -7,7 +7,7 @@ import { hasWhatsAppAccess } from "@/lib/billing/access";
 import { executeAuto, executePending, remember, runAgent, undoTransactions } from "./agent/agent";
 import { budgetAlertFor } from "./budget-alert";
 import { canAutoExecute, type PreparedAction } from "./agent/write-tools";
-import { downloadMedia } from "./meta";
+import { countInbound, downloadMedia } from "./meta";
 import { transcribeAudio } from "./transcribe";
 import { appUrl, connectUrl, getOrCreateOnboardingToken } from "./onboarding";
 import { formatBRL, formatDayMonth, normalize } from "./text";
@@ -280,7 +280,9 @@ async function handleUnlinked(admin: Admin, message: IncomingMessage) {
 /* ------------------------------ fluxo normal ------------------------------ */
 
 async function handleLinked(admin: Admin, link: Link, message: IncomingMessage) {
-  // WhatsApp é do Forge Pro (com a cobrança desligada, todos usam).
+  await countInbound(link.user_id, message.type === "audio");
+
+  // WhatsApp é dos planos pagos (com a cobrança desligada, todos usam).
   if (!(await hasWhatsAppAccess(admin, link.user_id))) {
     await paywall(admin, link);
     return;
@@ -500,7 +502,7 @@ async function undoLatest(admin: Admin, link: Link) {
 
 /* ------------------------------ plano ------------------------------ */
 
-/** Aviso de que o WhatsApp é do Forge Pro: no máximo uma vez por dia (cada mensagem custa). */
+/** Aviso de que o WhatsApp é dos planos pagos: no máximo uma vez por dia (cada mensagem custa). */
 async function paywall(admin: Admin, link: Link) {
   const since = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
   const { data: recent } = await admin
@@ -518,7 +520,7 @@ async function paywall(admin: Admin, link: Link) {
 
   await out.text(
     link.phone,
-    `O registro pelo WhatsApp é do *Forge Pro* 💜\n\nCom ele você lança gastos por texto ou áudio, consulta saldo e cria metas sem abrir o app.\n\nAssine aqui: ${appUrl()}/planos\n\nVocê continua usando o app normalmente no plano gratuito.`
+    `O registro pelo WhatsApp é dos planos *Forge Pessoal* e *Forge MEI* 💜\n\nCom eles você lança gastos por texto ou áudio, consulta saldo e cria metas sem abrir o app.\n\nAssine aqui: ${appUrl()}/planos\n\nVocê continua usando o app normalmente no plano gratuito.`
   );
 }
 

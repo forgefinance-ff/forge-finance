@@ -159,7 +159,7 @@ export function summaryWhatsAppText(s: MonthlySummary, link: string, trialDaysLe
     `📝 ${s.entries} lançamento(s) em ${s.activeDays} dia(s)`,
     "",
     `Veja o resumo completo: ${link}`,
-    trialDaysLeft !== null ? `\n⏳ Seu teste grátis do Pro termina em ${trialDaysLeft} dia(s).` : null,
+    trialDaysLeft !== null ? `\n⏳ Seu teste grátis termina em ${trialDaysLeft} dia(s).` : null,
   ].filter((l) => l !== null);
   const short = `entrou ${brl(s.income)}, saiu ${brl(s.expense)}, ${s.saved >= 0 ? `sobrou ${brl(s.saved)}` : `faltou ${brl(-s.saved)}`}`;
   return { text: lines.join("\n"), short };

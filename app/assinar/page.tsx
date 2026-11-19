@@ -6,33 +6,36 @@ import { ArrowLeft, Check, Lock, RotateCcw, ShieldCheck } from "lucide-react";
 
 import { EmbeddedCheckout } from "@/components/billing/embedded-checkout";
 import { billingEnabled } from "@/lib/billing/config";
-import { getUserEntitlement, isProActive } from "@/lib/billing/get-user-plan";
-import { PLAN_CATALOG, PRO_PRICING, formatBRL, yearlyComparison } from "@/lib/billing/plans";
+import { getUserEntitlement, isPaidActive } from "@/lib/billing/get-user-plan";
+import { PLAN_CATALOG, PLAN_PRICING, formatBRL, parsePaidPlan, planSlug, yearlyComparison } from "@/lib/billing/plans";
 import { getAuthUser } from "@/lib/supabase/server";
 import { cn } from "@/lib/utils";
 
-export const metadata: Metadata = { title: "Assinar o Forge Pro · Forge Finance" };
+export const metadata: Metadata = { title: "Assinar · Forge Finance" };
 
 export default async function SubscribePage({
   searchParams,
 }: {
-  searchParams: Promise<{ plano?: string }>;
+  searchParams: Promise<{ plano?: string; tipo?: string }>;
 }) {
-  const { plano } = await searchParams;
+  const { plano, tipo } = await searchParams;
   const interval = plano === "mensal" ? "month" : "year";
   const planoParam = interval === "month" ? "mensal" : "anual";
+  const planId = parsePaidPlan(tipo);
+  const tipoParam = planSlug(planId);
 
   const user = await getAuthUser();
 
   // Sem conta: cria (ou entra) e volta direto para cá.
-  if (!user) redirect(`/cadastro?next=${encodeURIComponent(`/assinar?plano=${planoParam}`)}`);
+  if (!user) redirect(`/cadastro?next=${encodeURIComponent(`/assinar?tipo=${tipoParam}&plano=${planoParam}`)}`);
 
   const entitlement = await getUserEntitlement(user.id);
-  if (isProActive(entitlement)) redirect("/assinatura?checkout=ja-assinante");
+  if (isPaidActive(entitlement)) redirect("/assinatura?checkout=ja-assinante");
 
   const enabled = billingEnabled();
-  const pro = PLAN_CATALOG.find((plan) => plan.id === "pro")!;
-  const { perMonth, savings } = yearlyComparison();
+  const plan = PLAN_CATALOG.find((item) => item.id === planId)!;
+  const pricing = PLAN_PRICING[planId];
+  const { perMonth, savings } = yearlyComparison(planId);
   const yearly = interval === "year";
 
   return (
@@ -55,19 +58,41 @@ export default async function SubscribePage({
           <Link href="/#planos" className="inline-flex items-center gap-1.5 text-sm text-[#5b5575] hover:text-[#14111f]">
             <ArrowLeft className="h-4 w-4" /> Voltar
           </Link>
-          <h1 className="mt-4 text-3xl font-semibold tracking-tight">Assinar o Forge Pro</h1>
-          <p className="mt-2 text-[#5b5575]">Seu dinheiro organizado por mensagem ou áudio, direto no WhatsApp.</p>
+          <h1 className="mt-4 text-3xl font-semibold tracking-tight">Assinar o {plan.name}</h1>
+          <p className="mt-2 text-[#5b5575]">{plan.description}</p>
 
           <div className="mt-6 grid grid-cols-2 gap-2 rounded-2xl bg-white p-1.5 shadow-sm">
             {(
               [
-                ["anual", "Anual", `${formatBRL(perMonth)}/mês`],
-                ["mensal", "Mensal", `${formatBRL(PRO_PRICING.month.cents)}/mês`],
+                ["pessoal", "Forge Pessoal", `A partir de ${formatBRL(yearlyComparison("pessoal").perMonth)}/mês`],
+                ["mei", "Forge MEI", `A partir de ${formatBRL(yearlyComparison("pro").perMonth)}/mês`],
               ] as const
             ).map(([value, label, price]) => (
               <Link
                 key={value}
-                href={`/assinar?plano=${value}`}
+                href={`/assinar?tipo=${value}&plano=${planoParam}`}
+                replace
+                className={cn(
+                  "rounded-xl px-4 py-3 text-left transition",
+                  tipoParam === value ? "bg-[#14111f] text-white" : "text-[#4b4563] hover:bg-[#f6f5fa]"
+                )}
+              >
+                <span className="block text-sm font-semibold">{label}</span>
+                <span className={cn("text-xs", tipoParam === value ? "text-white/70" : "text-[#8a84a3]")}>{price}</span>
+              </Link>
+            ))}
+          </div>
+
+          <div className="mt-3 grid grid-cols-2 gap-2 rounded-2xl bg-white p-1.5 shadow-sm">
+            {(
+              [
+                ["anual", "Anual", `${formatBRL(perMonth)}/mês`],
+                ["mensal", "Mensal", `${formatBRL(pricing.month.cents)}/mês`],
+              ] as const
+            ).map(([value, label, price]) => (
+              <Link
+                key={value}
+                href={`/assinar?tipo=${tipoParam}&plano=${value}`}
                 replace
                 className={cn(
                   "rounded-xl px-4 py-3 text-left transition",
@@ -89,9 +114,9 @@ export default async function SubscribePage({
 
           <div className="mt-6 rounded-2xl bg-white p-5 shadow-sm">
             <div className="flex items-baseline justify-between">
-              <p className="font-semibold">Forge Pro · {yearly ? "anual" : "mensal"}</p>
+              <p className="font-semibold">{plan.name} · {yearly ? "anual" : "mensal"}</p>
               <p className="text-xl font-semibold">
-                {yearly ? formatBRL(PRO_PRICING.year.cents) : formatBRL(PRO_PRICING.month.cents)}
+                {yearly ? formatBRL(pricing.year.cents) : formatBRL(pricing.month.cents)}
                 <span className="text-sm font-normal text-[#8a84a3]">{yearly ? "/ano" : "/mês"}</span>
               </p>
             </div>
@@ -101,7 +126,7 @@ export default async function SubscribePage({
               </p>
             )}
             <ul className="mt-5 space-y-2.5 border-t border-black/[0.06] pt-5">
-              {pro.features.map((feature) => (
+              {plan.features.map((feature) => (
                 <li key={feature} className="flex gap-2.5 text-sm text-[#2c2740]">
                   <Check className="mt-0.5 h-4 w-4 shrink-0 text-violet-600" strokeWidth={3} />
                   {feature}
@@ -124,15 +149,27 @@ export default async function SubscribePage({
               Os dados do cartão vão direto para o Stripe e nunca passam pelo Forge.
             </li>
           </ul>
+
+          <p className="mt-6 text-xs leading-5 text-[#8a84a3]">
+            A assinatura renova automaticamente até você cancelar. Ao assinar, você concorda com os{" "}
+            <Link href="/termos" target="_blank" className="underline underline-offset-2 hover:text-[#14111f]">
+              Termos de Uso
+            </Link>{" "}
+            e a{" "}
+            <Link href="/privacidade" target="_blank" className="underline underline-offset-2 hover:text-[#14111f]">
+              Política de Privacidade
+            </Link>
+            .
+          </p>
         </section>
 
         {/* Pagamento */}
         <section className="rounded-3xl bg-white p-3 shadow-[0_30px_80px_-30px_rgba(76,29,149,0.35)] sm:p-5">
           {enabled ? (
-            <EmbeddedCheckout key={interval} interval={interval} />
+            <EmbeddedCheckout key={`${planId}-${interval}`} interval={interval} plan={planId} />
           ) : (
             <div className="flex min-h-[420px] flex-col items-center justify-center gap-3 p-6 text-center">
-              <p className="text-lg font-semibold">As assinaturas abrem ao fim do beta.</p>
+              <p className="text-lg font-semibold">As assinaturas abrem em breve.</p>
               <p className="max-w-sm text-sm text-[#5b5575]">
                 Por enquanto, tudo no Forge (inclusive o WhatsApp) está liberado sem custo para você.
               </p>

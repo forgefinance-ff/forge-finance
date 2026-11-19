@@ -17,7 +17,8 @@ import {
 } from "lucide-react";
 
 import { billingEnabled } from "@/lib/billing/config";
-import { PLAN_CATALOG, PRO_PRICING } from "@/lib/billing/plans";
+import { PLAN_CATALOG, PLAN_PRICING, planSlug, type PaidPlanId } from "@/lib/billing/plans";
+import { SELLER_LINE } from "@/lib/legal";
 
 import { DayTimeline } from "./day-timeline";
 import FoldText from "./fold-text";
@@ -52,7 +53,7 @@ const CATEGORIES: [string, number, string][] = [
 const FAQ = [
   {
     q: "O que acontece depois que eu assino?",
-    a: "Seu Forge Pro é liberado na hora. Você conecta o seu WhatsApp pela página WhatsApp do app (leva menos de um minuto) e já pode mandar o primeiro gasto.",
+    a: "Seu plano é liberado na hora. Você conecta o seu WhatsApp pela página WhatsApp do app (leva menos de um minuto) e já pode mandar o primeiro gasto.",
   },
   {
     q: "Preciso instalar algum aplicativo?",
@@ -72,7 +73,7 @@ const FAQ = [
   },
   {
     q: "Serve para MEI?",
-    a: "Serve. Você separa Pessoal e Empresa, controla contas a pagar e receber, clientes e o DAS, tudo no mesmo app e no mesmo WhatsApp.",
+    a: "Serve. No Forge MEI você separa Pessoal e Empresa, controla contas a pagar e receber, clientes e o DAS, tudo no mesmo app e no mesmo WhatsApp.",
   },
   {
     q: "Tem limite de mensagens?",
@@ -80,13 +81,23 @@ const FAQ = [
   },
   {
     q: "Posso cancelar quando quiser?",
-    a: "Pode. Sem multa e sem fidelidade. Você mantém o Forge Pro até o fim do período pago e seus dados continuam no plano gratuito. Desistindo em até 7 dias, devolvemos o valor.",
+    a: "Pode. Sem multa e sem fidelidade. Você mantém o plano até o fim do período pago e seus dados continuam no plano gratuito. Desistindo em até 7 dias, devolvemos o valor.",
   },
 ];
 
 export function LandingPage() {
   const billingOn = billingEnabled();
-  const pro = PLAN_CATALOG.find((plan) => plan.id === "pro")!;
+  const pricingPlans = (["pessoal", "pro"] as PaidPlanId[]).map((id) => {
+    const plan = PLAN_CATALOG.find((item) => item.id === id)!;
+    return {
+      slug: planSlug(id),
+      name: plan.name,
+      description: plan.description,
+      monthlyCents: PLAN_PRICING[id].month.cents,
+      yearlyCents: PLAN_PRICING[id].year.cents,
+      features: plan.features,
+    };
+  });
   const ctaHref = "#planos";
 
   return (
@@ -231,18 +242,10 @@ export function LandingPage() {
           </div>
         </section>
 
-        {/* Planos: texto de um lado, o plano sobre o palco do outro */}
+        {/* Planos: texto em cima e os dois planos lado a lado sobre o palco */}
         <section id="planos" className="uv-section pt-0 scroll-mt-24">
-          <div className="uv-wrap uv-row uv-row--flip">
-            <Reveal className="uv-panel uv-panel--stage">
-              <Pricing
-                billingOn={billingOn}
-                monthlyCents={PRO_PRICING.month.cents}
-                yearlyCents={PRO_PRICING.year.cents}
-                features={pro.features}
-              />
-            </Reveal>
-            <StaggerReveal onView className="uv-copy">
+          <div className="uv-wrap uv-pricing">
+            <StaggerReveal onView className="uv-copy uv-pricing__head">
               <h2 className="t-stagger-line">Organize seu dinheiro por menos de um café por semana.</h2>
               <p className="uv-lead t-stagger-line t-stagger-line--2 max-w-[40ch]">Sem fidelidade, sem multa e sem limite para o uso do dia a dia.</p>
               <p className="uv-body t-stagger-line t-stagger-line--3">
@@ -250,6 +253,9 @@ export function LandingPage() {
                 <Link href="/cadastro" className="uv-link--prose">Crie sua conta grátis</Link>
               </p>
             </StaggerReveal>
+            <Reveal className="uv-panel uv-panel--stage">
+              <Pricing billingOn={billingOn} plans={pricingPlans} />
+            </Reveal>
           </div>
         </section>
 
@@ -309,10 +315,12 @@ export function LandingPage() {
               <Link href="#planos" className="uv-link uv-link--muted">Planos</Link>
               <Link href="/login" className="uv-link uv-link--muted">Entrar</Link>
               <Link href="/cadastro" className="uv-link uv-link--muted">Criar conta</Link>
+              <Link href="/termos" className="uv-link uv-link--muted">Termos</Link>
               <Link href="/privacidade" className="uv-link uv-link--muted">Privacidade</Link>
             </nav>
           </div>
           <p className="uv-note mt-8">© {new Date().getFullYear()} <span className="brand-name">Forge Finance</span>. Todos os direitos reservados.</p>
+          <p className="uv-note mt-2">{SELLER_LINE}.</p>
         </div>
       </footer>
     </div>

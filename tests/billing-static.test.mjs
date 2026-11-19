@@ -31,10 +31,10 @@ test('quota is resolved by the database and consumed through an RPC', () => {
   assert.match(aiRoute, /quota\.allowed/);
 });
 
-test('Forge Pro pricing (R$19,90 mensal / R$199 anual) and plan pages exist', () => {
-  assert.match(plans, /export type PlanId = "free" \| "pro"/);
-  assert.match(plans, /month: \{ cents: 1990 \}/);
-  assert.match(plans, /year: \{ cents: 19900 \}/);
+test('Forge Pessoal and Forge MEI pricing and plan pages exist', () => {
+  assert.match(plans, /export type PlanId = "free" \| "pessoal" \| "pro"/);
+  assert.match(plans, /pessoal: \{ month: \{ cents: 1990 \}, year: \{ cents: 19900 \} \}/);
+  assert.match(plans, /pro: \{ month: \{ cents: 2990 \}, year: \{ cents: 29900 \} \}/);
   assert.ok(existsSync('app/(dashboard)/planos/page.tsx'));
   assert.ok(existsSync('app/(dashboard)/assinatura/page.tsx'));
 });

@@ -9,7 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 export const GUIDE_SKIP_COOKIE = "ff_guide_skip";
 
 export type GuideProgress = {
-  /** "pro": WhatsApp liberado (assinante ou beta). "free": sem WhatsApp. */
+  /** "pro": WhatsApp liberado (assinante, teste grátis ou cobrança desligada). "free": sem WhatsApp. */
   mode: "pro" | "free";
   whatsapp: boolean;
   hasAccount: boolean;

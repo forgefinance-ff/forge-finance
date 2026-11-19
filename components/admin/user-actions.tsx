@@ -24,9 +24,9 @@ import {
 type Kind = "grant" | "extend" | "revoke" | "reset_ai" | "disconnect";
 
 const COPY: Record<Kind, { label: string; title: string; description: string; days?: boolean; danger?: boolean }> = {
-  grant: { label: "Liberar Pro", title: "Liberar o Pro", description: "Para beta, contador parceiro ou cortesia. Deixe 0 dias para sem prazo.", days: true },
+  grant: { label: "Liberar MEI", title: "Liberar o Forge MEI", description: "Para fundador, contador parceiro ou cortesia. Deixe 0 dias para sem prazo.", days: true },
   extend: { label: "Estender", title: "Estender o acesso", description: "Soma dias ao prazo atual do acesso manual.", days: true },
-  revoke: { label: "Retirar Pro", title: "Retirar o acesso manual", description: "A pessoa volta para o Free. Assinaturas pagas não são afetadas.", danger: true },
+  revoke: { label: "Retirar MEI", title: "Retirar o acesso manual", description: "A pessoa volta para o Free. Assinaturas pagas não são afetadas.", danger: true },
   reset_ai: { label: "Zerar IA", title: "Zerar a cota de IA do mês", description: "As consultas usadas neste mês voltam a zero." },
   disconnect: { label: "Desconectar WhatsApp", title: "Desconectar o WhatsApp", description: "Use quando a pessoa trocar de número. Ela conecta de novo pelo app.", danger: true },
 };
@@ -148,7 +148,7 @@ export function UserActions({
                   required
                   minLength={3}
                   maxLength={300}
-                  placeholder="Ex.: contador parceiro, beta fundador"
+                  placeholder="Ex.: contador parceiro, fundador"
                   className={inputClass}
                 />
               </div>

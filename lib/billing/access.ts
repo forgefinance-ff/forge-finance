@@ -1,37 +1,31 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 import { billingEnabled } from "./config";
-import { isManualAccessValid, isTrialActive } from "./manual-access";
+import { grantsBusiness, grantsWhatsApp, type AccessRow } from "./manual-access";
 
 export { isManualAccessValid, isTrialActive, trialDaysLeft } from "./manual-access";
 
-/**
- * O registro pelo WhatsApp é do Forge Pro. Com a cobrança desligada (beta),
- * todo mundo usa. Acesso "admin" (concedido manualmente) e o teste grátis
- * de 30 dias também liberam.
- */
-export async function hasWhatsAppAccess(admin: SupabaseClient, userId: string): Promise<boolean> {
-  if (!billingEnabled()) return true;
-
-  const { data, error } = await admin
+async function readAccess(db: SupabaseClient, userId: string): Promise<AccessRow | null> {
+  const { data, error } = await db
     .from("user_entitlements")
     .select("plan_id, status, access_source, current_period_end, trial_ends_at")
     .eq("user_id", userId)
     .maybeSingle();
 
-  if (error || !data) return false;
-  if (data.access_source === "admin") return isManualAccessValid(data.current_period_end);
-  // Teste grátis de 30 dias a partir do cadastro: Pro completo.
-  if (isTrialActive(data.trial_ends_at)) return true;
-
-  return data.plan_id === "pro" && (data.status === "active" || data.status === "past_due");
+  if (error || !data) return null;
+  return data as AccessRow;
 }
 
-/**
- * Pessoal + Empresa (MEI) é do Forge Pro, como diz a página de planos.
- * Com a cobrança desligada, todos usam.
- */
+/** WhatsApp é dos planos pagos. Com a cobrança desligada, todo mundo usa. */
+export async function hasWhatsAppAccess(admin: SupabaseClient, userId: string): Promise<boolean> {
+  if (!billingEnabled()) return true;
+  const row = await readAccess(admin, userId);
+  return row ? grantsWhatsApp(row) : false;
+}
+
+/** Modo Empresa é do Forge MEI. Com a cobrança desligada, todo mundo usa. */
 export async function hasBusinessAccess(db: SupabaseClient, userId: string): Promise<boolean> {
-  return hasWhatsAppAccess(db, userId);
+  if (!billingEnabled()) return true;
+  const row = await readAccess(db, userId);
+  return row ? grantsBusiness(row) : false;
 }
-

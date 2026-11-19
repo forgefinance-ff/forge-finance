@@ -1,6 +1,6 @@
 import { isManualAccessValid, isTrialActive } from "./manual-access";
 import { createClient } from "@/lib/supabase/server";
-import { PLAN_CATALOG, type BillingInterval, type PlanId } from "./plans";
+import { PLAN_CATALOG, isPaidPlan, type BillingInterval, type PlanId } from "./plans";
 
 export type UserEntitlement = {
   userId: string;
@@ -26,7 +26,7 @@ export async function getUserEntitlement(userId?: string): Promise<UserEntitleme
   // Repara, de forma idempotente, contas criadas antes da migration ou com provisionamento ausente.
   const { error: ensureError } = await supabase.rpc("ensure_my_beta_entitlement");
   if (ensureError) {
-    // Não concede o Pro se o provisionamento falhar; segue tentando ler o registro existente.
+    // Não concede plano pago se o provisionamento falhar; segue tentando ler o registro existente.
   }
 
   const { data, error } = await supabase
@@ -59,15 +59,15 @@ export async function getUserEntitlement(userId?: string): Promise<UserEntitleme
   };
 }
 
-/** Assinante com acesso ao Forge Pro agora (inclui cobrança em nova tentativa). */
-export function isProActive(entitlement: UserEntitlement | null): boolean {
+/** Tem um plano pago agora: Pessoal ou MEI (inclui cobrança em nova tentativa). */
+export function isPaidActive(entitlement: UserEntitlement | null): boolean {
   if (!entitlement) return false;
   if (entitlement.accessSource === "admin") return isManualAccessValid(entitlement.currentPeriodEnd);
-  return entitlement.planId === "pro" && (entitlement.status === "active" || entitlement.status === "past_due");
+  return isPaidPlan(entitlement.planId) && (entitlement.status === "active" || entitlement.status === "past_due");
 }
 
-/** Está no teste grátis do Pro (e ainda não assina). */
+/** Está no teste grátis (e ainda não assina). */
 export function isOnTrial(entitlement: UserEntitlement | null): boolean {
-  if (!entitlement || isProActive(entitlement)) return false;
+  if (!entitlement || isPaidActive(entitlement)) return false;
   return isTrialActive(entitlement.trialEndsAt);
 }

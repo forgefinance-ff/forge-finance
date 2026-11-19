@@ -1,15 +1,16 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { isPaidPlan } from "./plans";
 import { stripeRequest } from "./stripe";
 
 /**
  * Garante a linha de acesso do usuário e um cliente no Stripe ligado a ele.
- * Devolve o id do cliente e se ele já é assinante ativo.
+ * Devolve o id do cliente e se ele já é assinante ativo de um plano pago.
  */
 export async function ensureStripeCustomer(
   admin: SupabaseClient,
   user: { id: string; email?: string | null }
-): Promise<{ customerId: string; alreadyPro: boolean }> {
+): Promise<{ customerId: string; alreadySubscribed: boolean }> {
   await admin
     .from("user_entitlements")
     .upsert({ user_id: user.id, plan_id: "free", status: "beta", access_source: "beta" }, {
@@ -23,8 +24,8 @@ export async function ensureStripeCustomer(
     .eq("user_id", user.id)
     .maybeSingle();
 
-  const alreadyPro =
-    entitlement?.plan_id === "pro" && (entitlement.status === "active" || entitlement.status === "past_due");
+  const alreadySubscribed =
+    isPaidPlan(entitlement?.plan_id) && (entitlement?.status === "active" || entitlement?.status === "past_due");
 
   let customerId: string | null = entitlement?.provider_customer_id ?? null;
 
@@ -41,5 +42,5 @@ export async function ensureStripeCustomer(
       .eq("user_id", user.id);
   }
 
-  return { customerId, alreadyPro };
+  return { customerId, alreadySubscribed };
 }

@@ -1,19 +1,12 @@
+import Link from "next/link";
 import { CheckCircle2, TriangleAlert } from "lucide-react";
 import { requireAdmin } from "@/lib/admin/auth";
 
 import { DonutChart, SignupsChart } from "@/components/admin/charts";
 import { Kpi, Panel, pct } from "@/components/admin/stat";
-import { getAdminOverview } from "@/lib/admin/data";
+import { getAdminOverview, getAdminUsage } from "@/lib/admin/data";
+import { WHATSAPP_FREE_SERVICE, microsToBrl, parseUsdBrl, whatsappMonthCost } from "@/lib/admin/usage-cost";
 import { formatCurrency } from "@/lib/formatters";
-
-/**
- * Meta no Brasil desde 01/10/2026: respostas do bot ("serviço") têm 1.000 grátis
- * por mês e depois US$ 0,0068 cada (~R$ 0,035); modelos de utilidade custam
- * US$ 0,00782 cada (~R$ 0,040), sempre.
- */
-const WHATSAPP_SERVICE_PRICE = 0.035;
-const WHATSAPP_TEMPLATE_PRICE = 0.04;
-const WHATSAPP_FREE_SERVICE = 1000;
 
 function dateTime(value: string | null) {
   if (!value) return "nunca";
@@ -26,7 +19,8 @@ function dateTime(value: string | null) {
 
 export default async function AdminOverviewPage() {
   await requireAdmin();
-  const o = await getAdminOverview();
+  const month = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }).slice(0, 7);
+  const [o, usage] = await Promise.all([getAdminOverview(), getAdminUsage(`${month}-01`, 1)]);
   const f = o.funnel;
   const r = o.revenue;
   const c = o.costs;
@@ -36,19 +30,15 @@ export default async function AdminOverviewPage() {
   const free = Math.max(0, o.users_total - paying - r.manual_access);
   const mrr = r.mrr_cents / 100;
 
-  const aiCostPerRequest = Number(process.env.ADMIN_AI_COST_PER_REQUEST ?? "") || null;
-  const aiCost = aiCostPerRequest ? c.ai_requests_month * aiCostPerRequest : null;
+  const aiCost = usage ? microsToBrl(usage.totals.aiCostUsdMicros, parseUsdBrl(process.env.ADMIN_USD_BRL)) : null;
   // A contagem de envios começou em 15/11/2026. Em novembro, cada mensagem
   // recebida tinha gerado uma resposta, então usa o maior dos dois; a partir
   // de dezembro vale só o que foi enviado de fato.
-  const month = new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" }).slice(0, 7);
   const serviceSent =
     month <= "2026-11"
       ? Math.max(c.whatsapp_service_sent_month ?? 0, c.whatsapp_inbound_month)
       : (c.whatsapp_service_sent_month ?? 0);
-  const whatsappCost =
-    Math.max(0, serviceSent - WHATSAPP_FREE_SERVICE) * WHATSAPP_SERVICE_PRICE +
-    (c.whatsapp_template_sent_month ?? 0) * WHATSAPP_TEMPLATE_PRICE;
+  const whatsappCost = whatsappMonthCost(serviceSent, c.whatsapp_template_sent_month ?? 0);
   const totalCost = (aiCost ?? 0) + whatsappCost;
 
   const viaWhatsApp = Math.min(o.channels_30d.whatsapp_actions, o.channels_30d.entries_total);
@@ -92,8 +82,8 @@ export default async function AdminOverviewPage() {
             centerLabel="usuários"
             data={[
               { name: "Free", value: free, color: "var(--line-strong)" },
-              { name: "Pro mensal", value: r.paying_month, color: "var(--brand)" },
-              { name: "Pro anual", value: r.paying_year, color: "var(--success)" },
+              { name: "Pagantes mensais", value: r.paying_month, color: "var(--brand)" },
+              { name: "Pagantes anuais", value: r.paying_year, color: "var(--success)" },
               { name: "Acesso liberado", value: r.manual_access, color: "var(--warning)" },
             ]}
           />
@@ -162,14 +152,14 @@ export default async function AdminOverviewPage() {
           <p className="mt-4 text-xs text-muted-foreground">Último aviso do Stripe: {dateTime(h.last_billing_event)}</p>
         </Panel>
 
-        <Panel title="Gastos do mês" description="Estimativa.">
+        <Panel title="Gastos do mês" description="IA medida em cada chamada; WhatsApp pela tabela da Meta.">
           <dl className="space-y-3 text-sm">
             <div className="flex justify-between gap-3">
               <dt className="text-muted-foreground">WhatsApp ({serviceSent} enviadas, {WHATSAPP_FREE_SERVICE} grátis)</dt>
               <dd className="tabular-nums text-foreground">{formatCurrency(whatsappCost)}</dd>
             </div>
             <div className="flex justify-between gap-3">
-              <dt className="text-muted-foreground">IA ({c.ai_requests_month} consultas)</dt>
+              <dt className="text-muted-foreground">IA ({usage?.totals.aiRequests ?? 0} chamadas)</dt>
               <dd className="tabular-nums text-foreground">{aiCost !== null ? formatCurrency(aiCost) : "—"}</dd>
             </div>
             <div className="flex justify-between gap-3 border-t border-line pt-3 font-medium">
@@ -177,8 +167,12 @@ export default async function AdminOverviewPage() {
               <dd className="tabular-nums text-foreground">{o.active.d30 ? formatCurrency(totalCost / o.active.d30) : "—"}</dd>
             </div>
           </dl>
-          {aiCost === null && (
-            <p className="mt-3 text-xs text-muted-foreground">Para estimar a IA, defina ADMIN_AI_COST_PER_REQUEST.</p>
+          {aiCost === null ? (
+            <p className="mt-3 text-xs text-muted-foreground">Para ver o custo da IA, rode a migration 20261118120000_usage_costs.</p>
+          ) : (
+            <Link href="/admin/custos" className="mt-3 inline-block text-sm text-primary underline-offset-4 hover:underline">
+              Ver custo por usuário
+            </Link>
           )}
         </Panel>
       </div>

@@ -40,7 +40,8 @@ export async function loadUserContext(
   db: Db,
   userId: string,
   phone: string,
-  defaultAccountId: string | null
+  defaultAccountId: string | null,
+  includeBusiness = true
 ): Promise<UserContext> {
   const [accounts, categories, customers, payables, goals, investments, cards, das] =
     await Promise.all([
@@ -159,6 +160,12 @@ export async function loadUserContext(
       data: { competence: d.competence, amount: Number(d.amount), due_date: d.due_date },
     }))
   );
+
+  if (!includeBusiness) {
+    for (const [ref, entity] of entities) {
+      if (entity.scope === "business") entities.delete(ref);
+    }
+  }
 
   const all = () => [...entities.values()];
 

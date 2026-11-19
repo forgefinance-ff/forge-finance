@@ -20,6 +20,18 @@ export default function CadastroPage() {
     >
       <RegisterForm />
 
+      <p className="forge-auth-note mt-4 text-center">
+        Ao criar sua conta, você concorda com os{" "}
+        <a href="/termos" target="_blank" rel="noreferrer" className="forge-auth-link">
+          Termos de Uso
+        </a>{" "}
+        e a{" "}
+        <a href="/privacidade" target="_blank" rel="noreferrer" className="forge-auth-link">
+          Política de Privacidade
+        </a>
+        .
+      </p>
+
       {whatsappStart && (
         <p className="forge-auth-note mt-5 text-center">
           Prefere usar pelo WhatsApp?{" "}

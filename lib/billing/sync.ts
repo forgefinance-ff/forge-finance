@@ -1,5 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
+import { planForStripePrice } from "./config";
+import { isPaidPlan } from "./plans";
 import { stripeRequest } from "./stripe";
 
 type StripeSubscription = {
@@ -12,12 +14,12 @@ type StripeSubscription = {
   items?: {
     data?: {
       current_period_end?: number;
-      price?: { recurring?: { interval?: string } | null } | null;
+      price?: { id?: string; recurring?: { interval?: string } | null } | null;
     }[];
   };
 };
 
-/** Status do Stripe que dão acesso ao Forge Pro. past_due = cobrança falhou, Stripe ainda está tentando. */
+/** Status do Stripe que dão acesso ao plano pago. past_due = cobrança falhou, Stripe ainda está tentando. */
 const ACCESS_STATUSES = new Set(["active", "trialing", "past_due"]);
 
 /**
@@ -59,7 +61,7 @@ export async function syncSubscription(admin: SupabaseClient, subscriptionId: st
     !hasAccess &&
     current?.provider_subscription_id &&
     current.provider_subscription_id !== sub.id &&
-    current.plan_id === "pro" &&
+    isPaidPlan(current.plan_id) &&
     (current.status === "active" || current.status === "past_due")
   ) {
     return;
@@ -77,7 +79,7 @@ export async function syncSubscription(admin: SupabaseClient, subscriptionId: st
   const row: Record<string, unknown> = hasAccess
     ? {
         ...base,
-        plan_id: "pro",
+        plan_id: planForStripePrice(item?.price?.id),
         status: sub.status === "past_due" ? "past_due" : "active",
         billing_interval: item?.price?.recurring?.interval === "year" ? "year" : "month",
         current_period_end: periodEnd ? new Date(periodEnd * 1000).toISOString() : null,

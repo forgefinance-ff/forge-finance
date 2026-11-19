@@ -51,7 +51,7 @@ function invalid(error: z.ZodError): AdminActionResult {
   return { ok: false, error: error.issues[0]?.message ?? "Dados inválidos." };
 }
 
-/** Libera o Pro manualmente (beta, contador parceiro, cortesia), com ou sem prazo. */
+/** Libera o Forge MEI manualmente (fundador, contador parceiro, cortesia), com ou sem prazo. */
 export async function grantPro(input: unknown): Promise<AdminActionResult> {
   const admin = await requireAdmin();
   const parsed = grantSchema.safeParse(input);
@@ -77,10 +77,10 @@ export async function grantPro(input: unknown): Promise<AdminActionResult> {
     },
     { onConflict: "user_id" }
   );
-  if (error) return { ok: false, error: "Não foi possível liberar o Pro." };
+  if (error) return { ok: false, error: "Não foi possível liberar o Forge MEI." };
 
   await logAction(db, admin.email, userId, "grant_pro", reason, { days, until: periodEnd });
-  return done(days > 0 ? `Pro liberado por ${days} dias.` : "Pro liberado sem prazo.");
+  return done(days > 0 ? `Forge MEI liberado por ${days} dias.` : "Forge MEI liberado sem prazo.");
 }
 
 /** Estende um acesso manual que tem prazo. */
