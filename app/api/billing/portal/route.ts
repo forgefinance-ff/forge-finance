@@ -31,6 +31,10 @@ export async function POST(request: Request) {
       customer: entitlement.provider_customer_id,
       return_url: `${origin}/assinatura`,
       locale: "pt-BR",
+      // Configuração do portal (cancelar, trocar de plano). Sem ela, o Stripe usa a padrão da conta.
+      ...(process.env.STRIPE_PORTAL_CONFIGURATION?.trim()
+        ? { configuration: process.env.STRIPE_PORTAL_CONFIGURATION.trim() }
+        : {}),
     });
 
     return NextResponse.redirect(session.url, 303);
