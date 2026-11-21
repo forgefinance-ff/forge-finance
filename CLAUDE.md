@@ -30,7 +30,7 @@ Para publicar em produção, siga `docs/PUBLICAR-PRODUCAO.md`.
 ## Comandos
 ```bash
 npm run dev        # servidor local (porta 3000)
-npm run check      # tipos + lint + testes (81 passando) — rode antes de cada commit
+npm run check      # tipos + lint + testes (84 passando) — rode antes de cada commit
 npm run build
 ```
 - No Windows, o `atualizar-e-rodar.bat` libera a porta 3000 e roda `npm install` e `npm run dev`.

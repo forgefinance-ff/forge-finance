@@ -32,6 +32,10 @@ function subscriptionIdOf(event: StripeEvent): string | null {
 
 const HANDLED = new Set([
   "checkout.session.completed",
+  // Pix: o pagamento pode ser confirmado depois que a sessão termina.
+  "checkout.session.async_payment_succeeded",
+  "checkout.session.async_payment_failed",
+  "invoice.payment_action_required",
   "customer.subscription.created",
   "customer.subscription.updated",
   "customer.subscription.deleted",

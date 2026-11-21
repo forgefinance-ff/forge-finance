@@ -68,7 +68,7 @@ const SECTIONS: LegalSection[] = [
       "Meta (WhatsApp Business Platform): envio e recebimento das mensagens do WhatsApp.",
       "Anthropic: interpretação das mensagens e assistente de IA.",
       "OpenAI: transcrição de áudios enviados ao bot.",
-      "Stripe: processamento dos pagamentos das assinaturas. Os dados do cartão são informados diretamente ao Stripe e não passam nem ficam guardados no Forge Finance.",
+      "Stripe: processamento dos pagamentos das assinaturas, por cartão ou Pix. Os dados do cartão e a autorização do Pix são informados diretamente ao Stripe e ao seu banco, e não passam nem ficam guardados no Forge Finance.",
       "Sentry: registro de erros técnicos do aplicativo.",
     ],
   },

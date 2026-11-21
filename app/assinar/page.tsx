@@ -146,7 +146,7 @@ export default async function SubscribePage({
             </li>
             <li className="flex gap-2.5">
               <Lock className="mt-0.5 h-4 w-4 shrink-0 text-violet-600" />
-              Os dados do cartão vão direto para o Stripe e nunca passam pelo Forge.
+              Os dados de pagamento vão direto para o Stripe e nunca passam pelo Forge.
             </li>
           </ul>
 
