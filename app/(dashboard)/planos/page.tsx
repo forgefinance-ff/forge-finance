@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Check, Lock, MessageCircle, RotateCcw, ShieldCheck, Sparkles, X } from "lucide-react";
 
-import { billingEnabled } from "@/lib/billing/config";
+import { billingEnabled, pixEnabled } from "@/lib/billing/config";
 import { getUserEntitlement, isOnTrial, isPaidActive } from "@/lib/billing/get-user-plan";
 import { trialDaysLeft } from "@/lib/billing/manual-access";
 import {
@@ -28,6 +28,11 @@ const TRUST = [
   { icon: RotateCcw, text: "7 dias para desistir" },
 ];
 
+const PAYMENT_ANSWER = {
+  card: "Cartão de crédito, pelo checkout seguro do Stripe. A renovação é automática, e você recebe o recibo por e-mail.",
+  pix: "Cartão de crédito ou Pix Automático, pelo checkout seguro do Stripe. No Pix, você autoriza a cobrança recorrente uma vez no app do seu banco, e o banco avisa antes de cada renovação. Você recebe o recibo por e-mail.",
+};
+
 const FAQ = [
   {
     q: "Qual a diferença entre o Forge Pessoal e o Forge MEI?",
@@ -43,7 +48,7 @@ const FAQ = [
   },
   {
     q: "Quais formas de pagamento?",
-    a: "Cartão de crédito, pelo checkout seguro do Stripe. A renovação é automática, e você recebe o recibo por e-mail.",
+    a: PAYMENT_ANSWER.card,
   },
   {
     q: "E se eu cancelar, perco meus dados?",
@@ -173,6 +178,9 @@ export default async function PlansPage({
   const entitlement = await getUserEntitlement();
   const currentPlan = isPaidActive(entitlement) && isPaidPlan(entitlement?.planId) ? entitlement.planId : null;
   const enabled = billingEnabled();
+  const faq = pixEnabled()
+    ? FAQ.map((item) => (item.a === PAYMENT_ANSWER.card ? { ...item, a: PAYMENT_ANSWER.pix } : item))
+    : FAQ;
   const onTrial = enabled && isOnTrial(entitlement);
   const daysLeft = trialDaysLeft(entitlement?.trialEndsAt);
   const free = PLAN_CATALOG.find((plan) => plan.id === "free")!;
@@ -265,7 +273,7 @@ export default async function PlansPage({
       <section className="rounded-2xl border border-line bg-surface p-6 sm:p-8">
         <h2 className="text-lg font-semibold text-foreground">Perguntas frequentes</h2>
         <div className="mt-4 divide-y divide-line">
-          {FAQ.map((item) => (
+          {faq.map((item) => (
             <details key={item.q} className="group py-4">
               <summary className="cursor-pointer list-none text-sm font-medium text-foreground marker:hidden">
                 {item.q}

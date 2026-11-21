@@ -5,6 +5,7 @@ Você é o Claude ajudando o Thiago, sócio do Forge Finance. Fale em português
 ## O que este pacote traz
 - **Planos:** Forge Free, Forge Pessoal (R$ 19,90/mês ou R$ 199/ano) e Forge MEI (R$ 29,90/mês ou R$ 299/ano). O id `pro` no banco passou a ser o Forge MEI.
 - **Lançamento:** textos de beta removidos, `/termos`, `/privacidade` atualizada, `robots.txt` e `sitemap.xml`.
+- **Pix Automático (opcional):** assinatura também por Pix, ligada por `STRIPE_PIX_ENABLED`. Fica desligado até ser testado.
 - **Custos:** aba `/admin/custos`, com tokens de IA e mensagens do WhatsApp por usuário.
 
 ## Regras que valem o tempo todo
@@ -20,7 +21,7 @@ Você é o Claude ajudando o Thiago, sócio do Forge Finance. Fale em português
 2. Atualize a `main` e crie a branch `lancamento-planos-custos`.
 3. Copie os arquivos do pacote por cima do repositório. Não apague arquivos que só existem no repositório.
 4. Rode `git diff --stat main` e leia as mudanças. **O pacote partiu da versão de 18/11/2026.** Se a `main` recebeu commits depois disso, o pacote pode desfazer esse trabalho: nesse caso, junte as duas versões à mão e mostre ao Thiago o que foi combinado.
-5. Rode `npm install`, `npm run check` e `npm run build`. Esperado: 81 testes passando e build sem erro. Se falhar, corrija antes de continuar.
+5. Rode `npm install`, `npm run check` e `npm run build`. Esperado: 84 testes passando e build sem erro. Se falhar, corrija antes de continuar.
 
 ## Etapa 2: Conferir o banco oficial (só leitura)
 1. Confirme com o Thiago que o projeto aberto é o `ixgdxgfhpycaadoogsyz`.
@@ -62,6 +63,7 @@ Peça ao Thiago para conferir ou preencher. Mudança em `NEXT_PUBLIC_*` só vale
 | `NEXT_PUBLIC_GOOGLE_AUTH` | `true` |
 | `WHATSAPP_MONTHLY_TEMPLATE` | Nome do modelo aprovado na Meta, se existir |
 | `ADMIN_USD_BRL` | Opcional: cotação do dólar (padrão 5.15) |
+| `STRIPE_PIX_ENABLED` | `false` até o Pix estar ativo e testado no Stripe (ver `docs/ATIVAR-COBRANCA.md` → Pix Automático) |
 
 `ADMIN_AI_COST_PER_REQUEST` e `STRIPE_PRICE_PRO_*` não são mais usadas.
 
@@ -83,7 +85,7 @@ Peça ao Thiago para conferir ou preencher. Mudança em `NEXT_PUBLIC_*` só vale
 Siga `docs/ATIVAR-COBRANCA.md` e `docs/LANCAMENTO-PUBLICO.md`. Antes, o Thiago precisa decidir:
 1. **Preço do MEI:** R$ 29,90 foi o definido pelo Guilherme, mas `docs/BRIEF-CRESCIMENTO.md` previa R$ 39,90.
 2. **Contas com o teste vencido:** ao ligar a cobrança, essas contas perdem na hora o WhatsApp e o modo Empresa. O número aparece em `verificar-producao.sql`. Pergunte se ele quer avisar essas pessoas ou estender o teste.
-3. **Stripe:** criar a conta no nome dele, os 4 preços e a troca de plano no portal, e testar tudo em modo de teste.
+3. **Stripe:** criar a conta no nome dele, os 4 preços e a troca de plano no portal, e testar tudo em modo de teste. Se for aceitar Pix, testar também a assinatura com Pix Automático e só então ligar `STRIPE_PIX_ENABLED`.
 4. **Jurídico:** um advogado deve revisar `/termos` e `/privacidade`.
 
 ## Se algo der errado

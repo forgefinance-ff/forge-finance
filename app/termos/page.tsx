@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { LegalPage, type LegalSection } from "@/components/legal/legal-page";
+import { PIX_MANDATE_MAX_BRL, pixEnabled } from "@/lib/billing/config";
 import { PLAN_PRICING, formatBRL } from "@/lib/billing/plans";
 import { SELLER_LINE, SELLER_NAME } from "@/lib/legal";
 import { SUPPORT_EMAIL } from "@/lib/support";
@@ -11,10 +12,25 @@ export const metadata: Metadata = {
 };
 
 const EMAIL = SUPPORT_EMAIL;
-const UPDATED = "18 de novembro de 2026";
+const UPDATED = "21 de novembro de 2026";
 
 const price = (plan: "pessoal" | "pro") =>
   `${formatBRL(PLAN_PRICING[plan].month.cents)} por mês ou ${formatBRL(PLAN_PRICING[plan].year.cents)} por ano`;
+
+const PIX = pixEnabled();
+
+const PAYMENT_ITEMS = [
+  PIX
+    ? "O pagamento é feito por cartão de crédito ou Pix Automático, processado pelo Stripe. Os dados de pagamento não passam pelo Forge Finance."
+    : "O pagamento é feito por cartão de crédito, processado pelo Stripe. Os dados do cartão não passam pelo Forge Finance.",
+  "A assinatura é renovada automaticamente ao fim de cada período (mensal ou anual), com cobrança na mesma forma de pagamento, até que você cancele.",
+  ...(PIX
+    ? [
+        `No Pix Automático, você autoriza uma única vez, no app do seu banco, cobranças recorrentes de até ${formatBRL(PIX_MANDATE_MAX_BRL * 100)} por mês. O banco avisa antes de cada cobrança. Cancelar essa autorização no banco interrompe as cobranças, mas não cancela o plano: para cancelar, use Plano e assinatura.`,
+      ]
+    : []),
+  "Se a cobrança falhar, poderemos tentar novamente. Sem o pagamento, a conta passa para o Forge Free.",
+];
 
 const SECTIONS: LegalSection[] = [
   {
@@ -58,11 +74,7 @@ const SECTIONS: LegalSection[] = [
   },
   {
     title: "6. Pagamento e renovação",
-    items: [
-      "O pagamento é feito por cartão de crédito, processado pelo Stripe. Os dados do cartão não passam pelo Forge Finance.",
-      "A assinatura é renovada automaticamente ao fim de cada período (mensal ou anual), com cobrança no mesmo cartão, até que você cancele.",
-      "Se a cobrança falhar, poderemos tentar novamente. Sem o pagamento, a conta passa para o Forge Free.",
-    ],
+    items: PAYMENT_ITEMS,
   },
   {
     title: "7. Cancelamento",
@@ -74,7 +86,7 @@ const SECTIONS: LegalSection[] = [
   {
     title: "8. Direito de desistência (7 dias)",
     paragraphs: [
-      `Você pode desistir da assinatura em até 7 dias depois da contratação e receber de volta o valor pago, conforme o artigo 49 do Código de Defesa do Consumidor. Basta pedir pelo e-mail ${EMAIL} ou pelo suporte do aplicativo. O estorno é feito no mesmo cartão da compra.`,
+      `Você pode desistir da assinatura em até 7 dias depois da contratação e receber de volta o valor pago, conforme o artigo 49 do Código de Defesa do Consumidor. Basta pedir pelo e-mail ${EMAIL} ou pelo suporte do aplicativo. O estorno é feito na mesma forma de pagamento da compra.`,
     ],
   },
   {

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 
-import { billingEnabled, stripePriceId } from "@/lib/billing/config";
+import { billingEnabled, pixPaymentOptions, stripePriceId } from "@/lib/billing/config";
 import { isPaidPlan, parsePaidPlan } from "@/lib/billing/plans";
 import { stripeRequest } from "@/lib/billing/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -76,6 +76,7 @@ export async function POST(request: Request) {
       locale: "pt-BR",
       metadata: { user_id: user.id },
       subscription_data: { metadata: { user_id: user.id } },
+      ...pixPaymentOptions(),
       success_url: `${origin}/assinatura?checkout=sucesso`,
       cancel_url: `${origin}/planos?checkout=cancelado`,
     });

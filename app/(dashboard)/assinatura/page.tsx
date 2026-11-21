@@ -67,7 +67,8 @@ export default async function SubscriptionPage({
       {checkout === "sucesso" && (
         <p className="flex items-start gap-2 rounded-xl border border-emerald-400/25 bg-emerald-400/10 px-4 py-3 text-sm text-success">
           <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />
-          Pagamento recebido! Seu plano é ativado em alguns segundos. Se ainda aparecer o plano gratuito, atualize a página.
+          Pagamento recebido! No cartão, seu plano é ativado em alguns segundos. No Pix, ele é ativado assim que o banco
+          confirmar a autorização. Se ainda aparecer o plano gratuito, atualize a página em instantes.
         </p>
       )}
       {checkout === "ja-assinante" && (
@@ -110,7 +111,8 @@ export default async function SubscriptionPage({
           )}
           {entitlement?.status === "past_due" && (
             <p className="text-amber-700 dark:text-amber-300">
-              Não conseguimos cobrar seu cartão. Atualize a forma de pagamento para não perder seu plano.
+              Não conseguimos fazer a cobrança. Atualize a forma de pagamento (ou, no Pix, confira se a autorização continua
+              ativa no app do seu banco) para não perder seu plano.
             </p>
           )}
           {!isPaid && (

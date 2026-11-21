@@ -32,8 +32,34 @@ assinar e o WhatsApp e o modo Empresa funcionam para todos.
      `checkout.session.completed`, `customer.subscription.created`,
      `customer.subscription.updated`, `customer.subscription.deleted`,
      `customer.subscription.paused`, `customer.subscription.resumed`,
-     `invoice.paid`, `invoice.payment_failed`
+     `invoice.paid`, `invoice.payment_failed`,
+     `checkout.session.async_payment_succeeded`,
+     `checkout.session.async_payment_failed`, `invoice.payment_action_required`
+     (os três últimos servem para o Pix)
    - Copie o **Segredo de assinatura** (começa com `whsec_...`).
+6. **Formas de pagamento** (Configurações → Pagamentos → Formas de pagamento):
+   - Ligue **Cartões**. Apple Pay, Google Pay e Link podem ficar ligados.
+   - Deixe **Boleto** desligado. Os Termos não prometem boleto.
+   - O Forge só vende assinatura, então o que for ligado aqui só aparece em assinatura.
+
+### Pix Automático (opcional)
+O Pix nas assinaturas usa o **Pix Automático**: o cliente autoriza uma vez no
+app do banco e as renovações são cobradas sozinhas.
+1. Ligue o **Pix** em Formas de pagamento. Se a opção não aparecer, peça a
+   liberação ao suporte do Stripe (contas do Brasil podem precisar de convite).
+2. Na Vercel, coloque `STRIPE_PIX_ENABLED=true` e publique de novo. Os Termos
+   e a página de planos passam a citar o Pix só depois desse deploy.
+3. A autorização é mensal, com limite de **R$ 400 por mês** (padrão do Stripe).
+   Ela cobre todos os planos, inclusive o anual. Se algum preço passar de
+   R$ 400, a renovação por Pix falha: ajuste `lib/billing/config.ts` antes.
+4. Teste no modo de teste: assinar com Pix, ver o plano liberar só depois da
+   autorização e conferir a renovação. A documentação do Stripe não mostra um
+   exemplo de assinatura com Pix no pagamento embutido na página (`/assinar`),
+   então confirme que o Pix aparece ali.
+5. O banco avisa o cliente 3 dias antes de cada cobrança, e a confirmação pode
+   levar até 7 dias. Se o cliente cancelar a autorização no banco, a próxima
+   cobrança falha e a assinatura fica com pagamento atrasado; ele precisa
+   autorizar de novo ou trocar para cartão em Plano e assinatura.
 
 ### Visual do pagamento (dentro do site)
 O formulário do cartão aparece na página `/assinar` do Forge. Para ele ficar
