@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { verifyStripeSignature } from "@/lib/billing/stripe";
 import { syncSubscription } from "@/lib/billing/sync";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { reportPaidInvoiceToUtmify } from "@/lib/utmify";
 
 export const runtime = "nodejs";
 export const maxDuration = 30;
@@ -81,6 +82,11 @@ export async function POST(request: Request) {
     await admin.from("billing_events").delete().eq("id", event.id);
     console.error("Stripe webhook error", (error as Error).message);
     return NextResponse.json({ error: "sync_failed" }, { status: 500 });
+  }
+
+  // Venda paga: avisa a Utmify (com os UTMs do anúncio). Não afeta o acesso.
+  if (event.type === "invoice.paid") {
+    await reportPaidInvoiceToUtmify(event.data.object as Parameters<typeof reportPaidInvoiceToUtmify>[0]);
   }
 
   revalidatePath("/assinatura");

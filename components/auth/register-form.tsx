@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 
 import { AlertCircleIcon, ArrowRightIcon, Loader2Icon, MailCheckIcon } from "lucide-react";
 
+import { trackMetaEvent } from "@/components/analytics/meta-pixel";
 import { GlassInputWrapper } from "@/components/ui/sign-in";
 import { createClient } from "@/lib/supabase/client";
 import { authErrorMessage } from "./auth-errors";
@@ -45,6 +46,9 @@ export function RegisterForm() {
       setError(authErrorMessage(error.message));
       return;
     }
+
+    // Cadastro feito: é a conversão que os anúncios da Meta otimizam.
+    trackMetaEvent("CompleteRegistration", { content_name: "cadastro_email" });
 
     // Sem confirmação de e-mail a sessão já vem pronta: segue direto.
     if (data.session) {

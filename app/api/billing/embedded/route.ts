@@ -3,11 +3,17 @@ import { NextResponse } from "next/server";
 import { billingEnabled, pixPaymentOptions, stripePriceId } from "@/lib/billing/config";
 import { ensureStripeCustomer } from "@/lib/billing/customer";
 import { parsePaidPlan } from "@/lib/billing/plans";
+import { UTM_COOKIE, parseUtmCookie, utmMetadata } from "@/lib/utm";
 import { StripeError, stripeRequest } from "@/lib/billing/stripe";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export const runtime = "nodejs";
+
+function cookieValue(request: Request, name: string): string | null {
+  const match = (request.headers.get("cookie") ?? "").split(/;\s*/).find((part) => part.startsWith(`${name}=`));
+  return match ? match.slice(name.length + 1) : null;
+}
 
 /**
  * Cria a sessão do checkout EMBUTIDO (o formulário do Stripe aparece dentro
@@ -53,7 +59,7 @@ export async function POST(request: Request) {
       allow_promotion_codes: true,
       locale: "pt-BR",
       metadata: { user_id: user.id },
-      subscription_data: { metadata: { user_id: user.id } },
+      subscription_data: { metadata: { ...utmMetadata(parseUtmCookie(cookieValue(request, UTM_COOKIE))), user_id: user.id } },
       ...pixPaymentOptions(),
       return_url: `${origin}/assinatura?checkout=sucesso&session_id={CHECKOUT_SESSION_ID}`,
     };

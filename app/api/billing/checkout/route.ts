@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { billingEnabled, pixPaymentOptions, stripePriceId } from "@/lib/billing/config";
 import { isPaidPlan, parsePaidPlan } from "@/lib/billing/plans";
 import { stripeRequest } from "@/lib/billing/stripe";
+import { UTM_COOKIE, parseUtmCookie, utmMetadata } from "@/lib/utm";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -75,7 +76,12 @@ export async function POST(request: Request) {
       allow_promotion_codes: true,
       locale: "pt-BR",
       metadata: { user_id: user.id },
-      subscription_data: { metadata: { user_id: user.id } },
+      subscription_data: {
+        metadata: {
+          ...utmMetadata(parseUtmCookie(request.headers.get("cookie")?.match(new RegExp(`(?:^|; )${UTM_COOKIE}=([^;]*)`))?.[1])),
+          user_id: user.id,
+        },
+      },
       ...pixPaymentOptions(),
       success_url: `${origin}/assinatura?checkout=sucesso`,
       cancel_url: `${origin}/planos?checkout=cancelado`,
