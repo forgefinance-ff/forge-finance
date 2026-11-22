@@ -9,6 +9,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/sonner";
 import { InvalidShake } from "@/components/motion";
 import { RegisterServiceWorker } from "@/components/pwa/register-sw";
+import { MetaPixel } from "@/components/analytics/meta-pixel";
+import { UtmCapture } from "@/components/analytics/utm-capture";
 
 const display = Outfit({
   subsets: ["latin"],
@@ -68,6 +70,8 @@ export default function RootLayout({ children }: RootLayoutProps) {
             <Toaster richColors position="top-right" />
             <InvalidShake />
             <RegisterServiceWorker />
+            <MetaPixel />
+            <UtmCapture />
           </TooltipProvider>
         </ThemeProvider>
       </body>

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { AlertTriangle, CheckCircle2, CircleHelp, MessageCircle, Sparkles } from "lucide-react";
 
+import { MetaEvent } from "@/components/analytics/meta-pixel";
 import { getAiStatus } from "@/lib/ai/config";
 import { billingEnabled } from "@/lib/billing/config";
 import { getUserEntitlement, isPaidActive } from "@/lib/billing/get-user-plan";
@@ -64,6 +65,15 @@ export default async function SubscriptionPage({
         </p>
       </header>
 
+      {checkout === "sucesso" && (
+        <MetaEvent
+          event="Subscribe"
+          params={{
+            value: PLAN_PRICING[paidPlan][entitlement?.billingInterval === "year" ? "year" : "month"].cents / 100,
+            currency: "BRL",
+          }}
+        />
+      )}
       {checkout === "sucesso" && (
         <p className="flex items-start gap-2 rounded-xl border border-emerald-400/25 bg-emerald-400/10 px-4 py-3 text-sm text-success">
           <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" />

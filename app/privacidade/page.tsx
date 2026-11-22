@@ -70,6 +70,8 @@ const SECTIONS: LegalSection[] = [
       "OpenAI: transcrição de áudios enviados ao bot.",
       "Stripe: processamento dos pagamentos das assinaturas, por cartão ou Pix. Os dados do cartão e a autorização do Pix são informados diretamente ao Stripe e ao seu banco, e não passam nem ficam guardados no Forge Finance.",
       "Sentry: registro de erros técnicos do aplicativo.",
+      "Meta (Pixel da Meta): medição dos anúncios do Forge Finance no Facebook e no Instagram, com cookies que registram visitas às páginas, cadastros e assinaturas. O Pixel não recebe os seus lançamentos, saldos ou valores.",
+      "Utmify: medição de qual anúncio trouxe cada assinatura. Recebe os parâmetros do anúncio (como utm_source e utm_campaign), o nome, o e-mail, o plano e o valor pago. Não recebe os seus lançamentos, saldos ou valores.",
     ],
   },
   {

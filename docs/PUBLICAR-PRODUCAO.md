@@ -5,6 +5,8 @@ Você é o Claude ajudando o Thiago, sócio do Forge Finance. Fale em português
 ## O que este pacote traz
 - **Planos:** Forge Free, Forge Pessoal (R$ 19,90/mês ou R$ 199/ano) e Forge MEI (R$ 29,90/mês ou R$ 299/ano). O id `pro` no banco passou a ser o Forge MEI.
 - **Lançamento:** textos de beta removidos, `/termos`, `/privacidade` atualizada, `robots.txt` e `sitemap.xml`.
+- **Pixel da Meta:** conta visitas (PageView), cadastros por e-mail (CompleteRegistration) e assinaturas (Subscribe). Liga com `NEXT_PUBLIC_META_PIXEL_ID`. Cadastro pelo Google ainda não envia o evento.
+- **Utmify:** o site guarda os UTMs do anúncio por 90 dias (cookie `ff_utm`), grava esses UTMs na assinatura do Stripe e envia cada fatura paga para a API da Utmify. Pagamento em modo de teste vai como `isTest` (a Utmify valida e não salva). Reembolso ainda não é enviado.
 - **Pix Automático (opcional):** assinatura também por Pix, ligada por `STRIPE_PIX_ENABLED`. Fica desligado até ser testado.
 - **Custos:** aba `/admin/custos`, com tokens de IA e mensagens do WhatsApp por usuário.
 
@@ -21,7 +23,7 @@ Você é o Claude ajudando o Thiago, sócio do Forge Finance. Fale em português
 2. Atualize a `main` e crie a branch `lancamento-planos-custos`.
 3. Copie os arquivos do pacote por cima do repositório. Não apague arquivos que só existem no repositório.
 4. Rode `git diff --stat main` e leia as mudanças. **O pacote partiu da versão de 18/11/2026.** Se a `main` recebeu commits depois disso, o pacote pode desfazer esse trabalho: nesse caso, junte as duas versões à mão e mostre ao Thiago o que foi combinado.
-5. Rode `npm install`, `npm run check` e `npm run build`. Esperado: 84 testes passando e build sem erro. Se falhar, corrija antes de continuar.
+5. Rode `npm install`, `npm run check` e `npm run build`. Esperado: 89 testes passando e build sem erro. Se falhar, corrija antes de continuar.
 
 ## Etapa 2: Conferir o banco oficial (só leitura)
 1. Confirme com o Thiago que o projeto aberto é o `ixgdxgfhpycaadoogsyz`.
@@ -63,6 +65,10 @@ Peça ao Thiago para conferir ou preencher. Mudança em `NEXT_PUBLIC_*` só vale
 | `NEXT_PUBLIC_GOOGLE_AUTH` | `true` |
 | `WHATSAPP_MONTHLY_TEMPLATE` | Nome do modelo aprovado na Meta, se existir |
 | `ADMIN_USD_BRL` | Opcional: cotação do dólar (padrão 5.15) |
+| `NEXT_PUBLIC_META_PIXEL_ID` | `2102009473771408` (Pixel "Forge Finance", criado em 22/11/2026 na conta Digital Words). Vazio desliga o Pixel |
+| `NEXT_PUBLIC_UTMIFY_ENABLED` | `true` para carregar o script de UTMs da Utmify |
+| `NEXT_PUBLIC_UTMIFY_PIXEL_ID` | `6b0260a457fe52f79859a327` (Pixel "Forge Finance" na Utmify, ligado ao Pixel da Meta `2102009473771408`) |
+| `UTMIFY_API_TOKEN` | Credencial da Utmify (Integrações > Webhooks > Credenciais de API). Envia cada fatura paga do Stripe |
 | `STRIPE_PIX_ENABLED` | `false` até o Pix estar ativo e testado no Stripe (ver `docs/ATIVAR-COBRANCA.md` → Pix Automático) |
 
 `ADMIN_AI_COST_PER_REQUEST` e `STRIPE_PRICE_PRO_*` não são mais usadas.
@@ -78,6 +84,7 @@ Peça ao Thiago para conferir ou preencher. Mudança em `NEXT_PUBLIC_*` só vale
    - [ ] Depois de uma pergunta ao assistente, `/admin/custos` mostra tokens e custo de IA para essa conta.
    - [ ] Depois de uma mensagem ao bot, `/admin/custos` mostra mensagens recebidas e enviadas.
    - [ ] A aba `/agenda` abre e salva um evento de teste.
+   - [ ] No Gerenciador de Eventos da Meta, Pixel "Forge Finance" → **Testar eventos**: abrir o site mostra PageView, o cadastro mostra CompleteRegistration e o clique em "Assinar" mostra InitiateCheckout. Se o PageView aparecer em dobro (site e Utmify), avise o Guilherme.
 3. Mostre o resultado ao Thiago. Com o "ok" dele, faça o merge na `main` e publique em produção.
 4. Repita os testes principais em `https://www.forgefinance.com.br` e acompanhe os erros no Sentry e na Vercel.
 
