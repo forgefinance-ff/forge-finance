@@ -186,6 +186,7 @@ button.uv-tag:active { transform: translateY(1px); }
 .uv-hero h1 { max-width: 15ch; margin-inline: auto; text-wrap: balance; }
 .uv-hero .uv-lead { max-width: 50ch; text-wrap: balance; margin: var(--uv-space-lg) auto 0; }
 .uv-hero__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--uv-space-xs); margin-top: var(--uv-space-xl); }
+.uv-hero__note { margin-top: var(--uv-space-sm); text-align: center; }
 
 .uv-stage {
   position: relative;

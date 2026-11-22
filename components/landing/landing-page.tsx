@@ -52,6 +52,10 @@ const CATEGORIES: [string, number, string][] = [
 
 const FAQ = [
   {
+    q: "Preciso pagar para testar?",
+    a: "Não. Você cria a conta grátis e usa tudo por 30 dias, inclusive o WhatsApp, sem cadastrar cartão. Depois escolhe se quer assinar; se não assinar, continua no plano gratuito.",
+  },
+  {
     q: "O que acontece depois que eu assino?",
     a: "Seu plano é liberado na hora. Você conecta o seu WhatsApp pela página WhatsApp do app (leva menos de um minuto) e já pode mandar o primeiro gasto.",
   },
@@ -98,7 +102,8 @@ export function LandingPage() {
       features: plan.features,
     };
   });
-  const ctaHref = "#planos";
+  /** Quem chega do anúncio cria a conta grátis primeiro (30 dias com tudo liberado); os planos ficam mais abaixo. */
+  const ctaHref = "/cadastro";
 
   return (
     <div className="uv min-h-screen">
@@ -119,7 +124,7 @@ export function LandingPage() {
             <div className="uv-nav__end">
               <Link href="/login" className="uv-link hidden min-[350px]:inline">Entrar</Link>
               <Link href={ctaHref} className="uv-btn uv-btn--primary uv-btn--sm whitespace-nowrap">
-                Começar<span className="hidden sm:inline"> agora</span>
+                Começar<span className="hidden sm:inline"> grátis</span>
               </Link>
             </div>
           </nav>
@@ -129,14 +134,16 @@ export function LandingPage() {
       <main>
         {/* Herói centrado */}
         <section className="uv-hero uv-center">
-          <StaggerReveal className="uv-wrap">
-            <h1 className="t-stagger-line">Sua vida financeira organizada numa conversa.</h1>
-            <p className="uv-lead t-stagger-line t-stagger-line--2">Mande o gasto por mensagem ou áudio. O Forge registra e responde.</p>
-            <div className="uv-hero__actions t-stagger-line t-stagger-line--3">
-              <Link href={ctaHref} className="uv-btn uv-btn--primary t-learn">Quero organizar meu dinheiro <LearnChevron /></Link>
+          {/* Sem animação de entrada: o título aparece já no primeiro carregamento, mesmo com internet lenta. */}
+          <div className="uv-wrap">
+            <h1>Sua vida financeira organizada numa conversa.</h1>
+            <p className="uv-lead">Mande o gasto por mensagem ou áudio. O Forge registra e responde.</p>
+            <div className="uv-hero__actions">
+              <Link href={ctaHref} className="uv-btn uv-btn--primary t-learn">Começar grátis <LearnChevron /></Link>
               <Link href="#como-funciona" className="uv-btn uv-btn--ghost t-learn">Ver como funciona <LearnChevron /></Link>
             </div>
-          </StaggerReveal>
+            <p className="uv-note uv-hero__note">30 dias com tudo liberado. Sem cartão de crédito.</p>
+          </div>
         </section>
 
         {/* Palco: a demonstração em forma de mensagem */}
@@ -228,7 +235,7 @@ export function LandingPage() {
               <p className="uv-lead t-stagger-line t-stagger-line--2 max-w-[42ch]">
                 Saldo, gastos por categoria, metas, orçamento do mês e relatórios por período, no celular ou no computador.
               </p>
-              <Link href={ctaHref} className="uv-link t-stagger-line t-stagger-line--3">Quero organizar meu dinheiro</Link>
+              <Link href={ctaHref} className="uv-link t-stagger-line t-stagger-line--3">Começar grátis</Link>
               <div className="uv-tags t-stagger-line t-stagger-line--4">
                 {PANEL_TAGS.map(({ icon: Icon, label }) => (
                   <span key={label} className="uv-tag"><Icon aria-hidden />{label}</span>
@@ -249,8 +256,8 @@ export function LandingPage() {
               <h2 className="t-stagger-line">Organize seu dinheiro por menos de um café por semana.</h2>
               <p className="uv-lead t-stagger-line t-stagger-line--2 max-w-[40ch]">Sem fidelidade, sem multa e sem limite para o uso do dia a dia.</p>
               <p className="uv-body t-stagger-line t-stagger-line--3">
-                Prefere começar pelo básico?{" "}
-                <Link href="/cadastro" className="uv-link--prose">Crie sua conta grátis</Link>
+                Quer testar antes?{" "}
+                <Link href="/cadastro" className="uv-link--prose">Crie sua conta grátis</Link> e use tudo por 30 dias, sem cartão.
               </p>
             </StaggerReveal>
             <Reveal className="uv-panel uv-panel--stage">
@@ -276,8 +283,9 @@ export function LandingPage() {
           <StaggerReveal onView className="uv-wrap">
             <h2 className="t-stagger-line mx-auto max-w-[16ch]">Seu próximo gasto já pode ser só uma mensagem.</h2>
             <div className="uv-hero__actions t-stagger-line t-stagger-line--2">
-              <Link href={ctaHref} className="uv-btn uv-btn--primary t-learn">Começar agora <LearnChevron /></Link>
+              <Link href={ctaHref} className="uv-btn uv-btn--primary t-learn">Começar grátis <LearnChevron /></Link>
             </div>
+            <p className="uv-note uv-hero__note t-stagger-line t-stagger-line--3">30 dias com tudo liberado. Sem cartão de crédito.</p>
           </StaggerReveal>
         </section>
       </main>
