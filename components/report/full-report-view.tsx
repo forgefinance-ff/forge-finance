@@ -1,5 +1,7 @@
 // A folha do Relatório completo. Componente de servidor: sem JavaScript no
 // navegador além do botão de imprimir.
+import Image from "next/image";
+
 import "./report.css";
 
 import type { DreMonth } from "@/lib/business-calc";
@@ -80,7 +82,7 @@ export function FullReportView({ report }: { report: FullReport }) {
       <header className="rpt-cover">
         <div>
           <div className="rpt-brand">
-            <div className="rpt-logo">F</div>
+            <Image src="/icon-f.png" alt="" width={40} height={40} className="rpt-logo" priority />
             <div className="rpt-brand-name">Forge Finance</div>
           </div>
           <h1 className="rpt-title">Relatório financeiro completo</h1>
