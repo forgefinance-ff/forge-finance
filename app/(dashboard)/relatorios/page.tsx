@@ -41,9 +41,17 @@ export default async function ReportsPage({ searchParams }: Props) {
     .filter((a) => Number(a.current_balance) < 0)
     .reduce((sum, a) => sum + Number(a.current_balance), 0);
 
+  // O relatório completo abre no mesmo período escolhido aqui.
+  const exportHref =
+    period.key === "all"
+      ? "/relatorio-completo"
+      : period.key === "custom"
+        ? `/relatorio-completo?period=custom&from=${period.from}&to=${period.to}`
+        : `/relatorio-completo?period=${period.key}`;
+
   return (
     <div className="space-y-6">
-      <ReportsHeader />
+      <ReportsHeader exportHref={exportHref} />
 
       <PeriodFilter period={period.key} from={period.from} to={period.to} />
 
