@@ -100,16 +100,9 @@
   gap: 10px;
 }
 .rpt-logo {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #5b21b6, #7c3aed);
-  color: #fff;
-  font-family: var(--font-app-display), system-ui, sans-serif;
-  font-weight: 800;
-  font-size: 22px;
-  display: grid;
-  place-items: center;
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
 }
 .rpt-brand-name {
   font-family: var(--font-app-display), system-ui, sans-serif;
