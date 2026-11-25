@@ -6,6 +6,7 @@ import {
   buildMonthlySummary,
   defaultSummaryMonth,
   freshSummaryMonth,
+  fullReportLink,
   isLastDayOfMonth,
   lastDayOfMonth,
 } from "../../lib/monthly-summary-core.ts";
@@ -95,4 +96,12 @@ test("histórico de 6 meses", () => {
   assert.equal(h[5].income, 100);
   assert.equal(h[3].expense, 40);
   assert.equal(h[0].label, "jun");
+});
+
+test("link do relatório completo cobre o mês inteiro", () => {
+  assert.equal(
+    fullReportLink("https://app.exemplo.com", "2026-11"),
+    "https://app.exemplo.com/relatorio-completo?period=custom&from=2026-11-01&to=2026-11-30"
+  );
+  assert.match(fullReportLink("", "2028-02"), /to=2028-02-29$/);
 });

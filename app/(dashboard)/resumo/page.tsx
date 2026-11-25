@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { ChevronLeft, ChevronRight, FileText, Sparkles } from "lucide-react";
 
 import { HistoryChart } from "@/components/summary/history-chart";
 import { MarkSummarySeen } from "@/components/summary/mark-seen";
@@ -13,6 +13,7 @@ import {
   defaultSummaryMonth,
   freshSummaryMonth,
   isLastDayOfMonth,
+  lastDayOfMonth,
   loadMonthlySummary,
   loadSummaryHistory,
   monthName,
@@ -76,6 +77,17 @@ export default async function MonthlySummaryPage({ searchParams }: { searchParam
           <span className="w-24" />
         )}
       </nav>
+
+      {!s.empty && (
+        <div className="flex justify-end">
+          <Link
+            href={`/relatorio-completo?period=custom&from=${ym}-01&to=${ym}-${String(lastDayOfMonth(ym)).padStart(2, "0")}`}
+            className="glass flex h-10 items-center gap-2 rounded-full px-4 text-sm text-text-soft hover:text-foreground"
+          >
+            <FileText className="h-4 w-4" aria-hidden /> Relatório completo do mês (PDF)
+          </Link>
+        </div>
+      )}
 
       {/* Destaque */}
       <section className="overflow-hidden rounded-[28px] bg-brand p-7 text-white sm:p-9">

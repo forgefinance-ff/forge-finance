@@ -147,7 +147,13 @@ export function buildMonthlySummary(
 const brl = (v: number) => v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 /** Texto do WhatsApp. `short` vai no template aprovado da Meta. */
-export function summaryWhatsAppText(s: MonthlySummary, link: string, trialDaysLeft: number | null) {
+/** Link do relatório completo (PDF) de um mês fechado. `appUrl` sem barra no fim. */
+export function fullReportLink(appUrl: string, ym: string): string {
+  const last = String(lastDayOfMonth(ym)).padStart(2, "0");
+  return `${appUrl}/relatorio-completo?period=custom&from=${ym}-01&to=${ym}-${last}`;
+}
+
+export function summaryWhatsAppText(s: MonthlySummary, link: string, trialDaysLeft: number | null, reportLink?: string) {
   const lines = [
     `🗓️ Seu ${s.monthName} no Forge Finance:`,
     "",
@@ -159,6 +165,7 @@ export function summaryWhatsAppText(s: MonthlySummary, link: string, trialDaysLe
     `📝 ${s.entries} lançamento(s) em ${s.activeDays} dia(s)`,
     "",
     `Veja o resumo completo: ${link}`,
+    reportLink ? `📄 Relatório completo para baixar em PDF: ${reportLink}` : null,
     trialDaysLeft !== null ? `\n⏳ Seu teste grátis termina em ${trialDaysLeft} dia(s).` : null,
   ].filter((l) => l !== null);
   const short = `entrou ${brl(s.income)}, saiu ${brl(s.expense)}, ${s.saved >= 0 ? `sobrou ${brl(s.saved)}` : `faltou ${brl(-s.saved)}`}`;

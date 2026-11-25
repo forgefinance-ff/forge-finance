@@ -28,12 +28,17 @@ type Props = {
 
 export default async function FullReportPage({ searchParams }: Props) {
   const params = (await searchParams) ?? {};
+  // Mantém o período ao mandar para o login (o link do WhatsApp traz o mês).
+  const query = new URLSearchParams(
+    Object.entries(params).flatMap(([k, v]) => (typeof v === "string" ? [[k, v] as [string, string]] : []))
+  ).toString();
+  const loginHref = `/login?next=${encodeURIComponent(`/relatorio-completo${query ? `?${query}` : ""}`)}`;
   const user = await getAuthUser();
-  if (!user) redirect("/login?next=%2Frelatorio-completo");
+  if (!user) redirect(loginHref);
 
   const period = parsePeriod(params);
   const report = await getFullReport(period);
-  if (!report) redirect("/login?next=%2Frelatorio-completo");
+  if (!report) redirect(loginHref);
 
   return (
     <div className="rpt-root">

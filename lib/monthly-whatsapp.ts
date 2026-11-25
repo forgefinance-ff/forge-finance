@@ -3,7 +3,7 @@
 import { billingEnabled } from "@/lib/billing/config";
 import { isTrialActive, trialDaysLeft } from "@/lib/billing/manual-access";
 import { todayInBrazil } from "@/lib/dates";
-import { isLastDayOfMonth, loadMonthlySummary, summaryWhatsAppText } from "@/lib/monthly-summary";
+import { fullReportLink, isLastDayOfMonth, loadMonthlySummary, summaryWhatsAppText } from "@/lib/monthly-summary";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { sendTemplate, sendText } from "@/lib/whatsapp/meta";
 
@@ -17,6 +17,7 @@ export async function sendMonthlySummaries({ force = false }: { force?: boolean 
   const language = process.env.WHATSAPP_REMINDER_TEMPLATE_LANG || "pt_BR";
   const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "").replace(/\/$/, "");
   const link = `${appUrl}/resumo?mes=${ym}`;
+  const reportLink = fullReportLink(appUrl, ym);
 
   const [{ data: links, error }, { data: optedOut }] = await Promise.all([
     db.from("whatsapp_links").select("user_id, phone"),
@@ -50,7 +51,7 @@ export async function sendMonthlySummaries({ force = false }: { force?: boolean 
         continue;
       }
       const daysLeft = trials.has(target.user_id) ? trialDaysLeft(trials.get(target.user_id)) : null;
-      const { text, short } = summaryWhatsAppText(summary, link, daysLeft);
+      const { text, short } = summaryWhatsAppText(summary, link, daysLeft, reportLink);
       const ok = template ? await sendTemplate(target.phone, template, [short], language) : await sendText(target.phone, text);
       if (ok) sent++;
       else failed++;
