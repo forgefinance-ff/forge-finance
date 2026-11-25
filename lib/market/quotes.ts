@@ -11,6 +11,7 @@
  * requisição por símbolo em voo, para muitos usuários com a mesma ação não
  * multiplicarem as chamadas.
  */
+import { dropIsolatedSpikes } from "@/lib/market/clean";
 import type { Quote } from "@/lib/market/portfolio";
 import {
   brapiSupports,
@@ -372,7 +373,7 @@ async function yahooHistory(symbol: string, range: HistoryRange): Promise<Histor
   if (!points.length) return null;
   const meta = result?.meta;
   return {
-    points,
+    points: dropIsolatedSpikes(points),
     previousClose: range === "1d" ? (finite(meta?.chartPreviousClose) ?? finite(meta?.previousClose)) : null,
     currency: typeof meta?.currency === "string" ? meta.currency : "BRL",
   };
