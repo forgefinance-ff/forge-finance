@@ -6,6 +6,7 @@ import {
   normalizeTicker,
   yahooSymbol,
 } from "../../lib/market/symbols.ts";
+import { dropIsolatedSpikes } from "../../lib/market/clean.ts";
 import { buildPortfolio, quoteKey, type InvestmentRow, type Quote } from "../../lib/market/portfolio.ts";
 
 test("normaliza códigos da B3, cripto e EUA", () => {
@@ -22,7 +23,7 @@ test("normaliza códigos da B3, cripto e EUA", () => {
 
 test("símbolo do Yahoo por classe", () => {
   assert.equal(yahooSymbol("PETR4", "acao"), "PETR4.SA");
-  assert.equal(yahooSymbol("BTC", "cripto"), "BTC-BRL");
+  assert.equal(yahooSymbol("BTC", "cripto"), "BTC-USD");
   assert.equal(yahooSymbol("BRK.B", "exterior"), "BRK-B");
 });
 
@@ -140,4 +141,25 @@ test("sem cotação usa o último preço salvo e marca como desatualizado", () =
 test("ativo do exterior sem dólar fica com o valor salvo", () => {
   const p = buildPortfolio([{ ...rows[1], current_value: 1100 }], new Map(), { usdBrl: null });
   assert.equal(p.positions[0].value, 1100);
+});
+
+const c = (close: number, open = close, high = close, low = close) => ({ open, high, low, close });
+
+test("descarta ponto isolado errado e mantém movimento real", () => {
+  // Dólar do Yahoo: primeiro dia quebrado (4,96 entre dias de 5,37).
+  const series = [c(4.96, 4.97, 5.46, 4.96), c(5.37), c(5.35), c(5.35), c(5.38)];
+  const cleaned = dropIsolatedSpikes(series);
+  assert.equal(cleaned.length, 4);
+  assert.equal(cleaned[0].close, 5.37);
+
+  // Pico no meio
+  assert.equal(dropIsolatedSpikes([c(10), c(10.1), c(14), c(10.2), c(10.1)]).length, 4);
+
+  // Queda real que continua: fica
+  assert.equal(dropIsolatedSpikes([c(10), c(10.1), c(8), c(7.9), c(7.8)]).length, 5);
+});
+
+test("limita pavio absurdo", () => {
+  const [p] = dropIsolatedSpikes([c(5.4, 5.4, 5.45, 3), c(5.41), c(5.42), c(5.4)]);
+  assert.ok(p.low > 4.8);
 });

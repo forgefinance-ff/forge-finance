@@ -11,6 +11,7 @@
  * requisição por símbolo em voo, para muitos usuários com a mesma ação não
  * multiplicarem as chamadas.
  */
+import { dropIsolatedSpikes } from "@/lib/market/clean";
 import type { Quote } from "@/lib/market/portfolio";
 import {
   brapiSupports,
@@ -141,7 +142,7 @@ async function yahooQuote(symbol: string): Promise<Quote | null> {
   const period = meta.currentTradingPeriod?.regular;
   const nowSec = Date.now() / 1000;
   const marketOpen =
-    symbol.endsWith("-BRL") ||
+    /-(BRL|USD)$/.test(symbol) ||
     symbol.endsWith("=X") ||
     (!!period?.start && !!period?.end && nowSec >= period.start && nowSec <= period.end);
 
@@ -242,6 +243,38 @@ function isB3OpenNow(): boolean {
   return minutes >= 10 * 60 && minutes <= 17 * 60 + 55;
 }
 
+/* ---------------- conversão dólar -> real (cripto) ---------------- */
+
+const DOLAR = "BRL=X";
+
+function dolarQuote(): Promise<Quote | null> {
+  return cachedQuote(DOLAR, () => yahooQuote(DOLAR));
+}
+
+/** Converte uma cotação em dólar para reais (preço atual pelo dólar de agora, fechamento pelo de ontem). */
+function quoteToBrl(q: Quote, fx: Quote): Quote {
+  const rate = fx.price;
+  const prevRate = fx.previousClose ?? rate;
+  const price = q.price * rate;
+  const previousClose = q.previousClose != null ? q.previousClose * prevRate : null;
+  return {
+    ...q,
+    price,
+    previousClose,
+    change: previousClose != null ? price - previousClose : null,
+    changePct: previousClose ? (price / previousClose - 1) * 100 : null,
+    currency: "BRL",
+    dayHigh: q.dayHigh != null ? q.dayHigh * rate : null,
+    dayLow: q.dayLow != null ? q.dayLow * rate : null,
+    spark: q.spark ? q.spark.map((v) => v * rate) : null,
+  };
+}
+
+async function usdQuoteInBrl(symbol: string): Promise<Quote | null> {
+  const [q, fx] = await Promise.all([yahooQuote(symbol), dolarQuote()]);
+  return q && fx ? quoteToBrl(q, fx) : null;
+}
+
 /* ---------------- API pública do módulo ---------------- */
 
 async function cachedQuote(key: string, load: () => Promise<Quote | null>): Promise<Quote | null> {
@@ -265,6 +298,9 @@ async function cachedQuote(key: string, load: () => Promise<Quote | null>): Prom
 /** Cotação de um ativo da carteira. */
 export function getAssetQuote(ref: AssetRef): Promise<Quote | null> {
   const symbol = yahooSymbol(ref.ticker, ref.assetClass);
+  if (ref.assetClass === "cripto") {
+    return cachedQuote(`${symbol}>BRL`, () => usdQuoteInBrl(symbol));
+  }
   return cachedQuote(symbol, async () => {
     try {
       const q = await yahooQuote(symbol);
@@ -337,7 +373,7 @@ async function yahooHistory(symbol: string, range: HistoryRange): Promise<Histor
   if (!points.length) return null;
   const meta = result?.meta;
   return {
-    points,
+    points: dropIsolatedSpikes(points),
     previousClose: range === "1d" ? (finite(meta?.chartPreviousClose) ?? finite(meta?.previousClose)) : null,
     currency: typeof meta?.currency === "string" ? meta.currency : "BRL",
   };
@@ -386,9 +422,31 @@ async function cachedHistory(
   });
 }
 
+/** Histórico em dólar convertido pelo dólar de agora (aproximação do gráfico em reais). */
+async function usdHistoryInBrl(symbol: string, range: HistoryRange): Promise<History | null> {
+  const [h, fx] = await Promise.all([yahooHistory(symbol, range), dolarQuote()]);
+  if (!h || !fx) return null;
+  const rate = fx.price;
+  const prevRate = fx.previousClose ?? rate;
+  return {
+    points: h.points.map((p) => ({
+      ...p,
+      open: p.open * rate,
+      high: p.high * rate,
+      low: p.low * rate,
+      close: p.close * rate,
+    })),
+    previousClose: h.previousClose != null ? h.previousClose * prevRate : null,
+    currency: "BRL",
+  };
+}
+
 /** Candles e volume de um ativo da carteira. */
 export function getAssetHistory(ref: AssetRef, range: HistoryRange): Promise<History | null> {
   const symbol = yahooSymbol(ref.ticker, ref.assetClass);
+  if (ref.assetClass === "cripto") {
+    return cachedHistory(`${symbol}>BRL`, range, () => usdHistoryInBrl(symbol, range));
+  }
   return cachedHistory(symbol, range, async () => {
     try {
       const h = await yahooHistory(symbol, range);
@@ -404,7 +462,7 @@ export function getAssetHistory(ref: AssetRef, range: HistoryRange): Promise<His
 export const MARKET_SYMBOLS = {
   ibov: { symbol: "^BVSP", label: "Ibovespa", currency: "PTS" },
   dolar: { symbol: "BRL=X", label: "Dólar", currency: "BRL" },
-  btc: { symbol: "BTC-BRL", label: "Bitcoin", currency: "BRL" },
+  btc: { symbol: "BTC-USD", label: "Bitcoin", currency: "BRL", usdToBrl: true },
   sp500: { symbol: "^GSPC", label: "S&P 500", currency: "PTS" },
 } as const;
 export type MarketSymbolKey = keyof typeof MARKET_SYMBOLS;
@@ -413,12 +471,18 @@ export function isMarketSymbolKey(v: unknown): v is MarketSymbolKey {
   return typeof v === "string" && v in MARKET_SYMBOLS;
 }
 
+const toBrl = (key: MarketSymbolKey) => "usdToBrl" in MARKET_SYMBOLS[key];
+
 export function getMarketHistory(key: MarketSymbolKey, range: HistoryRange): Promise<History | null> {
   const { symbol } = MARKET_SYMBOLS[key];
-  return cachedHistory(symbol, range, () => yahooHistory(symbol, range));
+  return toBrl(key)
+    ? cachedHistory(`${symbol}>BRL`, range, () => usdHistoryInBrl(symbol, range))
+    : cachedHistory(symbol, range, () => yahooHistory(symbol, range));
 }
 
 export function getMarketQuote(key: MarketSymbolKey): Promise<Quote | null> {
   const { symbol } = MARKET_SYMBOLS[key];
-  return cachedQuote(symbol, () => yahooQuote(symbol));
+  return toBrl(key)
+    ? cachedQuote(`${symbol}>BRL`, () => usdQuoteInBrl(symbol))
+    : cachedQuote(symbol, () => yahooQuote(symbol));
 }
