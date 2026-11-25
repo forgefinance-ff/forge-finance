@@ -193,6 +193,16 @@ export async function buildDeepContext() {
       tipo: i.type,
       aportado: Number(i.invested_amount ?? 0),
       atual: Number(i.current_value ?? 0),
+      ...(i.ticker
+        ? {
+            codigo: i.ticker,
+            quantidade: Number(i.quantity ?? 0),
+            precoMedio: Number(i.avg_price ?? 0),
+            moeda: i.currency ?? "BRL",
+            ultimaCotacao: i.last_price == null ? null : Number(i.last_price),
+            variacaoDiaPct: i.last_change_pct == null ? null : Number(i.last_change_pct),
+          }
+        : {}),
     })),
     contasAPagarReceber: {
       atrasadas: { total: due.overdueTotal, quantidade: due.overdueCount },
