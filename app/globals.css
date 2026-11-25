@@ -474,3 +474,20 @@ h1, h2, h3 {
   .support-bubble { bottom: 1.5rem; }
   .support-panel { bottom: 6rem; }
 }
+
+/* Faixa de cotações (Investimentos): rola sozinha e pausa com o mouse. */
+@keyframes forge-tape {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.forge-tape-track {
+  animation: forge-tape 70s linear infinite;
+}
+.forge-tape:hover .forge-tape-track,
+.forge-tape:focus-within .forge-tape-track {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .forge-tape { overflow-x: auto; }
+  .forge-tape-track { animation: none; }
+}

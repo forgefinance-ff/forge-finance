@@ -1,31 +1,21 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
-import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
 
 import { deleteInvestmentAction, recordTradeAction } from "@/app/actions/investments";
+import { MarketChart, type ChartMode } from "@/components/investments/market-chart";
+import { ChartControls } from "@/components/investments/market-section";
+import { useHistory } from "@/components/investments/use-history";
 import { brl, money, qty, signedBrl, signedPct, timeAgo, toneClass } from "@/components/investments/format";
 import { inputClass, labelClass } from "@/components/investments/market-asset-form";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { MoneyInput } from "@/components/ui/money-input";
 import type { InvestmentTrade } from "@/lib/investments";
-import { chartAxisTick, chartTooltipLabelStyle, chartTooltipStyle } from "@/lib/chart-theme";
 import type { Position } from "@/lib/market/portfolio";
 import { ASSET_CLASS_LABEL, type HistoryRange } from "@/lib/market/symbols";
 import { cn } from "@/lib/utils";
-
-const RANGES: { key: HistoryRange; label: string }[] = [
-  { key: "1d", label: "Hoje" },
-  { key: "5d", label: "5D" },
-  { key: "1mo", label: "1M" },
-  { key: "6mo", label: "6M" },
-  { key: "1y", label: "1A" },
-  { key: "5y", label: "5A" },
-];
-
-type Point = { t: number; close: number };
 
 const today = () => new Date().toLocaleDateString("en-CA", { timeZone: "America/Sao_Paulo" });
 
@@ -68,35 +58,21 @@ function DetailBody({
   now: number;
   onClose: () => void;
 }) {
-  const [range, setRange] = useState<HistoryRange>("1mo");
-  const [history, setHistory] = useState<{ range: HistoryRange; points: Point[] | null; error?: string } | null>(null);
+  const [range, setRange] = useState<HistoryRange>("1d");
+  const [mode, setMode] = useState<ChartMode>("line");
   const [side, setSide] = useState<"buy" | "sell">("buy");
   const [error, setError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  useEffect(() => {
-    // Busca externa: o estado só muda quando a resposta chega.
-    let alive = true;
-    fetch(`/api/market/history?ticker=${encodeURIComponent(p.ticker ?? "")}&class=${p.assetClass}&range=${range}`)
-      .then(async (res) => {
-        const json = await res.json();
-        if (!alive) return;
-        setHistory(res.ok ? { range, points: json.points } : { range, points: null, error: json.error });
-      })
-      .catch(() => {
-        if (alive) setHistory({ range, points: null, error: "Sem conexão para carregar o gráfico." });
-      });
-    return () => {
-      alive = false;
-    };
-  }, [p.ticker, p.assetClass, range]);
-
-  const loading = !history || history.range !== range;
-  const points = !loading ? (history?.points ?? []) : [];
+  const { data: history, loading } = useHistory(
+    p.ticker && p.assetClass ? `ticker=${encodeURIComponent(p.ticker)}&class=${p.assetClass}` : null,
+    range
+  );
+  const points = history?.points ?? [];
   const first = points[0]?.close;
   const last = points[points.length - 1]?.close;
-  const rangeChange = first && last ? (last / first - 1) * 100 : null;
-  const up = (rangeChange ?? 0) >= 0;
+  const base = range === "1d" ? (history?.previousClose ?? first) : first;
+  const rangeChange = base && last ? (last / base - 1) * 100 : null;
 
   function handleTrade(formData: FormData) {
     setError(null);
@@ -125,11 +101,6 @@ function DetailBody({
     });
   }
 
-  const fmtTick = (t: number) =>
-    range === "1d"
-      ? new Date(t).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" })
-      : new Date(t).toLocaleDateString("pt-BR", { day: "2-digit", month: "2-digit", ...(range === "5y" || range === "1y" ? { year: "2-digit" } : {}) });
-
   const currency = p.currency;
 
   return (
@@ -152,80 +123,31 @@ function DetailBody({
             <span className="text-faint"> · {p.stale ? "último valor salvo" : timeAgo(p.quoteTime, now)}</span>
           </p>
         </div>
-        <div className="flex gap-1 rounded-xl bg-tint p-1" role="tablist" aria-label="Período do gráfico">
-          {RANGES.map((r) => (
-            <button
-              key={r.key}
-              type="button"
-              role="tab"
-              aria-selected={range === r.key}
-              onClick={() => setRange(r.key)}
-              className={cn(
-                "rounded-lg px-2.5 py-1 text-xs font-medium transition",
-                range === r.key ? "bg-surface-solid text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
-              )}
-            >
-              {r.label}
-            </button>
-          ))}
-        </div>
+        <ChartControls range={range} onRange={setRange} mode={mode} onMode={setMode} />
       </div>
 
-      <div className="h-52 rounded-2xl border border-line bg-surface-solid p-2">
+      <div className="rounded-2xl border border-line bg-surface-solid p-2">
         {loading ? (
-          <div className="flex h-full items-center justify-center text-xs text-faint">Carregando gráfico…</div>
+          <div className="h-[260px] animate-pulse rounded-xl bg-tint" />
         ) : !points.length ? (
-          <div className="flex h-full items-center justify-center px-4 text-center text-xs text-faint">
+          <div className="flex h-[260px] items-center justify-center px-4 text-center text-xs text-faint">
             {history?.error ?? "Sem dados para esse período."}
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={points} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
-              <defs>
-                <linearGradient id="assetFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor={up ? "var(--success)" : "var(--danger)"} stopOpacity={0.28} />
-                  <stop offset="100%" stopColor={up ? "var(--success)" : "var(--danger)"} stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <XAxis dataKey="t" tickFormatter={fmtTick} tick={chartAxisTick} axisLine={false} tickLine={false} minTickGap={40} />
-              <YAxis
-                domain={["auto", "auto"]}
-                tick={chartAxisTick}
-                axisLine={false}
-                tickLine={false}
-                width={56}
-                tickFormatter={(v: number) => v.toLocaleString("pt-BR", { maximumFractionDigits: v < 10 ? 2 : 0 })}
-              />
-              <Tooltip
-                contentStyle={chartTooltipStyle}
-                labelStyle={chartTooltipLabelStyle}
-                labelFormatter={(t) =>
-                  new Date(Number(t)).toLocaleString("pt-BR", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: range === "1d" || range === "5d" ? undefined : "numeric",
-                    hour: range === "1d" || range === "5d" ? "2-digit" : undefined,
-                    minute: range === "1d" || range === "5d" ? "2-digit" : undefined,
-                    timeZone: "America/Sao_Paulo",
-                  })
-                }
-                formatter={(v) => [money(Number(v), currency), "Preço"]}
-              />
-              <Area
-                type="monotone"
-                dataKey="close"
-                stroke={up ? "var(--success)" : "var(--danger)"}
-                strokeWidth={2}
-                fill="url(#assetFill)"
-                isAnimationActive={false}
-              />
-            </AreaChart>
-          </ResponsiveContainer>
+          <MarketChart
+            points={points}
+            mode={mode}
+            previousClose={range === "1d" ? history?.previousClose : null}
+            intraday={range === "1d" || range === "5d"}
+            formatPrice={(v) => money(v, currency)}
+            live={range === "1d" && p.marketOpen}
+            height={260}
+          />
         )}
       </div>
       {rangeChange != null && (
         <p className="-mt-3 text-xs text-faint">
-          No período: <span className={cn("tabular-nums", toneClass(rangeChange))}>{signedPct(rangeChange)}</span>
+          {range === "1d" ? "Hoje" : "No período"}: <span className={cn("tabular-nums", toneClass(rangeChange))}>{signedPct(rangeChange)}</span>
         </p>
       )}
 

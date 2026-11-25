@@ -24,6 +24,8 @@ export type Quote = {
   dayHigh: number | null;
   dayLow: number | null;
   source: "yahoo" | "brapi";
+  /** Fechamentos do dia (minigráfico). */
+  spark?: number[] | null;
 };
 
 export type InvestmentRow = {
@@ -70,6 +72,9 @@ export type Position = {
   /** true quando a cotação veio do banco (provedor fora do ar). */
   stale: boolean;
   marketOpen: boolean;
+  /** Preços do dia para o minigráfico (null sem cotação). */
+  spark: number[] | null;
+  previousClose: number | null;
 };
 
 export type Insight = {
@@ -148,6 +153,8 @@ export function buildPosition(
       quoteTime: null,
       stale: false,
       marketOpen: false,
+      spark: null,
+      previousClose: null,
     };
   }
 
@@ -198,6 +205,8 @@ export function buildPosition(
     quoteTime: quote?.time ?? (row.last_price_at ? Date.parse(row.last_price_at) : null),
     stale: !quote,
     marketOpen: quote?.marketOpen ?? false,
+    spark: quote?.spark ?? null,
+    previousClose: quote?.previousClose ?? null,
   };
 }
 
