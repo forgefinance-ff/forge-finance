@@ -17,6 +17,8 @@ import { toast } from "sonner";
 
 import { deleteInvestmentAction, updateInvestmentValueAction } from "@/app/actions/investments";
 import { AssetDetail } from "@/components/investments/asset-detail";
+import { Sparkline } from "@/components/investments/market-chart";
+import { MarketSection } from "@/components/investments/market-section";
 import { brl, money, qty, signedBrl, signedPct, timeAgo, toneClass } from "@/components/investments/format";
 import { InvestmentForm } from "@/components/investments/investment-form";
 import { inputClass, MarketAssetForm } from "@/components/investments/market-asset-form";
@@ -123,12 +125,11 @@ export function InvestmentsLive({ initial }: { initial: PortfolioView }) {
 
   return (
     <div className="space-y-6">
-      {/* Faixa do mercado */}
-      <section className="forge-panel flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
-          <IndexChip label="Ibovespa" value={data.ibovespa?.price != null ? data.ibovespa.price.toLocaleString("pt-BR", { maximumFractionDigits: 0 }) + " pts" : "—"} pct={data.ibovespa?.changePct ?? null} />
-          <IndexChip label="Dólar" value={data.dolar?.price != null ? brl(data.dolar.price) : "—"} pct={data.dolar?.changePct ?? null} />
-        </div>
+      <MarketSection />
+
+      {/* Status da carteira */}
+      <div className="flex items-center justify-between gap-3">
+        <p className="forge-panel-title">Sua carteira</p>
         <div className="flex items-center gap-3 text-xs text-muted-foreground">
           <span className="flex items-center gap-2">
             <span className="relative flex h-2 w-2">
@@ -148,7 +149,7 @@ export function InvestmentsLive({ initial }: { initial: PortfolioView }) {
             <RefreshCw className={cn("h-4 w-4", refreshing && "animate-spin")} />
           </button>
         </div>
-      </section>
+      </div>
 
       {/* Números principais */}
       <section className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -233,16 +234,6 @@ export function InvestmentsLive({ initial }: { initial: PortfolioView }) {
           {adding === "manual" && <InvestmentForm embedded onDone={closeAdd} />}
         </DialogContent>
       </Dialog>
-    </div>
-  );
-}
-
-function IndexChip({ label, value, pct }: { label: string; value: string; pct: number | null }) {
-  return (
-    <div className="flex items-baseline gap-2">
-      <span className="text-xs text-faint">{label}</span>
-      <span className="text-sm font-semibold tabular-nums text-foreground">{value}</span>
-      <span className={cn("text-xs tabular-nums", toneClass(pct))}>{signedPct(pct)}</span>
     </div>
   );
 }
@@ -375,6 +366,7 @@ function Positions({
                   {qty(p.quantity)} × {p.price != null ? money(p.price, p.currency) : "—"}
                 </p>
               </div>
+              <Sparkline values={p.spark} reference={p.previousClose} width={56} height={24} />
               <div className="text-right">
                 <p className={cn("rounded px-1 font-semibold tabular-nums text-foreground transition-colors duration-700", flashClass(p.id))}>
                   {brl(p.value)}
@@ -388,10 +380,11 @@ function Positions({
 
       {/* Computador */}
       <div className="hidden overflow-x-auto sm:block">
-        <table className="w-full min-w-[760px] text-sm">
+        <table className="w-full min-w-[860px] text-sm">
           <thead className="border-y border-line text-left text-xs text-muted-foreground">
             <tr>
               <th className="px-5 py-2.5 font-medium">Ativo</th>
+              <th className="px-3 py-2.5 font-medium">Dia</th>
               <th className="px-3 py-2.5 text-right font-medium">Cotação</th>
               <th className="px-3 py-2.5 text-right font-medium">Hoje</th>
               <th className="px-3 py-2.5 text-right font-medium">Qtd. · PM</th>
@@ -416,6 +409,9 @@ function Positions({
                     </span>
                     <span className="block max-w-[220px] truncate text-xs text-faint">{p.name}</span>
                   </button>
+                </td>
+                <td className="px-3 py-3">
+                  <Sparkline values={p.spark} reference={p.previousClose} />
                 </td>
                 <td className="px-3 py-3 text-right">
                   <span className={cn("rounded px-1 tabular-nums text-foreground transition-colors duration-700", flashClass(p.id))}>
