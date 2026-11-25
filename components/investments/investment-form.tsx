@@ -11,7 +11,7 @@ const inputClass =
   "w-full rounded-xl border border-line-strong bg-surface-solid px-4 py-3 text-foreground outline-none transition placeholder:text-faint hover:border-faint focus:border-brand focus:ring-2 focus:ring-brand/15";
 const labelClass = "mb-1.5 block text-sm font-medium text-text-soft";
 
-export function InvestmentForm() {
+export function InvestmentForm({ onDone, embedded = false }: { onDone?: () => void; embedded?: boolean } = {}) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
@@ -23,6 +23,7 @@ export function InvestmentForm() {
         await createInvestmentAction(formData);
         formRef.current?.reset();
         toast.success("Investimento salvo.");
+        onDone?.();
       } catch {
         setError("Não foi possível salvar o investimento. Confira os dados e tente de novo.");
       }
@@ -30,14 +31,18 @@ export function InvestmentForm() {
   }
 
   return (
-    <form ref={formRef} action={handleSubmit} className="space-y-4 rounded-[22px] border border-line bg-surface p-6">
-      <h2 className="text-xl font-semibold text-foreground">Novo investimento</h2>
+    <form
+      ref={formRef}
+      action={handleSubmit}
+      className={embedded ? "space-y-4" : "space-y-4 rounded-[22px] border border-line bg-surface p-6"}
+    >
+      {!embedded && <h2 className="text-xl font-semibold text-foreground">Novo investimento</h2>}
 
       <div>
         <label htmlFor="inv-name" className={labelClass}>
           Nome do investimento
         </label>
-        <input id="inv-name" name="name" required maxLength={80} placeholder="Ex.: Tesouro Selic 2029" className={inputClass} />
+        <input id="inv-name" name="name" required maxLength={80} placeholder="Ex.: Tesouro Selic 2029, CDB 110% CDI" className={inputClass} />
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
@@ -47,7 +52,7 @@ export function InvestmentForm() {
           </label>
           <select id="inv-type" name="type" required className={inputClass}>
             <option value="Renda Fixa">Renda fixa</option>
-            <option value="Renda Variável">Renda variável</option>
+            <option value="Previdência">Previdência</option>
             <option value="Fundos">Fundos</option>
             <option value="Cripto">Cripto</option>
             <option value="Outros">Outros</option>

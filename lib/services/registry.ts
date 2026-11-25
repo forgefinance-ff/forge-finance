@@ -4,6 +4,8 @@
  */
 import { z } from "zod";
 import { MOVEMENT_KINDS } from "@/lib/movement-kinds";
+import { ASSET_CLASSES, ASSET_CLASS_TYPE, assetCurrency } from "@/lib/market/symbols";
+import { parseAmount } from "@/lib/money";
 
 import { dbFail, parseInput, ServiceError, type ServiceCtx } from "@/lib/services/context";
 import {
@@ -226,3 +228,160 @@ export async function createInvestment(ctx: ServiceCtx, raw: z.input<typeof inve
 
 export const deleteInvestment = (ctx: ServiceCtx, investmentId: string) =>
   deleteOwned(ctx, "investments", investmentId, "Investimento");
+
+/** Atualiza o valor de um investimento manual (renda fixa, previdência etc.). */
+export async function updateInvestmentValue(ctx: ServiceCtx, investmentId: string, rawValue: unknown) {
+  parseInput(id("Investimento não encontrado."), investmentId);
+  const value = parseInput(nonNegativeAmount("O valor atual"), rawValue);
+
+  const { data, error } = await ctx.db
+    .from("investments")
+    .update({ current_value: value })
+    .eq("id", investmentId)
+    .eq("user_id", ctx.userId)
+    .is("ticker", null)
+    .select("id");
+
+  if (error) dbFail(error, "Não foi possível atualizar o valor.");
+  if (!data?.length) throw new ServiceError("Investimento não encontrado.");
+}
+
+/* ---------------- bolsa: posições com cotação automática ---------------- */
+
+/** Número com casas livres (quantidade de cripto, preço de centavos). */
+const decimal = (label: string, { allowZero = false } = {}) =>
+  z
+    .union([z.number(), z.string()])
+    .transform((v) => (typeof v === "number" ? v : parseAmount(v)))
+    .refine(
+      (v) => Number.isFinite(v) && (allowZero ? v >= 0 : v > 0),
+      allowZero ? `${label} não pode ser negativo.` : `${label} deve ser maior que zero.`
+    )
+    .refine((v) => v <= 1_000_000_000, `${label} está alto demais.`)
+    .transform((v) => Math.round(v * 1e8) / 1e8);
+
+export const tradeInput = z.object({
+  side: z.enum(["buy", "sell"], { message: "Escolha compra ou venda." }),
+  quantity: decimal("A quantidade"),
+  price: decimal("O preço", { allowZero: true }),
+  fees: optionalAmount(nonNegativeAmount("A taxa")).transform((v) => v ?? 0),
+  traded_at: optionalDate("Informe uma data válida."),
+  /** Dólar do dia (só ativos do exterior). */
+  fx_rate: z.number().positive().default(1),
+});
+
+const TRADE_ERRORS: Record<string, string> = {
+  insufficient_quantity: "Você está vendendo mais do que tem desse ativo.",
+  investment_not_found: "Investimento não encontrado.",
+  not_market_investment: "Esse investimento não é da bolsa.",
+  invalid_quantity: "Quantidade inválida.",
+  invalid_price: "Preço inválido.",
+};
+
+/** Registra compra ou venda e atualiza quantidade, preço médio e custo (tudo numa transação). */
+export async function recordTrade(
+  ctx: ServiceCtx,
+  investmentId: string,
+  raw: z.input<typeof tradeInput>
+) {
+  parseInput(id("Investimento não encontrado."), investmentId);
+  const input = parseInput(tradeInput, raw);
+
+  if (input.traded_at && input.traded_at > new Date().toISOString().slice(0, 10)) {
+    throw new ServiceError("A data da operação não pode ser no futuro.");
+  }
+
+  const { error } = await ctx.db.rpc("ff_investment_trade", {
+    p_investment_id: investmentId,
+    p_side: input.side,
+    p_quantity: input.quantity,
+    p_price: input.price,
+    p_fx_rate: input.fx_rate,
+    p_fees: input.fees,
+    p_traded_at: input.traded_at ?? new Date().toISOString().slice(0, 10),
+  });
+
+  if (error) {
+    const known = Object.entries(TRADE_ERRORS).find(([code]) => error.message?.includes(code));
+    if (known) throw new ServiceError(known[1]);
+    dbFail(error, "Não foi possível registrar a operação.");
+  }
+}
+
+export const marketInvestmentInput = z.object({
+  ticker: text("o código do ativo", 16),
+  asset_class: z.enum(ASSET_CLASSES, { message: "Escolha o tipo do ativo." }),
+  name: optionalText(80),
+  institution: optionalText(60),
+});
+
+/**
+ * Cria a posição (ou reaproveita a do mesmo código) e registra a primeira compra.
+ * O código já deve vir normalizado e conferido com o provedor de cotação.
+ */
+export async function createMarketInvestment(
+  ctx: ServiceCtx,
+  raw: z.input<typeof marketInvestmentInput>,
+  firstTrade: z.input<typeof tradeInput>,
+  quote: { price: number; currency: string } | null
+): Promise<string> {
+  const input = parseInput(marketInvestmentInput, raw);
+  const ticker = input.ticker.toUpperCase();
+
+  const { data: existing, error: findError } = await ctx.db
+    .from("investments")
+    .select("id")
+    .eq("user_id", ctx.userId)
+    .eq("scope", ctx.scope)
+    .eq("ticker", ticker)
+    .eq("asset_class", input.asset_class)
+    .maybeSingle();
+
+  if (findError) dbFail(findError, "Não foi possível salvar o ativo.");
+
+  let investmentId = existing?.id ? String(existing.id) : null;
+  let created = false;
+
+  if (!investmentId) {
+    const { data, error } = await ctx.db
+      .from("investments")
+      .insert({
+        user_id: ctx.userId,
+        scope: ctx.scope,
+        name: input.name || ticker,
+        type: ASSET_CLASS_TYPE[input.asset_class],
+        institution: input.institution,
+        ticker,
+        asset_class: input.asset_class,
+        currency: assetCurrency(input.asset_class),
+        quantity: 0,
+        avg_price: 0,
+        invested_amount: 0,
+        current_value: 0,
+        last_price: quote?.price ?? null,
+        last_price_at: quote ? new Date().toISOString() : null,
+      })
+      .select("id")
+      .single();
+
+    if (error || !data) {
+      if (error?.message?.includes("ticker") || error?.code === "42703") {
+        throw new ServiceError("A aba de bolsa ainda está sendo ativada. Tente de novo em alguns minutos.");
+      }
+      dbFail(error, "Não foi possível salvar o ativo.");
+    }
+    investmentId = String(data.id);
+    created = true;
+  }
+
+  try {
+    await recordTrade(ctx, investmentId, { ...firstTrade, side: "buy" });
+  } catch (error) {
+    if (created) {
+      await ctx.db.from("investments").delete().eq("id", investmentId).eq("user_id", ctx.userId);
+    }
+    throw error;
+  }
+
+  return investmentId;
+}
