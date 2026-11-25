@@ -22,7 +22,7 @@ test("normaliza códigos da B3, cripto e EUA", () => {
 
 test("símbolo do Yahoo por classe", () => {
   assert.equal(yahooSymbol("PETR4", "acao"), "PETR4.SA");
-  assert.equal(yahooSymbol("BTC", "cripto"), "BTC-BRL");
+  assert.equal(yahooSymbol("BTC", "cripto"), "BTC-USD");
   assert.equal(yahooSymbol("BRK.B", "exterior"), "BRK-B");
 });
 

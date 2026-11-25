@@ -80,9 +80,12 @@ export function guessAssetClass(raw: string): AssetClass {
   return "exterior";
 }
 
-/** Símbolo no Yahoo Finance. */
+/**
+ * Símbolo no Yahoo Finance. Cripto vem em dólar (o Yahoo não tem mais os
+ * pares em real) e é convertida pelo dólar do momento.
+ */
 export function yahooSymbol(ticker: string, assetClass: AssetClass): string {
-  if (assetClass === "cripto") return `${ticker}-BRL`;
+  if (assetClass === "cripto") return `${ticker}-USD`;
   if (assetClass === "exterior") return ticker.replace(".", "-");
   return `${ticker}.SA`;
 }
